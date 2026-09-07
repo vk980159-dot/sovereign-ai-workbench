@@ -85,7 +85,7 @@ class LocalVectorStore:
 
         # Initialize dedicated local OllamaEmbeddings for vector retrieval
         self.embedder = OllamaEmbeddings(
-            model="nomic-embed-text",
+            model=settings.EMBEDDING_MODEL_NAME,
             base_url=settings.OLLAMA_BASE_URL
         )
 

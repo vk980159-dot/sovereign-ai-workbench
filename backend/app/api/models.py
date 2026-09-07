@@ -89,8 +89,10 @@ class AuditVerifyResponse(BaseModel):
 class SystemHealthResponse(BaseModel):
     status: str
     version: str
+    environment: str = "production-airgapped"
     air_gapped: bool
     ollama_endpoint: str
+    ollama_connected: Optional[bool] = None
     default_model: str
     chroma_collection: str
     total_vectors: int

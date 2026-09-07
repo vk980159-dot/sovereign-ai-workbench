@@ -1,0 +1,60 @@
+# ==============================================================================
+# Sovereign AI Workbench - Render Blueprint Deployment Spec (SIH26117)
+# Public Cloud Web Service Specification
+# ==============================================================================
+
+services:
+  - type: web
+    name: sovereign-ai-workbench
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /api/v1/health
+
+    envVars:
+      # Production Cloud Mode
+      - key: ENVIRONMENT
+        value: production-cloud
+
+      # Cloud demo mode relaxes strict localhost air-gap check
+      - key: AIR_GAP_STRICT_MODE
+        value: "false"
+
+      # Auto-generate cryptographically secure session secret key
+      - key: AUTH_SECRET_KEY
+        generateValue: true
+
+      # Initial Administrator Credentials
+      - key: ADMIN_DEFAULT_USERNAME
+        value: admin
+      - key: ADMIN_DEFAULT_PASSWORD
+        generateValue: true
+      - key: ADMIN_DEFAULT_EMAIL
+        value: admin@sovereign.local
+      - key: ADMIN_DEFAULT_FULL_NAME
+        value: Sovereign Administrator
+
+      # Inference Engine Configuration
+      - key: OLLAMA_BASE_URL
+        value: http://localhost:11434
+      - key: DEFAULT_MODEL
+        value: llama3.1
+      - key: EMBEDDING_MODEL_NAME
+        value: nomic-embed-text
+
+      # Social Authentication (Optional - configure in Render dashboard if needed)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_REDIRECT_URI
+        sync: false

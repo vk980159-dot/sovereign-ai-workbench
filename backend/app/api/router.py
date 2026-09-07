@@ -58,6 +58,17 @@ from app.agents.graph import run_agent_workflow
 api_router = APIRouter()
 
 
+def is_request_secure(req: Request) -> bool:
+    """Determines whether a cookie should have the secure flag set."""
+    if req.url.scheme == "https":
+        return True
+    if req.headers.get("x-forwarded-proto") == "https":
+        return True
+    if "cloud" in settings.ENVIRONMENT.lower():
+        return True
+    return False
+
+
 # Active WebSocket Connection Manager
 class ConnectionManager:
     def __init__(self):
@@ -143,7 +154,7 @@ async def login(login_req: LoginRequest, request: Request, response: Response):
         max_age=settings.SESSION_EXPIRE_HOURS * 3600,
         httponly=True,
         samesite="lax",
-        secure=False  # Allow local HTTP on air-gapped network
+        secure=is_request_secure(request)
     )
 
     return LoginResponse(
@@ -391,7 +402,7 @@ async def google_callback(
             max_age=settings.SESSION_EXPIRE_HOURS * 3600,
             httponly=True,
             samesite="lax",
-            secure=False
+            secure=is_request_secure(request)
         )
         resp.delete_cookie(key="oauth_state_google")
         return resp
@@ -625,7 +636,7 @@ async def github_callback(
             max_age=settings.SESSION_EXPIRE_HOURS * 3600,
             httponly=True,
             samesite="lax",
-            secure=False
+            secure=is_request_secure(request)
         )
         resp.delete_cookie(key="oauth_state_github")
         return resp
@@ -782,11 +793,21 @@ async def system_health():
     is_valid, _, _, _ = audit_logger.verify_integrity()
     stats = vector_store.get_stats()
 
+    ollama_ok = False
+    try:
+        async with httpx.AsyncClient(timeout=0.8) as client:
+            resp = await client.get(f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/tags")
+            ollama_ok = (resp.status_code == 200)
+    except Exception:
+        ollama_ok = False
+
     return SystemHealthResponse(
         status="ONLINE_SECURE",
         version=settings.VERSION,
+        environment=settings.ENVIRONMENT,
         air_gapped=settings.AIR_GAP_STRICT_MODE,
         ollama_endpoint=settings.OLLAMA_BASE_URL,
+        ollama_connected=ollama_ok,
         default_model=settings.DEFAULT_MODEL,
         chroma_collection=stats.get("collection_name", settings.CHROMA_COLLECTION_NAME),
         total_vectors=stats.get("total_chunks", 0),

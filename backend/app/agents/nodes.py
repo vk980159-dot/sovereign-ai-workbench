@@ -55,11 +55,15 @@ async def call_local_llm(
             else:
                 return f"[Local Inference Error: Ollama HTTP {response.status_code}]"
     except httpx.ConnectError:
-        # Graceful fallback if local Ollama daemon has not been started yet
         return (
-            f"[LOCAL DEMO MODE: Local Ollama daemon at {settings.OLLAMA_BASE_URL} is offline or starting up. "
-            f"Please ensure 'ollama serve' is running with model '{settings.DEFAULT_MODEL}'. "
-            f"Simulated local synthesis: Processed user input securely against {len(user_prompt)} characters of local context.]"
+            f"[INFERENCE STATUS: Ollama engine at {settings.OLLAMA_BASE_URL} is unreachable. "
+            f"In Cloud Demo Mode, set OLLAMA_BASE_URL to an accessible Ollama host providing model '{settings.DEFAULT_MODEL}', "
+            f"or execute locally with 'ollama serve'. System integrity preserved: zero fake AI responses generated.]"
+        )
+    except httpx.TimeoutException:
+        return (
+            f"[INFERENCE STATUS: Inference request timed out after {settings.INFERENCE_TIMEOUT_SECONDS}s. "
+            f"Ensure the host at {settings.OLLAMA_BASE_URL} has sufficient CPU/GPU resources for '{settings.DEFAULT_MODEL}'.]"
         )
     except Exception as e:
         return f"[Inference Exception: {str(e)}]"

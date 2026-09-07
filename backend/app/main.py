@@ -1,9 +1,11 @@
 """
 Sovereign AI Workbench - FastAPI Entry Point (SIH26117)
 Serves High-Security REST API, WebSocket Agent Streams, and Embedded Frontend Dashboard.
+Supports both on-premise air-gapped deployment and cloud container execution (Docker/Render).
 """
 
 import os
+import sys
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -11,6 +13,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 import httpx
+
+# Ensure backend directory is in sys.path so 'app' can be resolved from root or backend/
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 from app.config import settings, validate_air_gap_compliance
 from app.api.router import api_router
@@ -23,19 +30,29 @@ from app.database.vector_store import vector_store
 async def lifespan(app: FastAPI):
     """
     Application startup and shutdown lifecycle hooks.
-    Enforces strict air-gapped security validations.
+    Enforces air-gapped security validations locally, while permitting cloud demo deployment.
     """
     print("=" * 70)
     print(" [SOVEREIGN AI WORKBENCH - BOOT SEQUENCE INITIATED]")
+    print(f" [ENVIRONMENT]: {settings.ENVIRONMENT}")
+    print(f" [BINDING]: http://{settings.HOST}:{settings.PORT}")
     print("=" * 70)
 
     # 0. Enforce Air-Gap Policy
     try:
         validate_air_gap_compliance()
-        print(" [AIR-GAP VALIDATOR]: PASS. All endpoints bound to strictly local networks.")
+        if settings.AIR_GAP_STRICT_MODE:
+            print(" [AIR-GAP VALIDATOR]: PASS. All endpoints bound to strictly local networks.")
+        else:
+            print(" [AIR-GAP VALIDATOR]: NOTICE. Cloud Demo Mode active (AIR_GAP_STRICT_MODE=false).")
     except Exception as e:
         print(f" [AIR-GAP VALIDATOR FATAL]: {e}")
         raise e
+
+    # 0.1 Check for production secret safety
+    if settings.ENVIRONMENT != "development" and settings.AUTH_SECRET_KEY == "sovereign-ai-workbench-airgapped-auth-secret-key-sih2026":
+        print(" [SECURITY NOTICE]: AUTH_SECRET_KEY is using development default.")
+        print("                    For production deployments, configure AUTH_SECRET_KEY in environment.")
 
     # 1. Initialize Local SQLite Authentication Database and Admin Seed
     try:
@@ -46,13 +63,19 @@ async def lifespan(app: FastAPI):
         raise e
 
     # 2. Cryptographic Audit Chain Check
-    is_valid, count, msg, tip_hash = audit_logger.verify_integrity()
-    print(f" [AUDIT INTEGRITY]: Verified {count} records. Tip Hash: {tip_hash[:16]}... ({msg})")
+    try:
+        is_valid, count, msg, tip_hash = audit_logger.verify_integrity()
+        print(f" [AUDIT INTEGRITY]: Verified {count} records. Tip Hash: {tip_hash[:16]}... ({msg})")
+    except Exception as e:
+        print(f" [AUDIT WARNING]: Audit verification encounter: {e}")
 
     # 3. Vector Database Verification
-    stats = vector_store.get_stats()
-    total_chunks = stats.get("total_chunks", 0)
-    print(f" [VECTOR ENGINE]: Active. Collection: '{stats.get('collection_name', 'sovereign_knowledge_base')}' ({total_chunks} chunks indexed).")
+    try:
+        stats = vector_store.get_stats()
+        total_chunks = stats.get("total_chunks", 0)
+        print(f" [VECTOR ENGINE]: Active. Collection: '{stats.get('collection_name', 'sovereign_knowledge_base')}' ({total_chunks} chunks indexed).")
+    except Exception as e:
+        print(f" [VECTOR ENGINE WARNING]: Vector store status: {e}")
 
     # 4. Local Ollama Health Probe
     try:
@@ -65,7 +88,10 @@ async def lifespan(app: FastAPI):
                 print(f" [LOCAL INFERENCE WARNING]: Ollama returned status {resp.status_code}")
     except Exception:
         print(f" [LOCAL INFERENCE NOTICE]: Ollama daemon at {settings.OLLAMA_BASE_URL} is currently unreachable.")
-        print(f"                            Ensure 'ollama serve' is running with model '{settings.DEFAULT_MODEL}'.")
+        if settings.AIR_GAP_STRICT_MODE:
+            print(f"                            Ensure 'ollama serve' is running with model '{settings.DEFAULT_MODEL}'.")
+        else:
+            print(f"                            In Cloud Demo Mode, configure OLLAMA_BASE_URL to connect an external host.")
 
     print("=" * 70)
     print(f" WORKBENCH READY AT: http://{settings.HOST}:{settings.PORT}")
@@ -84,10 +110,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS Policy (Configured for local sovereign operation)
+# CORS Policy (Configured safely with verified origins)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

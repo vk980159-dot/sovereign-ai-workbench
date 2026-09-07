@@ -1,0 +1,37 @@
+# ==============================================================================
+# Sovereign AI Workbench - Docker Build Ignore Rules (SIH26117)
+# Prevents secrets, runtime databases, and local artifacts from entering images
+# ==============================================================================
+
+# Version control & metadata
+.git/
+.gitignore
+
+# Environment & Secrets (NEVER bake into image)
+.env
+.env.*
+*.env
+!.env.example
+
+# Local databases & runtime state (Must remain on persistent mounts or volumes)
+auth.db
+auth.db-journal
+*.db
+chroma_db/
+uploaded_docs/
+audit_trail.jsonl
+
+# Python cache & virtual environment
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+venv/
+env/
+ENV/
+
+# Temporary and local scratch files
+*.log
+scratch/
+.system_generated/

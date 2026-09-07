@@ -1,11 +1,14 @@
 """
-Configuration Manager for Sovereign On-Premise Agentic AI Workbench
-Enforces strict air-gap compliance and local-only network routing.
+Configuration Manager for Sovereign On-Premise Agentic AI Workbench (SIH26117)
+Enforces strict air-gap compliance locally, while supporting cloud web service deployment.
 """
 
 import os
+import sys
 from pathlib import Path
+from typing import List, Optional
 from urllib.parse import urlparse
+
 try:
     from pydantic_settings import BaseSettings, SettingsConfigDict
     from pydantic import Field, AliasChoices, field_validator
@@ -48,50 +51,82 @@ class WorkbenchSettings(BaseSettings):
     # Core Application Settings
     PROJECT_NAME: str = "Sovereign AI Workbench"
     VERSION: str = "1.0.0"
-    ENVIRONMENT: str = "production-airgapped"
-    DEBUG: bool = False
+    ENVIRONMENT: str = Field(
+        default_factory=lambda: os.getenv("ENVIRONMENT", os.getenv("WORKBENCH_ENVIRONMENT", "production-airgapped")).strip(),
+        validation_alias=AliasChoices("ENVIRONMENT", "WORKBENCH_ENVIRONMENT") if AliasChoices else "ENVIRONMENT",
+        description="Operating environment: 'production-airgapped', 'production-cloud', or 'development'"
+    )
+    DEBUG: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("DEBUG", "WORKBENCH_DEBUG") if AliasChoices else "DEBUG"
+    )
 
-    # Server Configuration
-    HOST: str = "127.0.0.1"
-    PORT: int = 8000
+    # Server Configuration (Supports dynamic Cloud $PORT and 0.0.0.0 binding)
+    HOST: str = Field(
+        default_factory=lambda: os.getenv("HOST", os.getenv("WORKBENCH_HOST", "127.0.0.1")).strip(),
+        validation_alias=AliasChoices("HOST", "WORKBENCH_HOST") if AliasChoices else "HOST",
+        description="Host IP binding (127.0.0.1 for local, 0.0.0.0 for cloud/Docker)"
+    )
+    PORT: int = Field(
+        default_factory=lambda: int(os.getenv("PORT", os.getenv("WORKBENCH_PORT", "8000")).strip()),
+        validation_alias=AliasChoices("PORT", "WORKBENCH_PORT") if AliasChoices else "PORT",
+        description="Server listening port"
+    )
 
     # Local Inference Core (Ollama / vLLM)
     OLLAMA_BASE_URL: str = Field(
-        default="http://localhost:11434",
-        description="Local Ollama instance endpoint. External URLs are rejected by air-gap validator."
+        default_factory=lambda: os.getenv("OLLAMA_BASE_URL", os.getenv("WORKBENCH_OLLAMA_BASE_URL", "http://localhost:11434")).strip(),
+        validation_alias=AliasChoices("OLLAMA_BASE_URL", "WORKBENCH_OLLAMA_BASE_URL") if AliasChoices else "OLLAMA_BASE_URL",
+        description="Local Ollama instance endpoint. External URLs are rejected when air-gap strict mode is active."
     )
     DEFAULT_MODEL: str = Field(
-        default="llama3.1",
+        default_factory=lambda: os.getenv("DEFAULT_MODEL", os.getenv("OLLAMA_MODEL", os.getenv("WORKBENCH_DEFAULT_MODEL", "llama3.1"))).strip(),
+        validation_alias=AliasChoices("DEFAULT_MODEL", "OLLAMA_MODEL", "WORKBENCH_DEFAULT_MODEL") if AliasChoices else "DEFAULT_MODEL",
         description="Default local model identifier (e.g., llama3.1, qwen2.5:7b, mistral)"
     )
     MODEL_TEMPERATURE: float = 0.1
     INFERENCE_TIMEOUT_SECONDS: float = 120.0
 
+    # Optional persistent storage mount directory (e.g., Render Persistent Disk path '/var/data')
+    DATA_DIR: Optional[str] = Field(
+        default_factory=lambda: os.getenv("DATA_DIR", os.getenv("WORKBENCH_DATA_DIR", None)),
+        validation_alias=AliasChoices("DATA_DIR", "WORKBENCH_DATA_DIR") if AliasChoices else "DATA_DIR",
+        description="Mount path for cloud persistent disk (defaults to project root directory if None)"
+    )
+
     # Vector Storage & Embeddings
-    BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
-    CHROMA_PERSIST_DIR: str = str(BASE_DIR / "chroma_db")
     CHROMA_COLLECTION_NAME: str = "sovereign_knowledge_base"
-    EMBEDDING_MODEL_NAME: str = "nomic-embed-text"
+    EMBEDDING_MODEL_NAME: str = Field(
+        default_factory=lambda: os.getenv("EMBEDDING_MODEL_NAME", os.getenv("EMBEDDING_MODEL", os.getenv("WORKBENCH_EMBEDDING_MODEL_NAME", "nomic-embed-text"))).strip(),
+        validation_alias=AliasChoices("EMBEDDING_MODEL_NAME", "EMBEDDING_MODEL", "WORKBENCH_EMBEDDING_MODEL_NAME") if AliasChoices else "EMBEDDING_MODEL_NAME",
+        description="Ollama embedding model name (e.g. nomic-embed-text)"
+    )
     CHUNK_SIZE: int = 500
     CHUNK_OVERLAP: int = 50
     TOP_K_RETRIEVAL: int = 3
 
-    # Security & Cryptographic Auditing
+    # Dynamic File Paths (Computed based on DATA_DIR if present)
+    CHROMA_PERSIST_DIR: str = str(BASE_DIR / "chroma_db")
     AUDIT_LOG_FILE: str = str(BASE_DIR / "audit_trail.jsonl")
+    UPLOAD_DIR: str = str(BASE_DIR / "uploaded_docs")
+    AUTH_DB_PATH: str = str(BASE_DIR / "auth.db")
+
+    # Security & Cryptographic Auditing
     PII_REDACTION_TAG: str = "[REDACTED_CONFIDENTIAL]"
-    AIR_GAP_STRICT_MODE: bool = True
+    AIR_GAP_STRICT_MODE: bool = Field(
+        default_factory=lambda: os.getenv("AIR_GAP_STRICT_MODE", os.getenv("WORKBENCH_AIR_GAP_STRICT_MODE", "true")).strip().lower() in ("true", "1", "yes"),
+        validation_alias=AliasChoices("AIR_GAP_STRICT_MODE", "WORKBENCH_AIR_GAP_STRICT_MODE") if AliasChoices else "AIR_GAP_STRICT_MODE",
+        description="Strictly reject non-loopback endpoints when True. Set False for Cloud Demo mode."
+    )
 
     # Agent Loop Guardrails
     MAX_AUDIT_ITERATIONS: int = 3
     MIN_AUDIT_CONFIDENCE: float = 0.80
 
-    # Local Document Uploads
-    UPLOAD_DIR: str = str(BASE_DIR / "uploaded_docs")
-
-    # Authentication & Session Security (100% Local & Air-Gapped)
-    AUTH_DB_PATH: str = str(BASE_DIR / "auth.db")
+    # Authentication & Session Security
     AUTH_SECRET_KEY: str = Field(
-        default="sovereign-ai-workbench-airgapped-auth-secret-key-sih2026",
+        default_factory=lambda: os.getenv("AUTH_SECRET_KEY", os.getenv("SESSION_SECRET", os.getenv("WORKBENCH_AUTH_SECRET_KEY", "sovereign-ai-workbench-airgapped-auth-secret-key-sih2026"))).strip(),
+        validation_alias=AliasChoices("AUTH_SECRET_KEY", "SESSION_SECRET", "WORKBENCH_AUTH_SECRET_KEY") if AliasChoices else "AUTH_SECRET_KEY",
         description="Cryptographic HMAC key for local session token verification"
     )
     SESSION_EXPIRE_HOURS: int = 12
@@ -99,28 +134,33 @@ class WorkbenchSettings(BaseSettings):
 
     # Initial Local Admin Bootstrap Credentials
     ADMIN_DEFAULT_USERNAME: str = Field(
-        default="admin",
+        default_factory=lambda: os.getenv("ADMIN_DEFAULT_USERNAME", os.getenv("WORKBENCH_ADMIN_DEFAULT_USERNAME", "admin")).strip(),
+        validation_alias=AliasChoices("ADMIN_DEFAULT_USERNAME", "WORKBENCH_ADMIN_DEFAULT_USERNAME") if AliasChoices else "ADMIN_DEFAULT_USERNAME",
         description="Bootstrap administrator username"
     )
     ADMIN_DEFAULT_PASSWORD: str = Field(
-        default="SovereignAdmin2026!",
+        default_factory=lambda: os.getenv("ADMIN_DEFAULT_PASSWORD", os.getenv("WORKBENCH_ADMIN_DEFAULT_PASSWORD", "SovereignAdmin2026!")).strip(),
+        validation_alias=AliasChoices("ADMIN_DEFAULT_PASSWORD", "WORKBENCH_ADMIN_DEFAULT_PASSWORD") if AliasChoices else "ADMIN_DEFAULT_PASSWORD",
         description="Bootstrap administrator password"
     )
     ADMIN_DEFAULT_EMAIL: str = Field(
-        default="admin@sovereign.local",
+        default_factory=lambda: os.getenv("ADMIN_DEFAULT_EMAIL", os.getenv("WORKBENCH_ADMIN_DEFAULT_EMAIL", "admin@sovereign.local")).strip(),
+        validation_alias=AliasChoices("ADMIN_DEFAULT_EMAIL", "WORKBENCH_ADMIN_DEFAULT_EMAIL") if AliasChoices else "ADMIN_DEFAULT_EMAIL",
         description="Bootstrap administrator email address"
     )
     ADMIN_DEFAULT_FULL_NAME: str = Field(
-        default="Sovereign Administrator",
+        default_factory=lambda: os.getenv("ADMIN_DEFAULT_FULL_NAME", os.getenv("WORKBENCH_ADMIN_DEFAULT_FULL_NAME", "Sovereign Administrator")).strip(),
+        validation_alias=AliasChoices("ADMIN_DEFAULT_FULL_NAME", "WORKBENCH_ADMIN_DEFAULT_FULL_NAME") if AliasChoices else "ADMIN_DEFAULT_FULL_NAME",
         description="Bootstrap administrator full name"
     )
-    PASSWORD_MIN_LENGTH: int = Field(
-        default=8,
-        description="Minimum password character length"
-    )
-    ALLOW_USER_REGISTRATION: bool = Field(
-        default=True,
-        description="Permit new user self-registration on air-gapped system"
+    PASSWORD_MIN_LENGTH: int = Field(default=8, description="Minimum password character length")
+    ALLOW_USER_REGISTRATION: bool = Field(default=True, description="Permit new user self-registration")
+
+    # CORS Configuration
+    CORS_ORIGINS: str = Field(
+        default_factory=lambda: os.getenv("CORS_ORIGINS", os.getenv("WORKBENCH_CORS_ORIGINS", "")).strip(),
+        validation_alias=AliasChoices("CORS_ORIGINS", "WORKBENCH_CORS_ORIGINS") if AliasChoices else "CORS_ORIGINS",
+        description="Comma-separated allowed CORS origins for external clients"
     )
 
     # Google OAuth Configuration
@@ -163,21 +203,29 @@ class WorkbenchSettings(BaseSettings):
         description="GitHub OAuth Callback URL"
     )
 
-    if field_validator:
-        @field_validator("GOOGLE_REDIRECT_URI", mode="after")
-        @classmethod
-        def validate_google_redirect(cls, v: str) -> str:
-            return v.strip() if v and v.strip() else "http://127.0.0.1:8000/api/auth/google/callback"
+    def model_post_init(self, __context):
+        """Re-route storage directories to DATA_DIR if configured (e.g. Render Persistent Disk)."""
+        if self.DATA_DIR and self.DATA_DIR.strip():
+            data_path = Path(self.DATA_DIR.strip()).resolve()
+            self.CHROMA_PERSIST_DIR = str(data_path / "chroma_db")
+            self.AUDIT_LOG_FILE = str(data_path / "audit_trail.jsonl")
+            self.UPLOAD_DIR = str(data_path / "uploaded_docs")
+            self.AUTH_DB_PATH = str(data_path / "auth.db")
 
-        @field_validator("GITHUB_REDIRECT_URI", mode="after")
-        @classmethod
-        def validate_github_redirect(cls, v: str) -> str:
-            return v.strip() if v and v.strip() else "http://127.0.0.1:8000/api/auth/github/callback"
-
-        @field_validator("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", mode="after")
-        @classmethod
-        def strip_oauth_credentials(cls, v: str) -> str:
-            return v.strip() if v else ""
+    def get_cors_origins(self) -> List[str]:
+        """Returns verified origins allowed for CORS."""
+        origins = [
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ]
+        if self.CORS_ORIGINS:
+            for part in self.CORS_ORIGINS.split(","):
+                part = part.strip()
+                if part and part not in origins:
+                    origins.append(part)
+        return origins
 
     def google_oauth_configured(self) -> bool:
         return bool(self.GOOGLE_CLIENT_ID and self.GOOGLE_CLIENT_SECRET)
@@ -211,14 +259,15 @@ os.makedirs(os.path.dirname(os.path.abspath(settings.AUDIT_LOG_FILE)), exist_ok=
 def validate_air_gap_compliance() -> bool:
     """
     Validates that inference endpoints and storage paths do NOT route to public internet.
-    Raises ValueError if an external network endpoint is detected.
+    In cloud demo mode (AIR_GAP_STRICT_MODE=False), logs informational notice.
     """
+    if not settings.AIR_GAP_STRICT_MODE:
+        return True
+
     parsed = urlparse(settings.OLLAMA_BASE_URL)
     hostname = parsed.hostname or ""
-
     allowed_local_hosts = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
 
-    # Check for loopback or private RFC1918 subnets
     is_loopback = hostname in allowed_local_hosts
     is_private_subnet = (
         hostname.startswith("192.168.") or
@@ -226,10 +275,11 @@ def validate_air_gap_compliance() -> bool:
         (hostname.startswith("172.") and 16 <= int(hostname.split(".")[1] if len(hostname.split(".")) > 1 else 0) <= 31)
     )
 
-    if settings.AIR_GAP_STRICT_MODE and not (is_loopback or is_private_subnet):
+    if not (is_loopback or is_private_subnet):
         raise SecurityError(
             f"AIR-GAP VIOLATION DETECTED: Endpoint '{settings.OLLAMA_BASE_URL}' references non-local host '{hostname}'. "
-            "All connections must strictly resolve to loopback or verified on-premise air-gapped subnets."
+            "All connections must strictly resolve to loopback or verified on-premise air-gapped subnets. "
+            "To deploy in Cloud Demo Mode, set AIR_GAP_STRICT_MODE=false in your environment."
         )
 
     return True
