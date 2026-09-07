@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign AI Workbench | Create Account</title>
+    <!-- 100% Offline Embedded Styling (Industrial Dark Theme matching SIH26117 Dashboard) -->
+    <style>
+        :root {
+            --bg-base: #0a0c10;
+            --bg-surface: #12151d;
+            --bg-card: #181d28;
+            --border-color: #262f40;
+            --border-focus: #38bdf8;
+            --accent-primary: #38bdf8;
+            --accent-primary-hover: #0284c7;
+            --accent-glow: rgba(56, 189, 248, 0.2);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.12);
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --mono-family: "JetBrains Mono", "Fira Code", Consolas, Menlo, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Subtle radial ambient glow */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 650px;
+            height: 650px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.07) 0%, rgba(10, 12, 16, 0) 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .register-container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.25rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Brand Header */
+        .brand-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .brand-logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.75rem;
+            color: #ffffff;
+            box-shadow: 0 0 25px var(--accent-glow);
+            margin-bottom: 0.85rem;
+        }
+
+        .brand-title {
+            font-size: 1.45rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
+        }
+
+        .brand-subtitle {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 500;
+        }
+
+        /* Badges Container */
+        .badges-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+        }
+
+        .badge-airgap {
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--success-color);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .badge-audit {
+            background: rgba(56, 189, 248, 0.1);
+            color: #7dd3fc;
+            border: 1px solid rgba(56, 189, 248, 0.25);
+        }
+
+        /* Alert Banners */
+        .alert-banner {
+            display: none;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.82rem;
+            align-items: center;
+            gap: 0.6rem;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .alert-banner.active {
+            display: flex;
+        }
+
+        .alert-error {
+            background: var(--danger-bg);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Form Controls */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
+        }
+
+        @media (max-width: 480px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-field {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.65rem 0.85rem;
+            font-size: 0.88rem;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: #1c2230;
+        }
+
+        .input-field::placeholder {
+            color: #475569;
+            font-size: 0.82rem;
+        }
+
+        .input-password {
+            padding-right: 2.5rem;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 0.65rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .toggle-password:hover {
+            color: var(--text-main);
+        }
+
+        /* Password Criteria Checklist */
+        .password-criteria {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+            margin-bottom: 1rem;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .criteria-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 0.2rem;
+            transition: color 0.2s;
+        }
+
+        .criteria-item.met {
+            color: var(--success-color);
+        }
+
+        .criteria-icon {
+            font-size: 0.75rem;
+        }
+
+        /* Submit Button */
+        .btn-submit {
+            width: 100%;
+            background: var(--accent-primary);
+            color: #050b14;
+            border: none;
+            border-radius: 8px;
+            padding: 0.8rem 1.25rem;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            background: #7dd3fc;
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            background: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Spinner */
+        .spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #64748b;
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .btn-submit.loading .spinner {
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Switch link */
+        .switch-link-wrapper {
+            margin-top: 1.25rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .switch-link {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .switch-link:hover {
+            color: #7dd3fc;
+            text-decoration: underline;
+        }
+
+        /* Security Footnote */
+        .security-footnote {
+            margin-top: 1.25rem;
+            text-align: center;
+            font-size: 0.68rem;
+            color: #64748b;
+            letter-spacing: 0.02em;
+        }
+
+        .security-footnote span {
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="register-container">
+        <!-- Brand Header -->
+        <div class="brand-section">
+            <div class="brand-logo">Δ</div>
+            <h1 class="brand-title">Sovereign AI Workbench</h1>
+            <p class="brand-subtitle">Secure On-Premise Multi-Agent Intelligence • SIH26117</p>
+
+            <div class="badges-row">
+                <div class="status-badge badge-airgap">
+                    <span class="pulse-dot"></span>
+                    <span>LOCAL / AIR-GAPPED</span>
+                </div>
+                <div class="status-badge badge-audit">
+                    <span>🔒 ARGON2ID ENCRYPTED</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Banner -->
+        <div id="alertBanner" class="alert-banner alert-error">
+            <span>⚠️</span>
+            <span id="alertMessage">Validation error occurred.</span>
+        </div>
+
+        <!-- Registration Form -->
+        <form id="registerForm" novalidate>
+            <div class="form-group">
+                <label class="form-label" for="fullName">Full Name</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="fullName" 
+                        name="fullName" 
+                        class="input-field" 
+                        placeholder="e.g. Dr. A. P. Sharma" 
+                        required 
+                        autofocus
+                    />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            class="input-field" 
+                            placeholder="e.g. asharma" 
+                            required
+                            autocomplete="username"
+                        />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            class="input-field" 
+                            placeholder="user@organization.local" 
+                            required
+                            autocomplete="email"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="input-field input-password" 
+                            placeholder="Min 8 characters" 
+                            required
+                            autocomplete="new-password"
+                        />
+                        <button 
+                            type="button" 
+                            id="togglePasswordBtn" 
+                            class="toggle-password" 
+                            aria-label="Toggle password visibility"
+                            title="Show/Hide password"
+                        >
+                            👁️
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confirmPassword">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="confirmPassword" 
+                            name="confirmPassword" 
+                            class="input-field input-password" 
+                            placeholder="Re-enter password" 
+                            required
+                            autocomplete="new-password"
+                        />
+                        <button 
+                            type="button" 
+                            id="toggleConfirmBtn" 
+                            class="toggle-password" 
+                            aria-label="Toggle confirm password visibility"
+                            title="Show/Hide password"
+                        >
+                            👁️
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Criteria Feedback -->
+            <div class="password-criteria">
+                <div style="font-weight: 600; margin-bottom: 0.3rem;">Password Requirements:</div>
+                <div id="critLength" class="criteria-item">
+                    <span class="criteria-icon">○</span>
+                    <span>At least 8 characters in length</span>
+                </div>
+                <div id="critLetter" class="criteria-item">
+                    <span class="criteria-icon">○</span>
+                    <span>Contains at least one letter</span>
+                </div>
+                <div id="critNumber" class="criteria-item">
+                    <span class="criteria-icon">○</span>
+                    <span>Contains at least one number or symbol</span>
+                </div>
+                <div id="critMatch" class="criteria-item">
+                    <span class="criteria-icon">○</span>
+                    <span>Passwords match</span>
+                </div>
+            </div>
+
+            <button type="submit" id="btnSubmit" class="btn-submit">
+                <span class="spinner"></span>
+                <span id="btnText">Create Sovereign Account</span>
+            </button>
+        </form>
+
+        <!-- Link to Sign In -->
+        <div class="switch-link-wrapper">
+            Already have an account? 
+            <a href="/login" class="switch-link">Sign In</a>
+        </div>
+
+        <!-- Security Footnote -->
+        <div class="security-footnote">
+            Zero Cloud Telemetry • Argon2id Memory-Hard KDF • <span>Local Air-Gapped Host</span>
+        </div>
+    </div>
+
+    <!-- Client Registration Logic -->
+    <script>
+        const registerForm = document.getElementById("registerForm");
+        const fullNameInput = document.getElementById("fullName");
+        const usernameInput = document.getElementById("username");
+        const emailInput = document.getElementById("email");
+        const passwordInput = document.getElementById("password");
+        const confirmPasswordInput = document.getElementById("confirmPassword");
+        const togglePasswordBtn = document.getElementById("togglePasswordBtn");
+        const toggleConfirmBtn = document.getElementById("toggleConfirmBtn");
+        const btnSubmit = document.getElementById("btnSubmit");
+        const btnText = document.getElementById("btnText");
+        const alertBanner = document.getElementById("alertBanner");
+        const alertMessage = document.getElementById("alertMessage");
+
+        const critLength = document.getElementById("critLength");
+        const critLetter = document.getElementById("critLetter");
+        const critNumber = document.getElementById("critNumber");
+        const critMatch = document.getElementById("critMatch");
+
+        // Toggle password show/hide
+        let showPass = false;
+        togglePasswordBtn.addEventListener("click", () => {
+            showPass = !showPass;
+            passwordInput.type = showPass ? "text" : "password";
+            togglePasswordBtn.innerText = showPass ? "🙈" : "👁️";
+        });
+
+        let showConfirm = false;
+        toggleConfirmBtn.addEventListener("click", () => {
+            showConfirm = !showConfirm;
+            confirmPasswordInput.type = showConfirm ? "text" : "password";
+            toggleConfirmBtn.innerText = showConfirm ? "🙈" : "👁️";
+        });
+
+        // Live Password Checklist Updates
+        function updateCriteria() {
+            const pwd = passwordInput.value;
+            const confirm = confirmPasswordInput.value;
+
+            // Length
+            const hasLength = pwd.length >= 8;
+            setCriteria(critLength, hasLength);
+
+            // Letter
+            const hasLetter = /[a-zA-Z]/.test(pwd);
+            setCriteria(critLetter, hasLetter);
+
+            // Number/symbol
+            const hasNumber = /[0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd);
+            setCriteria(critNumber, hasNumber);
+
+            // Match
+            const hasMatch = pwd.length > 0 && pwd === confirm;
+            setCriteria(critMatch, hasMatch);
+        }
+
+        function setCriteria(el, isMet) {
+            if (isMet) {
+                el.classList.add("met");
+                el.querySelector(".criteria-icon").innerText = "✓";
+            } else {
+                el.classList.remove("met");
+                el.querySelector(".criteria-icon").innerText = "○";
+            }
+        }
+
+        passwordInput.addEventListener("input", updateCriteria);
+        confirmPasswordInput.addEventListener("input", updateCriteria);
+
+        function showAlert(msg) {
+            alertMessage.innerText = msg;
+            alertBanner.classList.add("active");
+        }
+
+        function hideAlert() {
+            alertBanner.classList.remove("active");
+        }
+
+        // Form Submit Handler
+        registerForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            hideAlert();
+
+            const fullName = fullNameInput.value.trim();
+            const username = usernameInput.value.trim();
+            const email = emailInput.value.trim().toLowerCase();
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            // Basic Validation Checks
+            if (!fullName || !username || !email || !password || !confirmPassword) {
+                showAlert("Please complete all required fields.");
+                return;
+            }
+
+            if (fullName.length < 2) {
+                showAlert("Full name must be at least 2 characters long.");
+                fullNameInput.focus();
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_-]{3,32}$/.test(username)) {
+                showAlert("Username must be 3-32 alphanumeric characters, underscores, or hyphens.");
+                usernameInput.focus();
+                return;
+            }
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showAlert("Please enter a valid email address.");
+                emailInput.focus();
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showAlert("Password and Confirm Password do not match.");
+                confirmPasswordInput.focus();
+                return;
+            }
+
+            if (password.length < 8) {
+                showAlert("Password must contain at least 8 characters.");
+                passwordInput.focus();
+                return;
+            }
+
+            // Set button loading state
+            btnSubmit.disabled = true;
+            btnSubmit.classList.add("loading");
+            btnText.innerText = "Creating Account...";
+
+            try {
+                const response = await fetch("/api/v1/auth/register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        full_name: fullName,
+                        username: username,
+                        email: email,
+                        password: password,
+                        confirm_password: confirmPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && response.status === 201) {
+                    btnText.innerText = "✓ Account Created";
+                    // Redirect to login page with registered query param
+                    setTimeout(() => {
+                        window.location.href = "/login?registered=true";
+                    }, 400);
+                } else {
+                    const detail = data.detail || "Registration failed. Please check your details.";
+                    showAlert(detail);
+                    btnSubmit.disabled = false;
+                    btnSubmit.classList.remove("loading");
+                    btnText.innerText = "Create Sovereign Account";
+                }
+            } catch (err) {
+                showAlert(`Connection error: ${err.message}. Ensure backend is running.`);
+                btnSubmit.disabled = false;
+                btnSubmit.classList.remove("loading");
+                btnText.innerText = "Create Sovereign Account";
+            }
+        });
+    </script>
+</body>
+</html>

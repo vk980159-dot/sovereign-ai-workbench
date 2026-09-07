@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign AI Workbench | Login</title>
+    <!-- 100% Offline Embedded Styling (Industrial Dark Theme matching SIH26117 Dashboard) -->
+    <style>
+        :root {
+            --bg-base: #0a0c10;
+            --bg-surface: #12151d;
+            --bg-card: #181d28;
+            --border-color: #262f40;
+            --border-focus: #38bdf8;
+            --accent-primary: #38bdf8;
+            --accent-primary-hover: #0284c7;
+            --accent-glow: rgba(56, 189, 248, 0.2);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success-color: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.12);
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.12);
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --mono-family: "JetBrains Mono", "Fira Code", Consolas, Menlo, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Subtle radial ambient glow */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.07) 0%, rgba(10, 12, 16, 0) 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 440px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem 2.25rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Brand Header */
+        .brand-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 1.75rem;
+        }
+
+        .brand-logo {
+            width: 54px;
+            height: 54px;
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.85rem;
+            color: #ffffff;
+            box-shadow: 0 0 25px var(--accent-glow);
+            margin-bottom: 1rem;
+        }
+
+        .brand-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            margin-bottom: 0.35rem;
+        }
+
+        .brand-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 500;
+        }
+
+        /* Badges Container */
+        .badges-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.85rem;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+        }
+
+        .badge-airgap {
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--success-color);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .badge-audit {
+            background: rgba(56, 189, 248, 0.1);
+            color: #7dd3fc;
+            border: 1px solid rgba(56, 189, 248, 0.25);
+        }
+
+        /* Notification Banners */
+        .alert-banner {
+            display: none;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.82rem;
+            align-items: center;
+            gap: 0.6rem;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .alert-banner.active {
+            display: flex;
+        }
+
+        .alert-error {
+            background: var(--danger-bg);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+        }
+
+        .alert-success {
+            background: var(--success-bg);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #86efac;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #fcd34d;
+        }
+
+        /* Social OAuth Buttons */
+        .social-auth-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .btn-social {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-main);
+            position: relative;
+        }
+
+        .btn-social:hover:not(.disabled) {
+            background: #1e2433;
+            border-color: #38bdf8;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-social.disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            border-style: dashed;
+        }
+
+        .btn-social.disabled:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: var(--border-color);
+        }
+
+        .btn-social .provider-badge {
+            margin-left: auto;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.04em;
+        }
+
+        .social-icon {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.25rem 0;
+            color: #64748b;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .auth-divider span {
+            padding: 0 0.75rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.45rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-field {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: #1c2230;
+        }
+
+        .input-field::placeholder {
+            color: #475569;
+        }
+
+        .input-password {
+            padding-right: 2.75rem;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 0.75rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .toggle-password:hover {
+            color: var(--text-main);
+        }
+
+        /* Sign In Button */
+        .btn-signin {
+            width: 100%;
+            background: var(--accent-primary);
+            color: #050b14;
+            border: none;
+            border-radius: 8px;
+            padding: 0.8rem 1.25rem;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
+        }
+
+        .btn-signin:hover:not(:disabled) {
+            background: #7dd3fc;
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .btn-signin:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-signin:disabled {
+            background: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Spinner */
+        .spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #64748b;
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .btn-signin.loading .spinner {
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Link to Create Account */
+        .switch-link-wrapper {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .switch-link {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .switch-link:hover {
+            color: #7dd3fc;
+            text-decoration: underline;
+        }
+
+        /* Security Footnote */
+        .security-footnote {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.68rem;
+            color: #64748b;
+            letter-spacing: 0.02em;
+        }
+
+        .security-footnote span {
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <!-- Brand Header -->
+        <div class="brand-section">
+            <div class="brand-logo">Δ</div>
+            <h1 class="brand-title">Sovereign AI Workbench</h1>
+            <p class="brand-subtitle">Secure On-Premise Multi-Agent Intelligence • SIH26117</p>
+
+            <div class="badges-row">
+                <div class="status-badge badge-airgap">
+                    <span class="pulse-dot"></span>
+                    <span>LOCAL / AIR-GAPPED</span>
+                </div>
+                <div class="status-badge badge-audit">
+                    <span>🔒 SHA-256 AUDIT LEDGER</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Notification Banner -->
+        <div id="successBanner" class="alert-banner alert-success">
+            <span>✓</span>
+            <span id="successMessage">Account created successfully. Please sign in.</span>
+        </div>
+
+        <!-- Warning / Account Link Notification Banner -->
+        <div id="linkBanner" class="alert-banner alert-warning">
+            <span>🔗</span>
+            <span id="linkMessage">An account with this email already exists. Sign in with your password to link your social account.</span>
+        </div>
+
+        <!-- Error Notification Banner -->
+        <div id="errorBanner" class="alert-banner alert-error">
+            <span>⚠️</span>
+            <span id="errorMessage">Invalid credentials. Access denied.</span>
+        </div>
+
+        <!-- Social Identity Providers -->
+        <div class="social-auth-section">
+            <a id="btnGoogle" href="/api/auth/google/login" class="btn-social">
+                <svg class="social-icon" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.16 0 9.97 0 12s.45 3.84 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                </svg>
+                <span>Sign in with Google</span>
+                <span id="googleBadge" class="provider-badge">Connecting...</span>
+            </a>
+            <a id="btnGithub" href="/api/auth/github/login" class="btn-social">
+                <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                </svg>
+                <span>Sign in with GitHub</span>
+                <span id="githubBadge" class="provider-badge">Connecting...</span>
+            </a>
+        </div>
+
+        <div class="auth-divider">
+            <span>Or sign in with sovereign credentials</span>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" autocomplete="on">
+            <input type="hidden" id="linkToken" name="link_token" value="" />
+
+            <div class="form-group">
+                <label class="form-label" for="username">Username or Email</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        class="input-field" 
+                        placeholder="Enter username or email" 
+                        required 
+                        autofocus
+                        autocomplete="username"
+                    />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <div class="input-wrapper">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="input-field input-password" 
+                        placeholder="Enter account password" 
+                        required
+                        autocomplete="current-password"
+                    />
+                    <button 
+                        type="button" 
+                        id="togglePasswordBtn" 
+                        class="toggle-password" 
+                        aria-label="Toggle password visibility"
+                        title="Show/Hide password"
+                    >
+                        👁️
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" id="btnSignIn" class="btn-signin">
+                <span class="spinner"></span>
+                <span id="btnText">Sign In to Workbench</span>
+            </button>
+        </form>
+
+        <!-- Link to Registration -->
+        <div class="switch-link-wrapper">
+            Don't have an account? 
+            <a href="/register" class="switch-link">Create Account</a>
+        </div>
+
+        <!-- Air-Gap Compliance Note -->
+        <div class="security-footnote">
+            Zero Cloud Telemetry • Argon2id Memory-Hard KDF • <span>100% Air-Gapped Local Host</span>
+        </div>
+    </div>
+
+    <!-- Client Login Logic -->
+    <script>
+        const loginForm = document.getElementById("loginForm");
+        const usernameInput = document.getElementById("username");
+        const passwordInput = document.getElementById("password");
+        const linkTokenInput = document.getElementById("linkToken");
+        const togglePasswordBtn = document.getElementById("togglePasswordBtn");
+        const btnSignIn = document.getElementById("btnSignIn");
+        const btnText = document.getElementById("btnText");
+        const errorBanner = document.getElementById("errorBanner");
+        const errorMessage = document.getElementById("errorMessage");
+        const successBanner = document.getElementById("successBanner");
+        const successMessage = document.getElementById("successMessage");
+        const linkBanner = document.getElementById("linkBanner");
+        const linkMessage = document.getElementById("linkMessage");
+        const btnGoogle = document.getElementById("btnGoogle");
+        const btnGithub = document.getElementById("btnGithub");
+        const googleBadge = document.getElementById("googleBadge");
+        const githubBadge = document.getElementById("githubBadge");
+
+        // Toggle password show/hide
+        let showPassword = false;
+        togglePasswordBtn.addEventListener("click", () => {
+            showPassword = !showPassword;
+            passwordInput.type = showPassword ? "text" : "password";
+            togglePasswordBtn.innerText = showPassword ? "🙈" : "👁️";
+        });
+
+        function showError(msg) {
+            errorMessage.innerText = msg;
+            errorBanner.classList.add("active");
+            successBanner.classList.remove("active");
+            linkBanner.classList.remove("active");
+        }
+
+        function showSuccess(msg) {
+            successMessage.innerText = msg;
+            successBanner.classList.add("active");
+            errorBanner.classList.remove("active");
+            linkBanner.classList.remove("active");
+        }
+
+        function showLinkWarning(msg) {
+            linkMessage.innerText = msg;
+            linkBanner.classList.add("active");
+            errorBanner.classList.remove("active");
+            successBanner.classList.remove("active");
+        }
+
+        function hideBanners() {
+            errorBanner.classList.remove("active");
+            successBanner.classList.remove("active");
+            linkBanner.classList.remove("active");
+        }
+
+        // Check if user already has an active valid session on page load
+        async function checkExistingSession() {
+            const token = localStorage.getItem("sovereign_token");
+            if (!token) return;
+
+            try {
+                const resp = await fetch("/api/v1/auth/me", {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (resp.ok) {
+                    window.location.href = "/";
+                } else {
+                    localStorage.removeItem("sovereign_token");
+                    localStorage.removeItem("sovereign_user");
+                }
+            } catch (e) {
+                // Ignore network errors on session check
+            }
+        }
+
+        // Fetch OAuth provider availability (Air-gap awareness)
+        async function fetchProviders() {
+            try {
+                const resp = await fetch("/api/v1/auth/providers");
+                if (resp.ok) {
+                    const providers = await resp.json();
+
+                    // Google configuration state
+                    if (providers.google) {
+                        googleBadge.innerText = "Enabled";
+                        googleBadge.style.color = "var(--success-color)";
+                    } else {
+                        btnGoogle.classList.add("disabled");
+                        btnGoogle.removeAttribute("href");
+                        btnGoogle.setAttribute("title", "Google OAuth not configured (Air-Gapped node)");
+                        googleBadge.innerText = "Air-Gapped";
+                        btnGoogle.addEventListener("click", (e) => {
+                            e.preventDefault();
+                            showError("Google OAuth is not configured on this air-gapped system. Use local credentials.");
+                        });
+                    }
+
+                    // GitHub configuration state
+                    if (providers.github) {
+                        githubBadge.innerText = "Enabled";
+                        githubBadge.style.color = "var(--success-color)";
+                    } else {
+                        btnGithub.classList.add("disabled");
+                        btnGithub.removeAttribute("href");
+                        btnGithub.setAttribute("title", "GitHub OAuth not configured (Air-Gapped node)");
+                        githubBadge.innerText = "Air-Gapped";
+                        btnGithub.addEventListener("click", (e) => {
+                            e.preventDefault();
+                            showError("GitHub OAuth is not configured on this air-gapped system. Use local credentials.");
+                        });
+                    }
+                }
+            } catch (e) {
+                googleBadge.innerText = "Offline";
+                githubBadge.innerText = "Offline";
+            }
+        }
+
+        // Parse query parameters for notifications and linking flow
+        function checkQueryParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // 1. Account Linking Required Flow
+            if (urlParams.get("link_required") === "true") {
+                const provider = urlParams.get("provider") || "social";
+                const email = urlParams.get("email") || "";
+                const linkToken = urlParams.get("link_token") || "";
+
+                const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+                showLinkWarning(`An account with email (${email}) already exists. Enter your password to link your ${providerName} account.`);
+
+                if (email) {
+                    usernameInput.value = email;
+                }
+                if (linkToken) {
+                    linkTokenInput.value = linkToken;
+                }
+                btnText.innerText = `Sign In & Link ${providerName} Account`;
+                passwordInput.focus();
+                return;
+            }
+
+            // 2. OAuth or System Error
+            const err = urlParams.get("error");
+            if (err) {
+                const provider = urlParams.get("provider") || "OAuth";
+                const pName = provider.charAt(0).toUpperCase() + provider.slice(1);
+
+                const errorMap = {
+                    "oauth_not_configured": `${pName} authentication is not configured on this air-gapped node.`,
+                    "csrf_validation_failed": "Security validation failed (CSRF token mismatch). Please try again.",
+                    "oauth_cancelled": `${pName} sign-in was cancelled by the user.`,
+                    "token_exchange_failed": `Could not exchange token with ${pName}.`,
+                    "oauth_network_error": `Network error connecting to ${pName}. Check connectivity.`,
+                    "userinfo_failed": `Failed to retrieve user profile from ${pName}.`,
+                    "missing_credentials": "Authentication callback received incomplete credentials."
+                };
+                showError(errorMap[err] || `Social sign-in failed (${err}). Please use local credentials.`);
+                return;
+            }
+
+            // 3. User Registration Success
+            if (urlParams.get("registered") === "true") {
+                showSuccess("Account created successfully. Please sign in.");
+            }
+        }
+
+        // Form Submit Handler (supports local password and account linking)
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            hideBanners();
+
+            const identifier = usernameInput.value.trim();
+            const password = passwordInput.value;
+            const linkToken = linkTokenInput.value ? linkTokenInput.value.trim() : null;
+
+            if (!identifier || !password) {
+                showError("Please enter your username/email and password.");
+                return;
+            }
+
+            // Set loading state
+            btnSignIn.disabled = true;
+            btnSignIn.classList.add("loading");
+            btnText.innerText = linkToken ? "Linking & Authenticating..." : "Authenticating...";
+
+            try {
+                const payload = {
+                    username: identifier,
+                    password: password
+                };
+                if (linkToken) {
+                    payload.link_token = linkToken;
+                }
+
+                const response = await fetch("/api/v1/auth/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.access_token) {
+                    // Store access token & user info in localStorage
+                    localStorage.setItem("sovereign_token", data.access_token);
+                    localStorage.setItem("sovereign_user", JSON.stringify(data.user));
+
+                    btnText.innerText = linkToken ? "✓ Account Linked & Granted" : "✓ Sovereign Access Granted";
+
+                    setTimeout(() => {
+                        window.location.href = "/";
+                    }, 350);
+                } else {
+                    const detail = data.detail || "Authentication failed. Access denied.";
+                    showError(detail);
+                    btnSignIn.disabled = false;
+                    btnSignIn.classList.remove("loading");
+                    btnText.innerText = linkToken ? "Sign In & Link Account" : "Sign In to Workbench";
+                    passwordInput.focus();
+                }
+            } catch (err) {
+                showError(`Local connection error: ${err.message}. Ensure backend is running.`);
+                btnSignIn.disabled = false;
+                btnSignIn.classList.remove("loading");
+                btnText.innerText = linkToken ? "Sign In & Link Account" : "Sign In to Workbench";
+            }
+        });
+
+        // Initialize on load
+        window.addEventListener("DOMContentLoaded", () => {
+            checkQueryParams();
+            fetchProviders();
+            checkExistingSession();
+        });
+    </script>
+</body>
+</html>

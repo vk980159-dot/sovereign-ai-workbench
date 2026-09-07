@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign AI Workbench | Secure On-Premise Multi-Agent Intelligence • SIH26117</title>
+    <!-- Offline Embedded Styling (Industrial Dark Theme) -->
+    <style>
+        :root {
+            --bg-base: #0a0c10;
+            --bg-surface: #12151d;
+            --bg-card: #181d28;
+            --border-color: #262f40;
+            --accent-primary: #38bdf8;
+            --accent-primary-hover: #0284c7;
+            --accent-glow: rgba(56, 189, 248, 0.15);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --mono-family: "JetBrains Mono", "Fira Code", Consolas, Menlo, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-base); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+
+        /* Navigation Header */
+        header {
+            background: rgba(18, 21, 29, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.25rem;
+            color: #ffffff;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .brand-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-subtitle {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .header-badges {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .badge-airgap {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border-color: rgba(16, 185, 129, 0.25);
+        }
+
+        .badge-audit {
+            background: rgba(56, 189, 248, 0.1);
+            color: #7dd3fc;
+            border-color: rgba(56, 189, 248, 0.25);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .badge-audit:hover {
+            background: rgba(56, 189, 248, 0.2);
+            border-color: var(--accent-primary);
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: currentColor;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.9); }
+        }
+
+        /* Main Workspace Layout */
+        main {
+            display: grid;
+            grid-template-columns: 320px 1fr 420px;
+            gap: 1.25rem;
+            padding: 1.25rem;
+            flex: 1;
+            height: calc(100vh - 72px);
+            overflow: hidden;
+        }
+
+        @media (max-width: 1200px) {
+            main {
+                grid-template-columns: 1fr;
+                height: auto;
+                overflow: visible;
+            }
+        }
+
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        .panel-header {
+            padding: 0.85rem 1.15rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-content {
+            padding: 1.15rem;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Ingestion Panel */
+        .dropzone {
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(24, 29, 40, 0.5);
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--accent-primary);
+            background: var(--accent-glow);
+        }
+
+        .dropzone-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-primary);
+        }
+
+        .doc-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .doc-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.65rem 0.85rem;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .doc-name {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 170px;
+        }
+
+        /* Center Column: Graph & Query */
+        .graph-wrapper {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .agent-pipeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+
+        .agent-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            z-index: 2;
+        }
+
+        .node-icon-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            background: var(--bg-surface);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .agent-node.active .node-icon-box {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px var(--accent-primary);
+            background: rgba(56, 189, 248, 0.15);
+            transform: scale(1.08);
+        }
+
+        .agent-node.completed .node-icon-box {
+            border-color: var(--success-color);
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+        }
+
+        .agent-node.looping .node-icon-box {
+            border-color: var(--warning-color);
+            background: rgba(245, 158, 11, 0.15);
+            animation: pulse 1s infinite;
+        }
+
+        .node-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.03em;
+        }
+
+        .agent-node.active .node-label {
+            color: var(--accent-primary);
+        }
+
+        .pipeline-connector {
+            flex: 1;
+            height: 2px;
+            background: var(--border-color);
+            margin: 0 0.5rem;
+            position: relative;
+            top: -12px;
+            z-index: 1;
+            transition: background 0.3s ease;
+        }
+
+        .pipeline-connector.active {
+            background: var(--accent-primary);
+            box-shadow: 0 0 8px var(--accent-primary);
+        }
+
+        .feedback-loop-path {
+            font-size: 0.7rem;
+            color: var(--warning-color);
+            text-align: center;
+            border-top: 1px dashed var(--warning-color);
+            padding-top: 0.35rem;
+            margin-top: 0.25rem;
+            opacity: 0.8;
+        }
+
+        /* Real-Time Terminal Box */
+        .terminal-container {
+            background: #08090d;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: var(--mono-family);
+        }
+
+        .terminal-header {
+            background: #11131a;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid #1e2430;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .terminal-logs {
+            padding: 0.75rem;
+            font-size: 0.75rem;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .log-line {
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .log-time { color: #64748b; }
+        .log-agent { font-weight: bold; }
+        .agent-Retriever { color: #38bdf8; }
+        .agent-Analyst { color: #a855f7; }
+        .agent-Auditor { color: #f59e0b; }
+        .agent-Reporter { color: #10b981; }
+
+        /* Query Input Bar */
+        .query-box {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.5rem;
+        }
+
+        .query-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            padding: 0.4rem 0.6rem;
+            outline: none;
+        }
+
+        .query-input::placeholder { color: #64748b; }
+
+        .btn-submit {
+            background: var(--accent-primary);
+            color: #000;
+            border: none;
+            padding: 0.6rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-submit:hover {
+            background: #7dd3fc;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .btn-submit:disabled {
+            background: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        /* Right Column: Executive Report */
+        .report-card {
+            background: var(--bg-card);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            padding: 1.25rem;
+            flex: 1;
+            overflow-y: auto;
+            font-size: 0.88rem;
+        }
+
+        .report-card h1, .report-card h2, .report-card h3 {
+            color: var(--accent-primary);
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .report-card h1 { font-size: 1.25rem; }
+        .report-card h2 { font-size: 1.05rem; }
+        .report-card p { margin-bottom: 0.75rem; color: #cbd5e1; }
+        .report-card ul, .report-card ol { margin-left: 1.25rem; margin-bottom: 0.75rem; color: #cbd5e1; }
+        .report-card li { margin-bottom: 0.25rem; }
+
+        .citation-tag {
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            font-family: var(--mono-family);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Audit Badge Card */
+        .audit-stat-card {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+        .stat-value { font-size: 1rem; font-weight: 800; }
+        .val-good { color: var(--success-color); }
+        .val-warn { color: var(--warning-color); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal-content {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .btn-action {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.45rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-action:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="brand-container">
+            <div class="brand-logo">Δ</div>
+            <div>
+                <div class="brand-title">Sovereign AI Workbench</div>
+                <div class="brand-subtitle">Secure On-Premise Multi-Agent Intelligence • SIH26117</div>
+            </div>
+        </div>
+        <div class="header-badges">
+            <div class="status-badge badge-airgap">
+                <span class="pulse-dot"></span>
+                <span>AIR-GAP ENFORCED</span>
+            </div>
+            <div class="status-badge badge-audit" onclick="showAuditModal()" title="Inspect SHA-256 Micro-Ledger" style="cursor: pointer;">
+                <span>🔒 SHA-256 AUDIT LEDGER</span>
+            </div>
+            <div class="status-badge" id="userBadge" style="background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.25); color: #cbd5e1;">
+                <span>👤</span>
+                <span id="currentUsername">admin</span>
+            </div>
+            <button class="btn-action" onclick="handleLogout()" title="Sign out of Sovereign Session" style="display: inline-flex; align-items: center; gap: 0.35rem; color: #f87171; border-color: rgba(239, 68, 68, 0.35); font-weight: 600;">
+                <span>🚪</span>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Grid Workspace -->
+    <main>
+
+        <!-- Left Column: Document Ingestion & Local Repo -->
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <span>📁</span>
+                    <span>Air-Gapped Knowledge</span>
+                </div>
+                <span id="docCountBadge" style="font-size: 0.75rem; color: var(--accent-primary); font-weight: bold;">0 Chunks</span>
+            </div>
+            <div class="panel-content">
+                <!-- Drag and Drop Zone -->
+                <div class="dropzone" id="dropzone">
+                    <div class="dropzone-icon">📤</div>
+                    <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">Drop Air-Gapped Files Here</div>
+                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">PDF, TXT, MD, LOG (Zero Cloud Ingestion)</div>
+                    <button class="btn-action" onclick="document.getElementById('fileInput').click()">Select Local File</button>
+                    <input type="file" id="fileInput" style="display: none;" accept=".pdf,.txt,.md,.log,.csv,.json" onchange="handleFileUpload(this.files)">
+                </div>
+
+                <div id="uploadStatus" style="font-size: 0.75rem; display: none;"></div>
+
+                <!-- Ingested Documents List -->
+                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-top: 0.5rem;">
+                    Indexed Documents
+                </div>
+                <div class="doc-list" id="docList">
+                    <div style="color: var(--text-muted); font-size: 0.75rem; text-align: center; padding: 1rem;">
+                        No documents loaded yet. Drop a PDF to begin grounding.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Center Column: Multi-Agent Orchestration & Live Stream -->
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <span>⚡</span>
+                    <span>Multi-Agent State Graph</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">LangGraph State Machine</div>
+            </div>
+            <div class="panel-content">
+                <!-- Visual Agent Pipeline -->
+                <div class="graph-wrapper">
+                    <div class="agent-pipeline">
+                        <div class="agent-node" id="nodeRetriever">
+                            <div class="node-icon-box">🔍</div>
+                            <span class="node-label">Retriever</span>
+                        </div>
+                        <div class="pipeline-connector" id="conn1"></div>
+                        <div class="agent-node" id="nodeAnalyst">
+                            <div class="node-icon-box">🧠</div>
+                            <span class="node-label">Analyst</span>
+                        </div>
+                        <div class="pipeline-connector" id="conn2"></div>
+                        <div class="agent-node" id="nodeAuditor">
+                            <div class="node-icon-box">🛡️</div>
+                            <span class="node-label">Auditor</span>
+                        </div>
+                        <div class="pipeline-connector" id="conn3"></div>
+                        <div class="agent-node" id="nodeReporter">
+                            <div class="node-icon-box">📊</div>
+                            <span class="node-label">Reporter</span>
+                        </div>
+                    </div>
+                    <div class="feedback-loop-path">
+                        ↺ Fact-Check Feedback Loop: Re-routes to Analyst if Auditor Confidence &lt; 80%
+                    </div>
+                </div>
+
+                <!-- WebSocket Agent Thought Stream -->
+                <div class="terminal-container">
+                    <div class="terminal-header">
+                        <span>AGENT THOUGHT STREAM (WEBSOCKET LIVE)</span>
+                        <span id="socketStatus" style="color: var(--success-color);">● CONNECTED</span>
+                    </div>
+                    <div class="terminal-logs" id="terminalLogs">
+                        <div class="log-line">
+                            <span class="log-time">[SYSTEM]</span> Sovereign Multi-Agent Engine initialized in air-gapped sandbox.
+                        </div>
+                        <div class="log-line">
+                            <span class="log-time">[SECURITY]</span> PII Redactor active. SHA-256 Ledger chain verified.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Query Input Bar -->
+                <form class="query-box" id="queryForm" onsubmit="submitQuery(event)">
+                    <input type="text" id="queryInput" class="query-input" placeholder="Enter query for multi-agent reasoning (e.g., 'Summarize key risks in Section 3')..." autocomplete="off" required>
+                    <button type="submit" id="btnSubmit" class="btn-submit">Dispatch</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Right Column: Final Executive Report & Audit Metrics -->
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <span>📄</span>
+                    <span>Executive Intelligence</span>
+                </div>
+                <div style="display: flex; gap: 0.35rem;">
+                    <button class="btn-action" onclick="copyReport()">Copy</button>
+                    <button class="btn-action" onclick="downloadReport()">Export .MD</button>
+                </div>
+            </div>
+            <div class="panel-content">
+                <!-- Audit Metrics Strip -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <div class="audit-stat-card">
+                        <div>
+                            <div class="stat-label">Auditor Confidence</div>
+                            <div class="stat-value val-good" id="statConfidence">--%</div>
+                        </div>
+                        <span style="font-size: 1.25rem;">🛡️</span>
+                    </div>
+                    <div class="audit-stat-card">
+                        <div>
+                            <div class="stat-label">Audit Iterations</div>
+                            <div class="stat-value" id="statIterations">0</div>
+                        </div>
+                        <span style="font-size: 1.25rem;">🔁</span>
+                    </div>
+                </div>
+
+                <!-- Rendered Executive Report Output -->
+                <div class="report-card" id="reportContent">
+                    <div style="color: var(--text-muted); text-align: center; padding: 2rem 1rem;">
+                        Awaiting agent task execution. Dispatch a query to trigger the sovereign agentic workflow.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Audit Ledger Modal -->
+    <div class="modal-overlay" id="auditModal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="color: var(--accent-primary);">🔒 Cryptographic Audit Ledger</h3>
+                <button class="btn-action" onclick="document.getElementById('auditModal').classList.remove('open')">✕ Close</button>
+            </div>
+            <div id="auditModalBody" style="font-size: 0.8rem; font-family: var(--mono-family); line-height: 1.6;">
+                Verifying hash chain...
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Application Logic -->
+    <script>
+        const sessionId = "session_" + Math.random().toString(36).substring(2, 10);
+        let socket = null;
+        let lastReportMarkdown = "";
+
+        // ==========================================
+        // Authentication & Session Management
+        // ==========================================
+        function getAuthToken() {
+            return localStorage.getItem("sovereign_token") || "";
+        }
+
+        async function authFetch(url, options = {}) {
+            options.headers = options.headers || {};
+            const token = getAuthToken();
+            if (token) {
+                if (options.headers instanceof Headers) {
+                    options.headers.set("Authorization", `Bearer ${token}`);
+                } else {
+                    options.headers["Authorization"] = `Bearer ${token}`;
+                }
+            }
+            try {
+                const resp = await fetch(url, options);
+                if (resp.status === 401) {
+                    // Session invalid or expired - redirect to login
+                    localStorage.removeItem("sovereign_token");
+                    localStorage.removeItem("sovereign_user");
+                    window.location.href = "/login";
+                    return resp;
+                }
+                return resp;
+            } catch (err) {
+                throw err;
+            }
+        }
+
+        async function fetchCurrentUser() {
+            try {
+                const resp = await authFetch("/api/v1/auth/me");
+                if (resp.ok) {
+                    const data = await resp.json();
+                    const userEl = document.getElementById("currentUsername");
+                    const displayName = data.full_name ? `${data.full_name} (${data.username})` : `${data.username} (${data.role})`;
+                    if (userEl) userEl.innerText = displayName;
+                }
+            } catch (e) {
+                console.error("Could not fetch user profile:", e);
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await authFetch("/api/v1/auth/logout", { method: "POST" });
+            } catch (e) {
+                console.error("Logout request error:", e);
+            } finally {
+                localStorage.removeItem("sovereign_token");
+                localStorage.removeItem("sovereign_user");
+                window.location.href = "/login";
+            }
+        }
+
+        // Initialize WebSocket with authenticated session token
+        function initWebSocket() {
+            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+            const token = getAuthToken();
+            const queryParam = token ? `?token=${encodeURIComponent(token)}` : "";
+            const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/agent-thoughts/${sessionId}${queryParam}`;
+
+            socket = new WebSocket(wsUrl);
+
+            socket.onopen = () => {
+                document.getElementById("socketStatus").innerHTML = "● CONNECTED";
+                document.getElementById("socketStatus").style.color = "var(--success-color)";
+            };
+
+            socket.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === "agent_thought") {
+                        appendThoughtLog(msg.data);
+                        highlightActiveNode(msg.data.agent);
+                    } else if (msg.type === "workflow_completed") {
+                        handleWorkflowSuccess(msg.data);
+                    }
+                } catch (e) {
+                    console.error("WebSocket message parse error:", e);
+                }
+            };
+
+            socket.onclose = (event) => {
+                if (event.code === 1008) {
+                    // Unauthorized websocket policy violation
+                    localStorage.removeItem("sovereign_token");
+                    localStorage.removeItem("sovereign_user");
+                    window.location.href = "/login";
+                    return;
+                }
+                document.getElementById("socketStatus").innerHTML = "○ RECONNECTING";
+                document.getElementById("socketStatus").style.color = "var(--warning-color)";
+                setTimeout(initWebSocket, 2000);
+            };
+        }
+
+        // Highlight Active Agent Node in Pipeline Graph
+        function highlightActiveNode(agentName) {
+            const nodes = ["Retriever", "Analyst", "Auditor", "Reporter"];
+            nodes.forEach(name => {
+                const nodeEl = document.getElementById("node" + name);
+                if (nodeEl) nodeEl.classList.remove("active");
+            });
+
+            const activeEl = document.getElementById("node" + agentName);
+            if (activeEl) {
+                activeEl.classList.add("active");
+            }
+        }
+
+        // Append log line to terminal
+        function appendThoughtLog(log) {
+            const container = document.getElementById("terminalLogs");
+            const time = log.timestamp ? log.timestamp.split("T")[1].substring(0, 8) : "LOG";
+            const agentClass = "agent-" + (log.agent || "System");
+
+            const div = document.createElement("div");
+            div.className = "log-line";
+            div.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-agent ${agentClass}">[${log.agent}]</span> ${escapeHtml(log.thought)}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Handle Query Submission
+        async function submitQuery(e) {
+            e.preventDefault();
+            const input = document.getElementById("queryInput");
+            const query = input.value.trim();
+            if (!query) return;
+
+            const btn = document.getElementById("btnSubmit");
+            btn.disabled = true;
+            btn.innerText = "Reasoning...";
+
+            // Reset UI states
+            document.querySelectorAll(".agent-node").forEach(n => n.classList.remove("active", "completed", "looping"));
+            highlightActiveNode("Retriever");
+
+            appendThoughtLog({
+                agent: "System",
+                thought: `User Query Dispatched: "${query}"`,
+                timestamp: new Date().toISOString()
+            });
+
+            try {
+                // If socket is open, use websocket dispatch
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ query: query }));
+                } else {
+                    // Fallback to REST endpoint
+                    const resp = await authFetch("/api/v1/query", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ query: query, session_id: sessionId })
+                    });
+                    const data = await resp.json();
+                    handleWorkflowSuccess(data);
+                }
+            } catch (err) {
+                appendThoughtLog({
+                    agent: "Error",
+                    thought: `Workflow invocation failed: ${err.message}`,
+                    timestamp: new Date().toISOString()
+                });
+                btn.disabled = false;
+                btn.innerText = "Dispatch";
+            }
+        }
+
+        // Render Final Report
+        function handleWorkflowSuccess(data) {
+            const btn = document.getElementById("btnSubmit");
+            btn.disabled = false;
+            btn.innerText = "Dispatch";
+
+            document.querySelectorAll(".agent-node").forEach(n => n.classList.add("completed"));
+
+            // Update stats
+            const conf = Math.round((data.confidence || 0) * 100);
+            const confEl = document.getElementById("statConfidence");
+            confEl.innerText = `${conf}%`;
+            confEl.className = conf >= 80 ? "stat-value val-good" : "stat-value val-warn";
+
+            document.getElementById("statIterations").innerText = data.iteration_count || data.iterations || 1;
+
+            lastReportMarkdown = data.final_report || "";
+            document.getElementById("reportContent").innerHTML = renderSimpleMarkdown(lastReportMarkdown);
+        }
+
+        // Simple Client Markdown Renderer
+        function renderSimpleMarkdown(md) {
+            if (!md) return "<p>No report available.</p>";
+
+            let html = md
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+                .replace(/\*(.*)\*/gim, '<em>$1</em>')
+                .replace(/\[(doc_[a-zA-Z0-9_-]+)\]/gim, '<span class="citation-tag">[$1]</span>')
+                .replace(/^\s*[-*]\s+(.*)$/gim, '<li>$1</li>');
+
+            return html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>').replace(/\n\n/g, '<p></p>');
+        }
+
+        // File Upload Handler
+        async function handleFileUpload(files) {
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            const statusEl = document.getElementById("uploadStatus");
+            statusEl.style.display = "block";
+            statusEl.style.color = "var(--accent-primary)";
+            statusEl.innerText = `Ingesting & redacting '${file.name}' locally...`;
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const resp = await authFetch("/api/v1/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await resp.json();
+
+                if (resp.ok) {
+                    statusEl.style.color = "var(--success-color)";
+                    statusEl.innerText = `✓ Indexed ${result.chunks_created} chunks (${result.characters} chars).`;
+                    addDocToList(result.filename, result.chunks_created, result.sha256);
+                    fetchStats();
+                } else {
+                    statusEl.style.color = "var(--danger-color)";
+                    statusEl.innerText = `Upload failed: ${result.detail}`;
+                }
+            } catch (err) {
+                statusEl.style.color = "var(--danger-color)";
+                statusEl.innerText = `Error: ${err.message}`;
+            }
+        }
+
+        function addDocToList(filename, chunks, hash) {
+            const list = document.getElementById("docList");
+            if (list.innerText.includes("No documents loaded")) {
+                list.innerHTML = "";
+            }
+            const item = document.createElement("div");
+            item.className = "doc-item";
+            item.innerHTML = `
+                <div>
+                    <div class="doc-name" title="${filename}">📄 ${escapeHtml(filename)}</div>
+                    <div style="font-size: 0.68rem; color: var(--text-muted); font-family: var(--mono-family);">
+                        SHA: ${hash.substring(0, 10)}...
+                    </div>
+                </div>
+                <span class="citation-tag">${chunks} chunks</span>
+            `;
+            list.prepend(item);
+        }
+
+        // Fetch System Health & Stats
+        async function fetchStats() {
+            try {
+                const resp = await fetch("/api/v1/health");
+                if (resp.ok) {
+                    const data = await resp.json();
+                    document.getElementById("docCountBadge").innerText = `${data.total_vectors} Vectors Indexed`;
+                }
+            } catch (e) {
+                console.error("Error fetching stats:", e);
+            }
+        }
+
+        // Audit Modal
+        async function showAuditModal() {
+            const modal = document.getElementById("auditModal");
+            const body = document.getElementById("auditModalBody");
+            modal.classList.add("open");
+            body.innerHTML = "Auditing SHA-256 micro-ledger chain from Genesis block...";
+
+            try {
+                const resp = await authFetch("/api/v1/audit/verify");
+                const data = await resp.json();
+                body.innerHTML = `
+                    <div style="padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border-radius: 6px; border: 1px solid var(--success-color); margin-bottom: 1rem;">
+                        <strong>LEDGER STATUS:</strong> ${data.is_valid ? "VALID & UNTAMPERED" : "INTEGRITY COMPROMISED"}<br>
+                        <strong>TOTAL CHAINED RECORDS:</strong> ${data.total_records}<br>
+                        <strong>LATEST ROOT HASH:</strong> ${data.latest_hash}
+                    </div>
+                    <div style="color: var(--text-muted);">${escapeHtml(data.message)}</div>
+                `;
+            } catch (e) {
+                body.innerHTML = `<span style="color: var(--danger-color);">Verification request failed: ${e.message}</span>`;
+            }
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e.target.id === "auditModal") {
+                document.getElementById("auditModal").classList.remove("open");
+            }
+        }
+
+        function copyReport() {
+            if (!lastReportMarkdown) return;
+            navigator.clipboard.writeText(lastReportMarkdown);
+            alert("Report Markdown copied to clipboard!");
+        }
+
+        function downloadReport() {
+            if (!lastReportMarkdown) return;
+            const blob = new Blob([lastReportMarkdown], { type: "text/markdown" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Sovereign_Report_${new Date().toISOString().substring(0, 10)}.md`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function escapeHtml(str) {
+            return String(str || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
+
+        // Drag & Drop Listeners
+        const dropzone = document.getElementById("dropzone");
+        dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
+        dropzone.addEventListener("dragleave", () => { dropzone.classList.remove("dragover"); });
+        dropzone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropzone.classList.remove("dragover");
+            handleFileUpload(e.dataTransfer.files);
+        });
+
+        // Check query param for token (from social OAuth callback)
+        function checkUrlToken() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenParam = urlParams.get("token");
+            if (tokenParam) {
+                localStorage.setItem("sovereign_token", tokenParam);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        // Initialize on boot
+        window.addEventListener("DOMContentLoaded", () => {
+            checkUrlToken();
+            fetchCurrentUser();
+            initWebSocket();
+            fetchStats();
+        });
+    </script>
+</body>
+</html>

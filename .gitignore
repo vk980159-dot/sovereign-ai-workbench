@@ -1,0 +1,33 @@
+﻿# ==============================================================================
+# Sovereign AI Workbench - Git Ignore Rules (SIH26117)
+# ==============================================================================
+
+# Environment & Secrets (Never commit actual credentials)
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+
+# Python cache & compiled bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Local databases & user data
+auth.db
+auth.db-journal
+chroma_db/
+uploaded_docs/
+audit_trail.jsonl
+
+# Logs & temp files
+*.log
+scratch/
