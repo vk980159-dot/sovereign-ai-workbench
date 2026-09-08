@@ -210,6 +210,25 @@ class TaskExecutor:
                         callback=event_emitter
                     )
 
+                # Ingest vision analysis results into state
+                if tool_name == "vision_analyzer_tool" and isinstance(output_data, dict) and output_data.get("success"):
+                    ev_list = output_data.get("evidence", [])
+                    for ev in ev_list:
+                        retrieved_docs.append({
+                            "filename": ev.get("filename", output_data.get("filename")),
+                            "content": ev.get("text_excerpt", "") or output_data.get("analysis", ""),
+                            "similarity": ev.get("confidence", 0.88),
+                            "document_id": ev.get("sha256", "")[:16] or output_data.get("filename")
+                        })
+                    await emit_agent_event(
+                        task_id=task_id,
+                        event_type="VISION_COMPLETED",
+                        message=f"Vision model ({output_data.get('model', 'llava')}) successfully analyzed '{output_data.get('filename')}'.",
+                        step=step_num,
+                        documents=[output_data.get("filename")],
+                        callback=event_emitter
+                    )
+
                 # Record generated artifacts
                 if tool_name in ("output_writer", "generate_docx_approval_note", "generate_xlsx_calculation_sheet", "generate_pptx_presentation", "generate_pdf_report") and isinstance(output_data, dict):
                     artifacts.append(output_data)

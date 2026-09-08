@@ -134,8 +134,11 @@ class TestMultimodalDeliverables(unittest.TestCase):
         self.assertTrue(provider._is_multimodal_model("llama3.2-vision"))
 
         # Inspect visual document reports VISION_UNAVAILABLE if no multimodal model active
+        provider_no_vision = OllamaVisionProvider()
+        provider_no_vision._get_installed_vision_model = lambda: None
+
         async def run_vis():
-            return await provider.inspect_visual_document("some_image.png")
+            return await provider_no_vision.inspect_visual_document("some_image.png")
 
         res = asyncio.run(run_vis())
         self.assertEqual(res["status"], "VISION_UNAVAILABLE")
@@ -378,7 +381,7 @@ class TestMultimodalDeliverables(unittest.TestCase):
         self.assertFalse(any(f["file_id"] == fid1 for f in u2_list))
 
     def test_14_tool_registry_contains_multimodal_and_deliverable_tools(self):
-        """Test Tool Registry has registered all 6 new multimodal and deliverable tools."""
+        """Test Tool Registry has registered all multimodal, vision, and deliverable tools."""
         tools = default_tool_registry.list_tools()
         tool_names = [t["name"] for t in tools]
         self.assertIn("generate_docx_approval_note", tool_names)
@@ -387,9 +390,10 @@ class TestMultimodalDeliverables(unittest.TestCase):
         self.assertIn("generate_pdf_report", tool_names)
         self.assertIn("multimodal_document_reader", tool_names)
         self.assertIn("table_analyzer_tool", tool_names)
+        self.assertIn("vision_analyzer_tool", tool_names)
 
     def test_15_task_planner_sih_demo_pattern_schedules_docx(self):
-        """Test TaskPlanner selects multimodal reader and generate_docx_approval_note for SIH demo."""
+        """Test TaskPlanner selects multimodal reader, vision analyzer, and generate_docx_approval_note for SIH demo."""
         async def run_plan():
             return await task_planner.create_plan(
                 "Inspect scanned turbine report, cross-reference SOP-IND-702 safety limits, calculate thermal deviation, and generate signed Word Approval Note",
@@ -399,6 +403,7 @@ class TestMultimodalDeliverables(unittest.TestCase):
         cat, steps = asyncio.run(run_plan())
         tool_names = [s["tool_name"] for s in steps]
         self.assertIn("multimodal_document_reader", tool_names)
+        self.assertIn("vision_analyzer_tool", tool_names)
         self.assertIn("local_document_search", tool_names)
         self.assertIn("calculation_tool", tool_names)
         self.assertIn("generate_docx_approval_note", tool_names)
@@ -443,6 +448,38 @@ class TestMultimodalDeliverables(unittest.TestCase):
         self.assertIn("ARTIFACT_GENERATED", event_types)
         self.assertIn("ARTIFACT_VERIFICATION_PASSED", event_types)
         self.assertIn("TASK_COMPLETED", event_types)
+
+    def test_17_real_local_ocr_execution(self):
+        """Test real local Tesseract OCR execution on image with text."""
+        info = local_ocr_provider.get_provider_info()
+        self.assertTrue(info["available"], "Tesseract binary must be locally present and available.")
+        self.assertEqual(info["status"], "AVAILABLE")
+        self.assertIn("tesseract", info["binary_path"].lower())
+
+        demo_img = os.path.join(settings.DEMO_DATA_DIR, "inspection_photo.png")
+        if not os.path.isfile(demo_img):
+            demo_img = os.path.join(BASE_DIR, "backend", "demo_data", "inspection_photo.png")
+
+        res = asyncio.run(local_ocr_provider.extract_text_from_image(demo_img))
+        self.assertTrue(res["success"])
+        self.assertGreater(len(res["text"]), 0)
+        self.assertGreater(res["confidence"], 0.0)
+
+    def test_18_real_local_vision_execution(self):
+        """Test real local Ollama Vision provider with installed llava model."""
+        info = ollama_vision_provider.get_provider_info()
+        self.assertTrue(info["available"], "Ollama vision model must be locally installed and available.")
+        self.assertEqual(info["status"], "AVAILABLE")
+        self.assertEqual(info["active_model"], "llava:latest")
+
+        demo_img = os.path.join(settings.DEMO_DATA_DIR, "inspection_photo.png")
+        if not os.path.isfile(demo_img):
+            demo_img = os.path.join(BASE_DIR, "backend", "demo_data", "inspection_photo.png")
+
+        res = asyncio.run(ollama_vision_provider.analyze_image(demo_img, "Describe the technical components in this diagram."))
+        self.assertTrue(res["success"])
+        self.assertGreater(len(res["analysis"]), 0)
+        self.assertEqual(res["model"], "llava:latest")
 
 
 if __name__ == "__main__":

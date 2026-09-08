@@ -77,19 +77,20 @@ class TaskPlanner:
 
         # SIH Demo Pattern / Industrial Inspection Analysis with Multimodal Ingestion & Real Deliverables
         is_multimodal_sih = (
-            any(w in lower_q for w in ("scanned", "ocr", "multimodal", "image", "approval note", "word approval note", "word deliverable"))
+            any(w in lower_q for w in ("scanned", "ocr", "multimodal", "image", "vision", "photo", "approval note", "word approval note", "word deliverable"))
             or (deliverable_format and deliverable_format.upper() in ("DOCX", "XLSX", "PPTX", "PDF"))
         ) and any(w in lower_q for w in ("inspect", "inspection", "turbine", "bearing")) and any(w in lower_q for w in ("sop", "compare", "recommend", "standard", "note", "report"))
 
         if is_multimodal_sih:
             # Select appropriate deliverable tool and target filename
+            report_pdf = "scanned_inspection_report.pdf" if "scanned_inspection_report" in lower_q or "scanned" in lower_q else "scanned_turbine_inspection_report.pdf"
             if deliv == "DOCX":
                 gen_tool = "generate_docx_approval_note"
                 gen_fname = "Turbine_Remediation_Approval_Note.docx"
                 gen_input = {
                     "title": "Turbine Unit 4 Inspection & SOP Compliance Note",
                     "filename": gen_fname,
-                    "reference_doc": "scanned_turbine_inspection_report.pdf"
+                    "reference_doc": report_pdf
                 }
             elif deliv == "XLSX":
                 gen_tool = "generate_xlsx_calculation_sheet"
@@ -125,32 +126,39 @@ class TaskPlanner:
                     "step_number": 1,
                     "description": "Ingest and analyze multimodal industrial inspection report (scanned PDF / OCR / digital)",
                     "tool_name": "multimodal_document_reader",
-                    "tool_input": {"filename": "scanned_turbine_inspection_report.pdf"},
+                    "tool_input": {"filename": report_pdf},
                     "status": "PENDING"
                 },
                 {
                     "step_number": 2,
+                    "description": "Analyze technical diagram and visual inspection photo with local vision model",
+                    "tool_name": "vision_analyzer_tool",
+                    "tool_input": {"filename": "inspection_photo.png", "prompt": "Identify the industrial equipment, physical conditions, telemetry labels, and any visible thermal or mechanical anomalies."},
+                    "status": "PENDING"
+                },
+                {
+                    "step_number": 3,
                     "description": "Query local ChromaDB knowledge base for governing SOP standards and tolerance limits",
                     "tool_name": "local_document_search",
                     "tool_input": {"query": "turbine bearing temperature operating limits SOP-IND-702 vibration ISO-10816", "top_k": 3},
                     "status": "PENDING"
                 },
                 {
-                    "step_number": 3,
+                    "step_number": 4,
                     "description": "Calculate exact thermal and vibration exceedance deltas against SOP thresholds",
                     "tool_name": "calculation_tool",
                     "tool_input": {"expression": "88.4 - 75.0"},
                     "status": "PENDING"
                 },
                 {
-                    "step_number": 4,
+                    "step_number": 5,
                     "description": f"Generate signed {deliv} industrial deliverable artifact with citations and cryptographic SHA-256 seal",
                     "tool_name": gen_tool,
                     "tool_input": gen_input,
                     "status": "PENDING"
                 },
                 {
-                    "step_number": 5,
+                    "step_number": 6,
                     "description": "Deeply verify evidence grounding and validate deliverable artifact structural integrity",
                     "tool_name": "verification_tool",
                     "tool_input": {

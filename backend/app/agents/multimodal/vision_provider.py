@@ -77,10 +77,43 @@ class OllamaVisionProvider(VisionProvider):
     def _is_vision_model(self, model_name: str) -> bool:
         return self._is_multimodal_model(model_name)
 
+    PREFERRED_VISION_ORDER = ["llava", "llava:7b", "llama3.2-vision", "moondream", "minicpm-v", "bakllava"]
+
     def __init__(self, base_url: Optional[str] = None, model_name: Optional[str] = None):
         self.base_url = (base_url or settings.OLLAMA_BASE_URL).rstrip("/")
         self.model_name = model_name or settings.VISION_MODEL_NAME
         self._cached_available: Optional[bool] = None
+
+    def _get_installed_vision_model(self) -> Optional[str]:
+        """Queries local Ollama to find the active vision model tag following preferred order."""
+        try:
+            req = urllib.request.Request(f"{self.base_url}/api/tags")
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    installed_full = [m.get("name", "").strip() for m in data.get("models", [])]
+
+                    # 1. Configured model exact or base match
+                    if self.model_name:
+                        for m in installed_full:
+                            base = m.split(":")[0].lower()
+                            if (m == self.model_name or base == self.model_name.lower()) and self._is_multimodal_model(m):
+                                return m
+
+                    # 2. Preferred order
+                    for pref in self.PREFERRED_VISION_ORDER:
+                        for m in installed_full:
+                            base = m.split(":")[0].lower()
+                            if (m.lower() == pref or base == pref) and self._is_multimodal_model(m):
+                                return m
+
+                    # 3. Any known vision model
+                    for m in installed_full:
+                        if self._is_multimodal_model(m):
+                            return m
+        except Exception:
+            pass
+        return None
 
     def _query_local_models(self) -> List[str]:
         """Queries local Ollama tags endpoint to list installed models."""
@@ -98,14 +131,8 @@ class OllamaVisionProvider(VisionProvider):
     async def is_available(self) -> bool:
         if not settings.VISION_ENABLED:
             return False
+        return self._get_installed_vision_model() is not None
 
-        installed_models = self._query_local_models()
-        # Check if configured model or any known vision model is installed
-        target_name = self.model_name.split(":")[0].lower()
-        has_target = target_name in installed_models
-        has_any_vision = any(vm in installed_models for vm in self.KNOWN_VISION_MODELS)
-
-        return has_target or has_any_vision
 
     def _encode_image_b64(self, image_input: Any) -> Optional[str]:
         """Encodes an image to Base64 string for local Ollama multimodal API."""
@@ -124,7 +151,8 @@ class OllamaVisionProvider(VisionProvider):
         return None
 
     async def analyze_image(self, image_input: Any, prompt: Optional[str] = None) -> Dict[str, Any]:
-        if not await self.is_available():
+        active_model = self._get_installed_vision_model()
+        if not active_model or not settings.VISION_ENABLED:
             return {
                 "success": False,
                 "analysis": "",
@@ -139,10 +167,14 @@ class OllamaVisionProvider(VisionProvider):
 
         p = prompt or "Describe the industrial equipment, physical anomalies, or technical diagrams shown in this image."
         payload = {
-            "model": self.model_name,
+            "model": active_model,
             "prompt": p,
             "images": [b64_img],
-            "stream": False
+            "stream": False,
+            "options": {
+                "num_predict": 256,
+                "temperature": 0.2
+            }
         }
 
         try:
@@ -152,7 +184,7 @@ class OllamaVisionProvider(VisionProvider):
                 data=req_data,
                 headers={"Content-Type": "application/json"}
             )
-            with urllib.request.urlopen(req, timeout=45.0) as resp:
+            with urllib.request.urlopen(req, timeout=300.0) as resp:
                 if resp.status == 200:
                     data = json.loads(resp.read().decode("utf-8"))
                     res_text = data.get("response", "").strip()
@@ -161,7 +193,7 @@ class OllamaVisionProvider(VisionProvider):
                         "analysis": res_text,
                         "findings": [{"observation": res_text, "confidence": 0.88}],
                         "error": None,
-                        "model": self.model_name
+                        "model": active_model
                     }
         except Exception as e:
             logger.error(f"Ollama vision inference error: {e}")
@@ -170,7 +202,7 @@ class OllamaVisionProvider(VisionProvider):
                 "analysis": "",
                 "findings": [],
                 "error": f"VISION_ERROR: {str(e)}",
-                "model": self.model_name
+                "model": active_model
             }
 
         return {
@@ -223,16 +255,18 @@ class OllamaVisionProvider(VisionProvider):
         return {"has_diagram": has_diag, "details": res.get("analysis", ""), "confidence": 0.85 if has_diag else 0.2}
 
     def get_provider_info(self) -> Dict[str, Any]:
+        active_model = self._get_installed_vision_model()
+        avail = active_model is not None and settings.VISION_ENABLED
         installed = self._query_local_models()
-        target_name = self.model_name.split(":")[0].lower()
-        avail = target_name in installed or any(vm in installed for vm in self.KNOWN_VISION_MODELS)
         return {
             "provider": "ollama_vision",
             "configured_model": self.model_name,
+            "active_model": active_model,
+            "vision_model": active_model,
             "installed_vision_models": [m for m in installed if m in self.KNOWN_VISION_MODELS],
             "available": avail,
-            "status": "READY" if avail else "VISION_UNAVAILABLE",
-            "message": "Local open-weight vision model ready" if avail else f"No local vision model ('{self.model_name}') downloaded in Ollama. Zero fake vision generated."
+            "status": "AVAILABLE" if avail else "VISION_UNAVAILABLE",
+            "message": f"Local open-weight vision model '{active_model}' operational." if avail else f"No local vision model ('{self.model_name}') downloaded in Ollama. Zero fake vision generated."
         }
 
 

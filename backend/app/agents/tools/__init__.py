@@ -23,7 +23,8 @@ from .deliverable_tools import (
 )
 from .multimodal_tools import (
     multimodal_document_reader,
-    table_analyzer_tool
+    table_analyzer_tool,
+    vision_analyzer_tool
 )
 
 # Register Tool 1: local_document_search
@@ -204,5 +205,17 @@ default_tool_registry.register_tool(ToolDefinition(
     risk_level="low",
     read_only=True,
     handler=table_analyzer_tool
+))
+
+# Register Tool 16: vision_analyzer_tool
+default_tool_registry.register_tool(ToolDefinition(
+    name="vision_analyzer_tool",
+    description="Analyzes local technical diagrams, equipment photos, and visual inspection images using local Ollama vision model (llava).",
+    input_schema={"filename": "string", "prompt": "string (optional)"},
+    output_schema={"found": "boolean", "filename": "string", "success": "boolean", "model": "string", "analysis": "string", "findings": "list", "evidence": "list"},
+    permission_level="user",
+    risk_level="low",
+    read_only=True,
+    handler=vision_analyzer_tool
 ))
 

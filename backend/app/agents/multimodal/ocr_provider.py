@@ -58,41 +58,88 @@ class LocalOCRProvider(OCRProvider):
     """
 
     def __init__(self, custom_cmd: Optional[str] = None):
-        self.custom_cmd = custom_cmd or settings.TESSERACT_CMD
+        self.custom_cmd = custom_cmd if custom_cmd is not None else (settings.TESSERACT_CMD or None)
         self._binary_path: Optional[str] = None
         self._detect_binary()
 
     def _detect_binary(self):
-        # 1. Custom configured command
-        if self.custom_cmd and os.path.exists(self.custom_cmd):
-            self._binary_path = self.custom_cmd
+        # If custom command was provided, strictly validate it without falling back
+        if self.custom_cmd:
+            if os.path.exists(self.custom_cmd) or shutil.which(self.custom_cmd):
+                self._binary_path = self.custom_cmd if os.path.exists(self.custom_cmd) else shutil.which(self.custom_cmd)
+            else:
+                self._binary_path = None
             return
 
-        # 2. PATH check
-        path_binary = shutil.which("tesseract")
-        if path_binary:
-            self._binary_path = path_binary
-            return
+        # Auto-detect when no custom command is provided
+        if shutil.which("tesseract"):
+            self._binary_path = shutil.which("tesseract")
+        else:
+            # Standard Windows locations
+            user_appdata = os.path.expanduser(r"~\AppData\Local\Programs\Tesseract-OCR\tesseract.exe")
+            windows_defaults = [
+                r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+                r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+                user_appdata,
+                r"C:\Users\vk980\AppData\Local\Programs\Tesseract-OCR\tesseract.exe"
+            ]
+            for wpath in windows_defaults:
+                if os.path.exists(wpath):
+                    self._binary_path = wpath
+                    break
+            else:
+                self._binary_path = None
 
-        # 3. Standard Windows locations
-        windows_defaults = [
-            r"C:\Program Files\Tesseract-OCR\tesseract.exe",
-            r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
-            os.path.expanduser(r"~\AppData\Local\Programs\Tesseract-OCR\tesseract.exe")
-        ]
-        for wpath in windows_defaults:
-            if os.path.exists(wpath):
-                self._binary_path = wpath
-                return
+        if self._binary_path:
+            try:
+                import pytesseract
+                pytesseract.pytesseract.tesseract_cmd = self._binary_path
+            except Exception:
+                pass
 
-        self._binary_path = None
+    def _verify_execution(self) -> bool:
+        """Executes a real check against the local binary to verify it actually works."""
+        if not self._binary_path or not os.path.exists(self._binary_path):
+            return False
+        try:
+            import subprocess
+            res = subprocess.run([self._binary_path, "--version"], capture_output=True, timeout=3.0)
+            return res.returncode == 0
+        except Exception:
+            return False
+
+    def _get_version(self) -> Optional[str]:
+        if not self._binary_path or not os.path.exists(self._binary_path):
+            return None
+        try:
+            import subprocess
+            res = subprocess.run([self._binary_path, "--version"], capture_output=True, text=True, timeout=3.0)
+            if res.returncode == 0:
+                line = res.stdout.splitlines()[0]
+                return line.strip()
+        except Exception:
+            pass
+        return None
+
+    def _list_languages(self) -> List[str]:
+        if not self._binary_path or not os.path.exists(self._binary_path):
+            return []
+        try:
+            import subprocess
+            res = subprocess.run([self._binary_path, "--list-langs"], capture_output=True, text=True, timeout=3.0)
+            if res.returncode == 0:
+                langs = [l.strip() for l in res.stdout.splitlines() if l.strip() and not l.startswith("List of")]
+                return langs
+        except Exception:
+            pass
+        return ["eng"]
 
     async def is_available(self) -> bool:
         if not settings.OCR_ENABLED:
             return False
         if not self._binary_path:
             self._detect_binary()
-        return self._binary_path is not None
+        return self._verify_execution()
 
     async def extract_text_from_image(self, image_input: Any) -> Dict[str, Any]:
         if not await self.is_available():
@@ -101,7 +148,7 @@ class LocalOCRProvider(OCRProvider):
                 "text": "",
                 "confidence": 0.0,
                 "page": 1,
-                "error": "OCR_UNAVAILABLE: Local Tesseract binary not installed. Zero fake OCR generated."
+                "error": "OCR_UNAVAILABLE: Local Tesseract binary not installed or failed verification. Zero fake OCR generated."
             }
 
         try:
@@ -162,13 +209,15 @@ class LocalOCRProvider(OCRProvider):
         return res
 
     def get_provider_info(self) -> Dict[str, Any]:
-        avail = self._binary_path is not None and settings.OCR_ENABLED
+        can_exec = settings.OCR_ENABLED and self._verify_execution()
         return {
             "provider": "local_tesseract",
-            "available": avail,
-            "binary_path": self._binary_path if avail else None,
-            "status": "READY" if avail else "OCR_UNAVAILABLE",
-            "message": "Local Tesseract OCR engine ready" if avail else "Tesseract binary not installed on host. Zero fake OCR generated."
+            "available": can_exec,
+            "binary_path": self._binary_path if can_exec else None,
+            "version": self._get_version() if can_exec else None,
+            "languages": self._list_languages() if can_exec else [],
+            "status": "AVAILABLE" if can_exec else "OCR_UNAVAILABLE",
+            "message": "Local Tesseract OCR engine available and operational" if can_exec else "Tesseract binary not installed on host. Zero fake OCR generated."
         }
 
 

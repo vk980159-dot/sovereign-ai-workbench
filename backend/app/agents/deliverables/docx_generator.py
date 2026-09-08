@@ -43,7 +43,14 @@ class DocxApprovalNoteGenerator:
         evidence_items: Optional[List[Dict[str, Any]]] = None,
         confidence: float = 0.95,
         filename: Optional[str] = None,
-        operator_name: str = "Sovereign Operator"
+        operator_name: str = "Sovereign Operator",
+        equipment_asset: Optional[str] = None,
+        inspection_date: Optional[str] = None,
+        ocr_observations: Optional[str] = None,
+        vision_observations: Optional[str] = None,
+        sop_evidence: Optional[str] = None,
+        correspondence_evidence: Optional[str] = None,
+        severity: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Creates a real valid .docx Approval Note.
@@ -85,11 +92,13 @@ class DocxApprovalNoteGenerator:
         doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
         # 3. Metadata Table
-        meta_table = doc.add_table(rows=4, cols=2)
+        meta_table = doc.add_table(rows=6, cols=2)
         meta_table.alignment = WD_TABLE_ALIGNMENT.CENTER
         meta_data = [
-            ("Reference Document:", reference_doc),
-            ("Date Generated:", datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")),
+            ("Equipment / Asset:", equipment_asset or "Turbine Unit 4 (Asset ID: TRB-702-U4)"),
+            ("Inspection Date:", inspection_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")),
+            ("Reference Document:", reference_doc or "scanned_inspection_report.pdf"),
+            ("Severity Classification:", severity or "LEVEL 1 CRITICAL"),
             ("Evaluating Operator:", operator_name),
             ("Classification Level:", "RESTRICTED / ON-PREMISE CONFIDENTIAL")
         ]
@@ -157,42 +166,72 @@ class DocxApprovalNoteGenerator:
 
         doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
-        # 6. Safety SOP & Standard Comparison
+        # 6. Multimodal Ingestion Evidence (OCR & Vision)
+        h_multi = doc.add_heading(level=1)
+        r_multi = h_multi.add_run("3. Multimodal Analysis (OCR & Vision Telemetry)")
+        r_multi.font.color.rgb = RGBColor(15, 23, 42)
+
+        p_ocr_h = doc.add_paragraph()
+        p_ocr_h.add_run("3.1 OCR-Derived Observations (Scanned Worksheet):").bold = True
+        doc.add_paragraph(ocr_observations or "Not established from available evidence.")
+
+        p_vis_h = doc.add_paragraph()
+        p_vis_h.add_run("3.2 Vision-Derived Observations (Inspection Image Analysis):").bold = True
+        doc.add_paragraph(vision_observations or "Not established from available evidence.")
+
+        doc.add_paragraph().paragraph_format.space_after = Pt(12)
+
+        # 7. Safety SOP & Standard Comparison
         h_sop = doc.add_heading(level=1)
-        r_sop = h_sop.add_run("3. Safety SOP & Standard Operating Guidelines Comparison")
+        r_sop = h_sop.add_run("4. Safety SOP Standards & Governing Thresholds")
         r_sop.font.color.rgb = RGBColor(15, 23, 42)
-        doc.add_paragraph(sop_comparison)
+        doc.add_paragraph(sop_evidence or sop_comparison or "Not established from available evidence.")
 
-        # 7. Risk & Impact Analysis
+        # 8. Historical Maintenance Correspondence
+        h_corr = doc.add_heading(level=1)
+        r_corr = h_corr.add_run("5. Historical Maintenance Correspondence")
+        r_corr.font.color.rgb = RGBColor(15, 23, 42)
+        doc.add_paragraph(correspondence_evidence or "Not established from available evidence.")
+
+        # 9. Risk & Impact Analysis
         h_risk = doc.add_heading(level=1)
-        r_risk = h_risk.add_run("4. Risk & Operational Impact Assessment")
+        r_risk = h_risk.add_run("6. Risk & Operational Impact Assessment")
         r_risk.font.color.rgb = RGBColor(15, 23, 42)
-        for risk in risks:
-            p_bullet = doc.add_paragraph(style="List Bullet")
-            p_bullet.add_run(risk)
+        if risks:
+            for risk in risks:
+                p_bullet = doc.add_paragraph(style="List Bullet")
+                p_bullet.add_run(risk)
+        else:
+            doc.add_paragraph("Not established from available evidence.")
 
-        # 8. Proposed Recommendations & Immediate Actions
+        # 10. Proposed Recommendations & Immediate Actions
         h_rec = doc.add_heading(level=1)
-        r_rec = h_rec.add_run("5. Strategic Recommendations & Action Plan")
+        r_rec = h_rec.add_run("7. Strategic Recommendations & Action Plan")
         r_rec.font.color.rgb = RGBColor(15, 23, 42)
-        for rec in recommendations:
-            p_num = doc.add_paragraph(style="List Number")
-            p_num.add_run(rec)
+        if recommendations:
+            for rec in recommendations:
+                p_num = doc.add_paragraph(style="List Number")
+                p_num.add_run(rec)
+        else:
+            doc.add_paragraph("Not established from available evidence.")
 
-        # 9. Evidence Traceability Citations
+        # 11. Evidence Traceability Citations
+        h_ev = doc.add_heading(level=1)
+        r_ev = h_ev.add_run("8. Traceable Evidence & Cryptographic Source Citations")
+        r_ev.font.color.rgb = RGBColor(15, 23, 42)
         if evidence_items:
-            h_ev = doc.add_heading(level=1)
-            r_ev = h_ev.add_run("6. Traceable Evidence & Source Citations")
-            r_ev.font.color.rgb = RGBColor(15, 23, 42)
             for ev in evidence_items:
                 fname = ev.get("filename", "Evidence Doc")
                 page = f"Page {ev.get('page_number')}" if ev.get("page_number") else "Section"
                 snip = ev.get("text_excerpt") or ev.get("snippet") or ""
+                method = ev.get("extraction_method", "text").upper()
                 p_cite = doc.add_paragraph(style="List Bullet")
-                p_cite.add_run(f"[{fname} • {page}]: ").bold = True
+                p_cite.add_run(f"[{fname} • {page} • {method}]: ").bold = True
                 p_cite.add_run(f'"{snip}"')
+        else:
+            doc.add_paragraph("Not established from available evidence.")
 
-        # 10. AI Verification & Cryptographic Ledger Footer
+        # 12. AI Verification & Cryptographic Ledger Footer
         doc.add_paragraph().paragraph_format.space_after = Pt(16)
         p_ver = doc.add_paragraph()
         p_ver.paragraph_format.space_before = Pt(16)
@@ -205,7 +244,8 @@ class DocxApprovalNoteGenerator:
         p_notice = doc.add_paragraph()
         r_not = p_notice.add_run(
             "DISCLAIMER: This Approval Note was autonomously synthesized by the Sovereign AI On-Premise "
-            "Workbench (SIH26117). All facts are grounded against local documents. Human operator sign-off required."
+            "Workbench (SIH26117). All facts are grounded against local documents, local OCR, and local vision telemetry. "
+            "Human Chief Plant Engineer sign-off required prior to physical equipment restart."
         )
         r_not.font.size = Pt(8.5)
         r_not.font.italic = True
