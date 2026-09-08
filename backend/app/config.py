@@ -126,10 +126,38 @@ class WorkbenchSettings(BaseSettings):
     CHROMA_PERSIST_DIR: str = str(BASE_DIR / "chroma_db")
     AUDIT_LOG_FILE: str = str(BASE_DIR / "audit_trail.jsonl")
     UPLOAD_DIR: str = str(BASE_DIR / "uploaded_docs")
+    MULTIMODAL_UPLOAD_DIR: str = str(BASE_DIR / "multimodal_uploads")
     AUTH_DB_PATH: str = str(BASE_DIR / "auth.db")
     OUTPUT_DIR: str = str(BASE_DIR / "generated_artifacts")
     TASK_DB_PATH: str = str(BASE_DIR / "tasks.db")
     DEMO_DATA_DIR: str = str(BASE_DIR / "demo_data")
+
+    # Multimodal, OCR & Vision Capabilities
+    OCR_ENABLED: bool = Field(
+        default_factory=lambda: os.getenv("OCR_ENABLED", "true").strip().lower() in ("true", "1", "yes"),
+        description="Enable local OCR engine for scanned documents and images"
+    )
+    OCR_PROVIDER: str = Field(
+        default_factory=lambda: os.getenv("OCR_PROVIDER", "local").strip(),
+        description="Local OCR provider implementation ('local', 'tesseract')"
+    )
+    TESSERACT_CMD: Optional[str] = Field(
+        default_factory=lambda: os.getenv("TESSERACT_CMD", "").strip() or None,
+        description="Custom binary path for local tesseract executable if not in PATH"
+    )
+    VISION_ENABLED: bool = Field(
+        default_factory=lambda: os.getenv("VISION_ENABLED", "true").strip().lower() in ("true", "1", "yes"),
+        description="Enable local vision model interface"
+    )
+    VISION_PROVIDER: str = Field(
+        default_factory=lambda: os.getenv("VISION_PROVIDER", "ollama").strip(),
+        description="Local vision provider ('ollama')"
+    )
+    VISION_MODEL_NAME: str = Field(
+        default_factory=lambda: os.getenv("VISION_MODEL_NAME", "llava").strip(),
+        description="Local open-weight vision model name in Ollama"
+    )
+    MAX_UPLOAD_SIZE_BYTES: int = 50 * 1024 * 1024  # 50 MB
 
     # Security & Cryptographic Auditing
     PII_REDACTION_TAG: str = "[REDACTED_CONFIDENTIAL]"
@@ -268,6 +296,11 @@ class WorkbenchSettings(BaseSettings):
     def github_oauth_configured(self) -> bool:
         return bool(self.GITHUB_CLIENT_ID and self.GITHUB_CLIENT_SECRET)
 
+    @property
+    def EMBEDDING_MODEL(self) -> str:
+        return self.EMBEDDING_MODEL_NAME
+
+
     if SettingsConfigDict:
         model_config = SettingsConfigDict(
             env_file=(str(ROOT_ENV_PATH), str(BACKEND_ENV_PATH)),
@@ -288,6 +321,8 @@ settings = WorkbenchSettings()
 # Ensure directories exist
 os.makedirs(settings.CHROMA_PERSIST_DIR, exist_ok=True)
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+os.makedirs(settings.MULTIMODAL_UPLOAD_DIR, exist_ok=True)
+os.makedirs(settings.OUTPUT_DIR, exist_ok=True)
 os.makedirs(os.path.dirname(os.path.abspath(settings.AUDIT_LOG_FILE)), exist_ok=True)
 
 

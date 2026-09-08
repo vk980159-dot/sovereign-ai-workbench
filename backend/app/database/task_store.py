@@ -6,6 +6,7 @@ and artifact association.
 
 import sqlite3
 import json
+import uuid
 import threading
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
@@ -61,6 +62,41 @@ def init_task_db():
                     details TEXT,
                     status TEXT,
                     FOREIGN KEY(task_id) REFERENCES tasks(task_id) ON DELETE CASCADE
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS uploaded_files (
+                    file_id TEXT PRIMARY KEY,
+                    task_id TEXT,
+                    user_id TEXT,
+                    filename TEXT NOT NULL,
+                    original_filename TEXT NOT NULL,
+                    file_path TEXT NOT NULL,
+                    sha256 TEXT NOT NULL,
+                    mime_type TEXT NOT NULL,
+                    size_bytes INTEGER NOT NULL,
+                    page_count INTEGER DEFAULT 0,
+                    detected_type TEXT NOT NULL,
+                    ocr_status TEXT DEFAULT 'NOT_ATTEMPTED',
+                    vision_status TEXT DEFAULT 'NOT_ATTEMPTED',
+                    processing_status TEXT DEFAULT 'READY',
+                    extracted_text_preview TEXT,
+                    created_at TEXT NOT NULL
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS artifacts (
+                    artifact_id TEXT PRIMARY KEY,
+                    task_id TEXT NOT NULL,
+                    user_id TEXT,
+                    filename TEXT NOT NULL,
+                    file_path TEXT NOT NULL,
+                    artifact_type TEXT NOT NULL,
+                    sha256 TEXT NOT NULL,
+                    size_bytes INTEGER NOT NULL,
+                    verification_status TEXT NOT NULL,
+                    verification_details TEXT,
+                    created_at TEXT NOT NULL
                 )
             """)
             conn.commit()
@@ -275,3 +311,173 @@ def _format_task_row(row: sqlite3.Row) -> Dict[str, Any]:
         "created_at": row["created_at"],
         "completed_at": row["completed_at"]
     }
+
+
+def record_uploaded_file(
+    file_id: str,
+    filename: str,
+    original_filename: str,
+    file_path: str,
+    sha256: str,
+    mime_type: str,
+    size_bytes: int,
+    detected_type: str,
+    user_id: Optional[str] = None,
+    task_id: Optional[str] = None,
+    page_count: int = 0,
+    ocr_status: str = "NOT_ATTEMPTED",
+    vision_status: str = "NOT_ATTEMPTED",
+    processing_status: str = "READY",
+    extracted_text_preview: str = ""
+) -> Dict[str, Any]:
+    """Stores metadata for an authenticated multimodal file upload."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    with _db_lock:
+        with _get_db_conn() as conn:
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT OR REPLACE INTO uploaded_files (
+                    file_id, task_id, user_id, filename, original_filename,
+                    file_path, sha256, mime_type, size_bytes, page_count,
+                    detected_type, ocr_status, vision_status, processing_status,
+                    extracted_text_preview, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                file_id, task_id, user_id, filename, original_filename,
+                file_path, sha256, mime_type, size_bytes, page_count,
+                detected_type, ocr_status, vision_status, processing_status,
+                extracted_text_preview[:1000] if extracted_text_preview else "",
+                now_iso
+            ))
+            conn.commit()
+
+    return {
+        "file_id": file_id,
+        "task_id": task_id,
+        "user_id": user_id,
+        "filename": filename,
+        "original_filename": original_filename,
+        "file_path": file_path,
+        "sha256": sha256,
+        "mime_type": mime_type,
+        "size_bytes": size_bytes,
+        "page_count": page_count,
+        "detected_type": detected_type,
+        "ocr_status": ocr_status,
+        "vision_status": vision_status,
+        "processing_status": processing_status,
+        "created_at": now_iso
+    }
+
+
+def get_uploaded_file(file_id: str, user_id: Optional[str] = None, is_admin: bool = False) -> Optional[Dict[str, Any]]:
+    """Retrieves uploaded file record with user isolation."""
+    with _get_db_conn() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM uploaded_files WHERE file_id = ?", (file_id,))
+        row = cur.fetchone()
+        if not row:
+            return None
+        # Enforce user isolation
+        if not is_admin and user_id and str(row["user_id"]) != str(user_id):
+            return None
+        return dict(row)
+
+
+def list_uploaded_files(
+    user_id: Optional[str] = None,
+    is_admin: bool = False,
+    limit: int = 50,
+    offset: int = 0,
+    role: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """Lists uploaded files with user isolation."""
+    if role == "admin":
+        is_admin = True
+
+    with _get_db_conn() as conn:
+        cur = conn.cursor()
+        if is_admin or not user_id:
+            cur.execute("SELECT * FROM uploaded_files ORDER BY created_at DESC LIMIT ? OFFSET ?", (limit, offset))
+        else:
+            cur.execute("SELECT * FROM uploaded_files WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?", (str(user_id), limit, offset))
+        rows = cur.fetchall()
+        return [dict(r) for r in rows]
+
+
+def record_artifact(
+    artifact_id: Optional[str] = None,
+    task_id: str = "",
+    filename: str = "",
+    file_path: str = "",
+    artifact_type: str = "document",
+    sha256: str = "",
+    size_bytes: int = 0,
+    verification_status: str = "VERIFIED",
+    verification_details: Optional[Dict[str, Any]] = None,
+    user_id: Optional[str] = None
+) -> Dict[str, Any]:
+    """Stores metadata for a generated deliverable artifact."""
+    aid = artifact_id or f"art_{uuid.uuid4().hex[:12]}"
+    now_iso = datetime.now(timezone.utc).isoformat()
+    det_str = json.dumps(verification_details or {})
+    with _db_lock:
+        with _get_db_conn() as conn:
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT OR REPLACE INTO artifacts (
+                    artifact_id, task_id, user_id, filename, file_path,
+                    artifact_type, sha256, size_bytes, verification_status,
+                    verification_details, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                aid, task_id, user_id, filename, file_path,
+                artifact_type, sha256, size_bytes, verification_status,
+                det_str, now_iso
+            ))
+            conn.commit()
+
+    return {
+        "artifact_id": aid,
+        "task_id": task_id,
+        "user_id": user_id,
+        "filename": filename,
+        "file_path": file_path,
+        "artifact_type": artifact_type,
+        "sha256": sha256,
+        "size_bytes": size_bytes,
+        "verification_status": verification_status,
+        "verification_details": verification_details or {},
+        "created_at": now_iso
+    }
+
+
+def get_artifact_record(filename: str, user_id: Optional[str] = None, is_admin: bool = False) -> Optional[Dict[str, Any]]:
+    """Looks up artifact record by filename with user isolation."""
+    with _get_db_conn() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM artifacts WHERE filename = ? ORDER BY created_at DESC LIMIT 1", (filename,))
+        row = cur.fetchone()
+        if not row:
+            return None
+        # Enforce user isolation
+        if not is_admin and user_id and row["user_id"] and str(row["user_id"]) != str(user_id):
+            return None
+        res = dict(row)
+        res["verification_details"] = json.loads(row["verification_details"]) if row["verification_details"] else {}
+        return res
+
+
+def list_task_artifacts(task_id: str) -> List[Dict[str, Any]]:
+    """Retrieves all artifact records generated by a specific task."""
+    with _get_db_conn() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM artifacts WHERE task_id = ? ORDER BY created_at ASC", (task_id,))
+        rows = cur.fetchall()
+        results = []
+        for r in rows:
+            item = dict(r)
+            item["verification_details"] = json.loads(r["verification_details"]) if r["verification_details"] else {}
+            results.append(item)
+        return results
+

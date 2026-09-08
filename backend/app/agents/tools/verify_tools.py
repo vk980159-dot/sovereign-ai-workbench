@@ -35,15 +35,27 @@ def verification_tool(
     # Artifact verification
     artifact_verified = True
     artifact_error = None
+    artifact_details = None
     if artifact_filename:
         clean_name = os.path.basename(artifact_filename)
         path = os.path.join(settings.OUTPUT_DIR, clean_name)
-        if not os.path.isfile(path):
-            artifact_verified = False
-            artifact_error = f"Artifact '{clean_name}' does not exist on disk."
-        elif os.path.getsize(path) == 0:
-            artifact_verified = False
-            artifact_error = f"Artifact '{clean_name}' exists but is empty (0 bytes)."
+        try:
+            from app.agents.deliverables.validator import ArtifactValidator
+            v_res = ArtifactValidator.validate_artifact(path)
+            artifact_verified = v_res.get("verified", False)
+            artifact_details = v_res
+            if not artifact_verified:
+                artifact_error = v_res.get("error", "Artifact verification failed.")
+        except Exception as e:
+            # Fallback to basic file existence & non-empty check
+            if not os.path.isfile(path):
+                artifact_verified = False
+                artifact_error = f"Artifact '{clean_name}' does not exist on disk: {str(e)}"
+            elif os.path.getsize(path) == 0:
+                artifact_verified = False
+                artifact_error = f"Artifact '{clean_name}' exists but is empty (0 bytes)."
+            else:
+                artifact_verified = True
 
     all_grounded = all(c["grounded"] for c in verified_claims) if verified_claims else True
     overall_passed = all_grounded and artifact_verified
@@ -54,5 +66,6 @@ def verification_tool(
         "grounded_count": sum(1 for c in verified_claims if c["grounded"]),
         "claim_details": verified_claims,
         "artifact_verified": artifact_verified,
-        "artifact_error": artifact_error
+        "artifact_error": artifact_error,
+        "artifact_details": artifact_details
     }

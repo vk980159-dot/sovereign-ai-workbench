@@ -51,6 +51,7 @@ class AgentState(TypedDict):
     audit_discrepancies: List[str]
 
     # Final Synthesis & Generated Artifacts
+    deliverable_format: Optional[str]
     final_answer: str
     final_report: str
     evidence: List[Dict[str, Any]]

@@ -1583,7 +1583,18 @@
                             <span class="kbd-shortcut">Enter</span> to execute
                             <span class="kbd-shortcut">Ctrl+Enter</span> support
                         </div>
-                        <div class="query-actions">
+                        <div class="query-actions" style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                <label for="deliverableFormatSelect" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Deliverable:</label>
+                                <select id="deliverableFormatSelect" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.4rem 0.6rem; font-size: 0.78rem; outline: none; cursor: pointer;">
+                                    <option value="AUTO">✨ Auto-Detect</option>
+                                    <option value="DOCX" selected>📝 Word Approval Note (.docx)</option>
+                                    <option value="PDF">📑 PDF Report (.pdf)</option>
+                                    <option value="XLSX">📊 Excel Calculations (.xlsx)</option>
+                                    <option value="PPTX">📽️ PowerPoint Deck (.pptx)</option>
+                                    <option value="MARKDOWN">📄 Markdown Report (.md)</option>
+                                </select>
+                            </div>
                             <button class="btn-action" onclick="clearQuery()">Clear</button>
                             <button class="btn-primary" id="btnDispatch" onclick="submitQuery()">
                                 <span>⚡</span>
@@ -2407,8 +2418,14 @@
                 updateStepStatus(evt.step, "COMPLETED");
             } else if (evt.event_type === "STEP_FAILED") {
                 updateStepStatus(evt.step, "FAILED");
-            } else if (evt.event_type === "ARTIFACT_CREATED") {
+            } else if (evt.event_type === "ARTIFACT_CREATED" || evt.event_type === "ARTIFACT_GENERATED") {
                 addArtifactChip(evt.details || evt.data || {});
+            } else if (evt.event_type === "ARTIFACT_VERIFICATION_PASSED") {
+                showToast("✓ Deliverable package & SHA-256 verified", "success");
+            } else if (evt.event_type === "OCR_COMPLETED") {
+                showToast("✓ Local OCR extraction completed", "info");
+            } else if (evt.event_type === "VISION_UNAVAILABLE") {
+                showToast("ℹ Local vision model unavailable; zero fake vision generated", "info");
             } else if (evt.event_type === "TASK_COMPLETED") {
                 if (statusBadge) {
                     statusBadge.innerText = "COMPLETED";
@@ -2497,17 +2514,27 @@
             artChips.innerHTML = "";
             artifacts.forEach(art => {
                 const fname = typeof art === "string" ? art : (art.filename || art.title || "artifact");
-                const hash = art.sha256_hash ? art.sha256_hash.substring(0, 8) : "";
+                const hash = (typeof art === "object" && (art.sha256 || art.sha256_hash)) ? (art.sha256 || art.sha256_hash).substring(0, 8) : "";
+                const lower = fname.toLowerCase();
+                let icon = "📄";
+                let typeLabel = "FILE";
+                if (lower.endsWith(".docx")) { icon = "📝"; typeLabel = "WORD"; }
+                else if (lower.endsWith(".xlsx")) { icon = "📊"; typeLabel = "EXCEL"; }
+                else if (lower.endsWith(".pptx")) { icon = "📽️"; typeLabel = "PPTX"; }
+                else if (lower.endsWith(".pdf")) { icon = "📑"; typeLabel = "PDF"; }
+                else if (lower.endsWith(".md")) { icon = "📋"; typeLabel = "MD"; }
+
                 const chip = document.createElement("a");
                 chip.className = "artifact-chip";
                 chip.href = `/api/v1/agent/artifacts/${encodeURIComponent(fname)}`;
                 chip.target = "_blank";
-                chip.title = `Download SHA-256 verified artifact (${hash || 'verified'})`;
+                chip.title = `Download SHA-256 verified ${typeLabel} deliverable (${hash || 'verified'})`;
                 chip.innerHTML = `
-                    <span>📄</span>
-                    <span>${escapeHtml(fname)}</span>
-                    ${hash ? `<span style="opacity:0.6; font-size:0.65rem;">[${hash}]</span>` : ""}
-                    <span>⬇</span>
+                    <span style="font-size: 1rem;">${icon}</span>
+                    <span style="font-weight: 600;">${escapeHtml(fname)}</span>
+                    <span class="badge badge-sih" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">${typeLabel}</span>
+                    ${hash ? `<span style="opacity:0.6; font-family:var(--font-mono); font-size:0.65rem;">[${hash}]</span>` : ""}
+                    <span style="color: var(--accent-primary);">⬇</span>
                 `;
                 artChips.appendChild(chip);
             });
@@ -2623,11 +2650,18 @@
                 timestamp: new Date().toISOString()
             });
 
+            const delivSelect = document.getElementById("deliverableFormatSelect");
+            const delivFormat = delivSelect ? delivSelect.value : "AUTO";
+
             try {
                 const resp = await authFetch("/api/v1/agent/tasks", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ query: query, session_id: sessionId })
+                    body: JSON.stringify({
+                        query: query,
+                        session_id: sessionId,
+                        deliverable_format: delivFormat
+                    })
                 });
                 if (!resp.ok) {
                     const errData = await resp.json();
@@ -2802,21 +2836,51 @@
             const statusEl = document.getElementById("uploadStatus");
             statusEl.style.display = "block";
             statusEl.style.color = "var(--accent-primary)";
-            statusEl.innerText = `Ingesting & redacting '${file.name}' into local ChromaDB...`;
+            statusEl.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <span class="badge badge-sih" style="padding: 0.15rem 0.4rem;">SECURITY CHECK</span>
+                    <span class="badge badge-sih" style="padding: 0.15rem 0.4rem;">HASHING</span>
+                    <span>Ingesting '${escapeHtml(file.name)}'...</span>
+                </div>
+            `;
 
             const formData = new FormData();
             formData.append("file", file);
 
             try {
-                const resp = await authFetch("/api/v1/upload", {
+                let resp = await authFetch("/api/v1/multimodal/upload", {
                     method: "POST",
                     body: formData
                 });
+                if (!resp.ok && resp.status === 404) {
+                    // Fallback to legacy upload route
+                    resp = await authFetch("/api/v1/upload", {
+                        method: "POST",
+                        body: formData
+                    });
+                }
                 const result = await resp.json();
                 if (resp.ok) {
+                    const docType = result.detected_type || "DOCUMENT";
+                    const ocrBadge = result.ocr_applied
+                        ? `<span class="badge" style="background: rgba(16,185,129,0.15); color: var(--success);">OCR APPLIED</span>`
+                        : (result.ocr_status === "OCR_UNAVAILABLE" ? `<span class="badge" style="background: rgba(245,158,11,0.15); color: var(--warning);">OCR UNAVAILABLE</span>` : "");
+
                     statusEl.style.color = "var(--success)";
-                    statusEl.innerText = `✓ Indexed ${result.chunks_created} chunks (${result.characters} chars). SHA-256: ${result.sha256.substring(0, 16)}...`;
-                    showToast(`Successfully indexed '${file.name}' (${result.chunks_created} chunks)`, "success");
+                    statusEl.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <span class="badge badge-health">✓ READY</span>
+                                <span class="badge badge-sih">${escapeHtml(docType)}</span>
+                                ${ocrBadge}
+                                <span>${result.chunks_created !== undefined ? `${result.chunks_created} Chunks Indexed` : `${result.page_count || 1} Pages Processed`}</span>
+                            </div>
+                            <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">
+                                SHA-256: ${result.sha256}
+                            </div>
+                        </div>
+                    `;
+                    showToast(`Successfully ingested '${file.name}' (${docType})`, "success");
                     fetchDocuments();
                     fetchStats();
                 } else {
@@ -2978,6 +3042,27 @@
                     const hAirgap = document.getElementById("healthAirgapBadge");
                     if (hAirgap) hAirgap.innerText = data.air_gapped ? "AIR-GAPPED (STRICT)" : "CLOUD SECURE";
                 }
+
+                try {
+                    const capResp = await fetch("/api/v1/ai/capabilities");
+                    if (capResp.ok) {
+                        const caps = await capResp.json();
+                        const ocrEl = document.getElementById("healthOcrStatus");
+                        if (ocrEl) {
+                            ocrEl.innerHTML = caps.ocr_available
+                                ? `<span class="badge badge-health">AVAILABLE (${escapeHtml(caps.ocr_provider)})</span>`
+                                : `<span class="badge badge-sih" style="color: var(--warning); border-color: rgba(245,158,11,0.3);">${escapeHtml(caps.ocr_status)}</span>`;
+                        }
+                        const visEl = document.getElementById("healthVisionStatus");
+                        if (visEl) {
+                            visEl.innerHTML = caps.vision_available
+                                ? `<span class="badge badge-health">AVAILABLE (${escapeHtml(caps.vision_model || "")})</span>`
+                                : `<span class="badge badge-sih" style="color: var(--text-dim); border-color: rgba(148,163,184,0.3);">${escapeHtml(caps.vision_status)}</span>`;
+                        }
+                    }
+                } catch (ce) {
+                    console.log("Capabilities fetch note:", ce);
+                }
             } catch (e) {
                 console.error("System health check failed:", e);
             }
@@ -3015,10 +3100,12 @@
         // SIH Demonstration Mode
         // ==========================================
         function triggerSihDemo() {
-            showToast("Activating SIH26117 Autonomous Multi-Step Industrial Inspection Task...", "info");
+            showToast("Activating SIH26117 Multimodal Ingestion & Signed Word Approval Note Pipeline...", "info");
             switchTab("workbench");
-            const demoPrompt = "Inspect turbine report, compare findings against safety SOP, and prepare recommendation";
+            const demoPrompt = "Inspect scanned turbine report, cross-reference SOP-IND-702 safety limits, calculate thermal deviation, and generate signed Word Approval Note";
             document.getElementById("workbenchQueryInput").value = demoPrompt;
+            const delivSelect = document.getElementById("deliverableFormatSelect");
+            if (delivSelect) delivSelect.value = "DOCX";
             setTimeout(() => {
                 submitQuery();
             }, 500);

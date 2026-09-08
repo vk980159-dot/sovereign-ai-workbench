@@ -155,7 +155,7 @@ class TaskExecutor:
                         callback=event_emitter
                     )
 
-            tool_results.append(tool_res.dict())
+            tool_results.append(tool_res.model_dump() if hasattr(tool_res, "model_dump") else tool_res.dict())
 
             if tool_res.success:
                 step["status"] = "COMPLETED"
@@ -175,33 +175,90 @@ class TaskExecutor:
                     )
 
                 # Ingest read documents into evidence
-                if tool_name == "local_document_reader" and isinstance(output_data, dict) and output_data.get("found"):
-                    retrieved_docs.append({
-                        "filename": output_data.get("filename"),
-                        "content": output_data.get("content"),
-                        "similarity": 1.0,
-                        "document_id": output_data.get("sha256", "")[:16]
-                    })
+                if tool_name in ("local_document_reader", "multimodal_document_reader") and isinstance(output_data, dict) and output_data.get("found"):
+                    ev_list = output_data.get("evidence", [])
+                    if ev_list:
+                        for ev in ev_list:
+                            retrieved_docs.append({
+                                "filename": ev.get("filename", output_data.get("filename")),
+                                "content": ev.get("text_excerpt", ""),
+                                "similarity": ev.get("confidence", 1.0),
+                                "document_id": ev.get("sha256", "")[:16] or output_data.get("filename")
+                            })
+                    else:
+                        retrieved_docs.append({
+                            "filename": output_data.get("filename"),
+                            "content": output_data.get("content") or output_data.get("extracted_text_preview", ""),
+                            "similarity": 1.0,
+                            "document_id": output_data.get("sha256", "")[:16] or output_data.get("filename")
+                        })
+                    
+                    is_ocr = output_data.get("ocr_applied", False)
+                    event_type = "OCR_COMPLETED" if is_ocr else "DOCUMENT_RETRIEVED"
+                    msg = f"Ingested '{output_data.get('filename')}'"
+                    if output_data.get("doc_type"):
+                        msg += f" [{output_data.get('doc_type')}]"
+                    if is_ocr:
+                        msg += " (Local OCR successfully applied)."
+
                     await emit_agent_event(
                         task_id=task_id,
-                        event_type="DOCUMENT_RETRIEVED",
-                        message=f"Read document '{output_data.get('filename')}' ({output_data.get('characters')} chars).",
+                        event_type=event_type,
+                        message=msg,
                         step=step_num,
                         documents=[output_data.get("filename")],
                         callback=event_emitter
                     )
 
                 # Record generated artifacts
-                if tool_name == "output_writer" and isinstance(output_data, dict):
+                if tool_name in ("output_writer", "generate_docx_approval_note", "generate_xlsx_calculation_sheet", "generate_pptx_presentation", "generate_pdf_report") and isinstance(output_data, dict):
                     artifacts.append(output_data)
+                    # Persist to database artifacts table
+                    try:
+                        from app.database.task_store import record_artifact
+                        record_artifact(
+                            task_id=task_id,
+                            user_id=state.get("user_id"),
+                            filename=output_data.get("filename", ""),
+                            file_path=output_data.get("file_path") or output_data.get("filepath", ""),
+                            artifact_type=output_data.get("artifact_type", "document"),
+                            sha256=output_data.get("sha256", ""),
+                            size_bytes=output_data.get("size_bytes", 0),
+                            verification_status="PENDING"
+                        )
+                    except Exception:
+                        pass
+
                     await emit_agent_event(
                         task_id=task_id,
-                        event_type="ARTIFACT_CREATED",
-                        message=f"Generated artifact '{output_data.get('filename')}' (SHA-256: {output_data.get('sha256')[:16]}...).",
+                        event_type="ARTIFACT_GENERATED",
+                        message=f"Generated authentic deliverable '{output_data.get('filename')}' (SHA-256: {output_data.get('sha256', '')[:16]}...).",
                         step=step_num,
                         details=output_data,
                         callback=event_emitter
                     )
+
+                # Verification tool notifications
+                if tool_name == "verification_tool" and isinstance(output_data, dict):
+                    if output_data.get("artifact_verified"):
+                        await emit_agent_event(
+                            task_id=task_id,
+                            event_type="ARTIFACT_VERIFICATION_PASSED",
+                            message="Deliverable artifact verified: binary structure valid and cryptographic hash intact.",
+                            step=step_num,
+                            details=output_data.get("artifact_details"),
+                            callback=event_emitter
+                        )
+                    elif output_data.get("artifact_error"):
+                        await emit_agent_event(
+                            task_id=task_id,
+                            event_type="ARTIFACT_VERIFICATION_FAILED",
+                            message=f"Artifact verification warning: {output_data.get('artifact_error')}",
+                            step=step_num,
+                            status="WARNING",
+                            details=output_data.get("artifact_details"),
+                            callback=event_emitter
+                        )
 
                 completed_steps.append({
                     "step_number": step_num,

@@ -73,6 +73,7 @@ async def run_agentic_task(
     username: Optional[str] = None,
     session_id: Optional[str] = None,
     task_id: Optional[str] = None,
+    deliverable_format: Optional[str] = None,
     ws_emitter: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None
 ) -> Dict[str, Any]:
     """
@@ -141,6 +142,7 @@ async def run_agentic_task(
         "audit_verdict": "PENDING",
         "audit_feedback": "",
         "audit_discrepancies": [],
+        "deliverable_format": deliverable_format,
         "final_answer": "",
         "final_report": "",
         "evidence": [],

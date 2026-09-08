@@ -28,6 +28,7 @@ tasks.db
 tasks.db-journal
 chroma_db/
 uploaded_docs/
+multimodal_uploads/
 generated_artifacts/
 audit_trail.jsonl
 

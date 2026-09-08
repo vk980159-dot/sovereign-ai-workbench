@@ -121,6 +121,7 @@ class AdminUserItem(BaseModel):
 class CreateTaskRequest(BaseModel):
     query: str = Field(..., min_length=2, description="Task instruction or research question")
     session_id: Optional[str] = Field(None, description="Optional session identifier for WebSocket correlation")
+    deliverable_format: Optional[str] = Field("AUTO", description="Target deliverable format: AUTO, DOCX, XLSX, PPTX, PDF, MARKDOWN")
 
 
 class TaskResponse(BaseModel):
@@ -162,4 +163,54 @@ class ArtifactItem(BaseModel):
     filepath: str
     size_bytes: int
     sha256: str
+    created_at: str
+    artifact_type: Optional[str] = "document"
+    verification_status: Optional[str] = "PENDING"
+
+
+class AICapabilitiesResponse(BaseModel):
+    reasoning_model: str
+    embedding_model: str
+    ocr_provider: str
+    ocr_available: bool
+    ocr_status: str
+    ocr_message: str
+    vision_provider: str
+    vision_available: bool
+    vision_status: str
+    vision_model: Optional[str] = None
+    vision_message: str
+    deliverable_generators: List[str]
+
+
+class MultimodalUploadResponse(BaseModel):
+    file_id: str
+    filename: str
+    original_filename: str
+    sha256: str
+    size_bytes: int
+    mime_type: str
+    detected_type: str
+    page_count: int
+    ocr_applied: bool
+    ocr_status: str
+    evidence_count: int
+    preview_text: str
+    message: str
+
+
+class UploadedFileResponse(BaseModel):
+    file_id: str
+    task_id: Optional[str] = None
+    user_id: Optional[str] = None
+    filename: str
+    original_filename: str
+    sha256: str
+    mime_type: str
+    size_bytes: int
+    page_count: int
+    detected_type: str
+    ocr_status: str
+    vision_status: str
+    processing_status: str
     created_at: str

@@ -46,7 +46,8 @@ async def security_gate_node(state: AgentState) -> Dict[str, Any]:
 async def planner_node(state: AgentState) -> Dict[str, Any]:
     """Generates structured execution plan and task category."""
     q = state.get("original_query") or state.get("user_query", "")
-    category, plan = await task_planner.create_plan(q)
+    deliv_fmt = state.get("deliverable_format")
+    category, plan = await task_planner.create_plan(q, deliverable_format=deliv_fmt)
 
     state["task_category"] = category
     state["task_plan"] = plan

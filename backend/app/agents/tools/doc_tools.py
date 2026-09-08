@@ -23,6 +23,7 @@ def _find_local_file(filename: str) -> Optional[str]:
     candidates = [
         os.path.join(settings.DEMO_DATA_DIR, clean_name),
         os.path.join(settings.UPLOAD_DIR, clean_name),
+        os.path.join(settings.MULTIMODAL_UPLOAD_DIR, clean_name),
         os.path.join(settings.OUTPUT_DIR, clean_name),
         os.path.join(BASE_DIR, clean_name),
     ]

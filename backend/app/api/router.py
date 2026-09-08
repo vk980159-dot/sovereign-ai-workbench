@@ -6,6 +6,7 @@ and WebSocket Real-Time Thought Streaming.
 import os
 import uuid
 import shutil
+import hashlib
 from typing import List, Dict, Any, Optional
 from urllib.parse import urlencode
 import httpx
@@ -42,7 +43,10 @@ from app.api.models import (
     CreateTaskRequest,
     TaskResponse,
     TaskEventItem,
-    ArtifactItem
+    ArtifactItem,
+    AICapabilitiesResponse,
+    MultimodalUploadResponse,
+    UploadedFileResponse
 )
 from fastapi.responses import FileResponse
 from app.database.vector_store import vector_store
@@ -51,7 +55,10 @@ from app.database.task_store import (
     list_tasks,
     get_task_events,
     get_task_artifacts,
-    cancel_task
+    cancel_task,
+    record_uploaded_file,
+    get_uploaded_file,
+    list_uploaded_files
 )
 from app.security.audit_logger import audit_logger
 from app.security.auth import (
@@ -798,6 +805,7 @@ async def create_agent_task(
         user_id=user_id,
         username=username,
         session_id=sid,
+        deliverable_format=task_req.deliverable_format,
         ws_emitter=thought_emitter
     )
 
@@ -939,6 +947,286 @@ async def get_artifact_file(
         raise HTTPException(status_code=404, detail=f"Artifact '{clean_name}' not found.")
 
     return FileResponse(filepath, filename=clean_name)
+
+
+@api_router.get("/agent/artifacts/download/{filename}")
+async def download_artifact_file(
+    filename: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Direct download endpoint for generated deliverable artifacts."""
+    return await get_artifact_file(filename=filename, current_user=current_user)
+
+
+# ==========================================
+# 2C. MULTIMODAL INGESTION & CAPABILITIES
+# ==========================================
+@api_router.get("/ai/capabilities", response_model=AICapabilitiesResponse)
+@api_router.get("/capabilities", response_model=AICapabilitiesResponse)
+async def get_system_capabilities():
+    """
+    Returns authentic system capabilities regarding local AI models,
+    OCR engines, vision availability, and deliverable document generators.
+    """
+    from app.agents.multimodal.ocr_provider import local_ocr_provider
+    from app.agents.multimodal.vision_provider import ollama_vision_provider
+
+    ocr_info = local_ocr_provider.get_provider_info()
+    vision_info = ollama_vision_provider.get_provider_info()
+
+    return AICapabilitiesResponse(
+        reasoning_model=settings.DEFAULT_MODEL,
+        embedding_model=settings.EMBEDDING_MODEL_NAME,
+        ocr_provider=ocr_info.get("provider", "local_tesseract"),
+        ocr_available=ocr_info.get("available", False),
+        ocr_status=ocr_info.get("status", "OCR_UNAVAILABLE"),
+        ocr_message=ocr_info.get("message", ""),
+        vision_provider=vision_info.get("provider", "ollama_multimodal"),
+        vision_available=vision_info.get("available", False),
+        vision_status=vision_info.get("status", "VISION_UNAVAILABLE"),
+        vision_model=vision_info.get("active_model"),
+        vision_message=vision_info.get("message", ""),
+        deliverable_generators=["DOCX", "XLSX", "PPTX", "PDF", "MARKDOWN"]
+    )
+
+
+@api_router.post("/multimodal/upload", response_model=MultimodalUploadResponse)
+async def upload_multimodal_document(
+    file: UploadFile = File(...),
+    task_id: Optional[str] = None,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Secure on-premise multimodal document ingestion (PDF, Scanned PDF, Images, Tables).
+    Enforces 50MB file ceiling, anti-traversal security, SHA-256 calculation,
+    local OCR extraction, indexing into ChromaDB, and task store recording.
+    """
+    from app.agents.multimodal.pdf_processor import analyze_and_extract_pdf
+    from app.agents.multimodal.ocr_provider import local_ocr_provider
+    from app.agents.multimodal.table_extractor import TableExtractor
+
+    raw_filename = file.filename or "uploaded_file"
+    # Security: Anti-traversal sanitization
+    clean_name = os.path.basename(raw_filename.replace("\\", "/"))
+    if not clean_name or clean_name in (".", ".."):
+        raise HTTPException(status_code=400, detail="Invalid file name provided.")
+
+    ext = os.path.splitext(clean_name)[1].lower()
+    allowed_exts = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".csv", ".json", ".txt", ".md"}
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file format '{ext}'. Allowed formats: {', '.join(sorted(allowed_exts))}"
+        )
+
+    file_id = f"file_{uuid.uuid4().hex[:12]}"
+    target_filename = f"{file_id}_{clean_name}"
+    target_path = os.path.join(settings.MULTIMODAL_UPLOAD_DIR, target_filename)
+
+    # Stream to disk with size boundary
+    hasher = hashlib.sha256()
+    size_bytes = 0
+    with open(target_path, "wb") as buffer:
+        while chunk := await file.read(1024 * 1024):
+            size_bytes += len(chunk)
+            if size_bytes > settings.MAX_UPLOAD_SIZE_BYTES:
+                buffer.close()
+                if os.path.exists(target_path):
+                    os.remove(target_path)
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File exceeds maximum permissible upload limit of {settings.MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)} MB."
+                )
+            hasher.update(chunk)
+            buffer.write(chunk)
+
+    sha256_hash = hasher.hexdigest()
+    user_id = str(current_user.get("id") or current_user.get("user_id") or current_user.get("username", "anonymous"))
+
+    # Determine type, run OCR / parsing, and index into ChromaDB
+    page_count = 1
+    detected_type = "TEXT"
+    ocr_applied = False
+    ocr_status = "NOT_REQUIRED"
+    extracted_text = ""
+    evidence_count = 0
+
+    try:
+        if ext == ".pdf":
+            analysis = analyze_and_extract_pdf(target_path, original_filename=clean_name)
+            detected_type = analysis.document_type
+            page_count = analysis.page_count
+            ocr_applied = analysis.ocr_applied
+            ocr_status = analysis.ocr_status
+            extracted_text = analysis.full_text
+            evidence_count = len(analysis.evidence_items)
+
+            if extracted_text and not extracted_text.startswith("[SCANNED_PAGE_OCR_UNAVAILABLE]"):
+                vector_store.ingest_document(
+                    text=extracted_text,
+                    metadata={
+                        "filename": clean_name,
+                        "document_id": sha256_hash[:16],
+                        "source": "multimodal_pdf",
+                        "doc_type": detected_type
+                    }
+                )
+
+        elif ext in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
+            detected_type = "IMAGE"
+            page_count = 1
+            ocr_res = await local_ocr_provider.extract_text_from_image(target_path)
+            ocr_applied = ocr_res.get("success", False)
+            is_avail = await local_ocr_provider.is_available()
+            ocr_status = "SUCCESS" if ocr_applied else ("OCR_UNAVAILABLE" if not is_avail else "FAILED")
+            extracted_text = ocr_res.get("text", "")
+            evidence_count = 1 if extracted_text else 0
+
+            if extracted_text:
+                vector_store.ingest_document(
+                    text=extracted_text,
+                    metadata={
+                        "filename": clean_name,
+                        "document_id": sha256_hash[:16],
+                        "source": "multimodal_image",
+                        "doc_type": "IMAGE"
+                    }
+                )
+
+        elif ext == ".csv":
+            detected_type = "TABLE_CSV"
+            table_data = TableExtractor.extract_from_csv(target_path)
+            extracted_text = str(table_data)
+            evidence_count = table_data.get("row_count", 0)
+
+        elif ext == ".json":
+            detected_type = "STRUCTURED_JSON"
+            table_data = TableExtractor.extract_from_json(target_path)
+            extracted_text = str(table_data)
+            evidence_count = 1
+
+        else:
+            with open(target_path, "r", encoding="utf-8", errors="ignore") as f:
+                extracted_text = f.read()
+            detected_type = "TEXT"
+            evidence_count = 1
+            vector_store.ingest_document(
+                text=extracted_text,
+                metadata={
+                    "filename": clean_name,
+                    "document_id": sha256_hash[:16],
+                    "source": "text",
+                    "doc_type": "TEXT"
+                }
+            )
+
+    except Exception as e:
+        extracted_text = f"[Ingestion note: {str(e)}]"
+
+    # Record in SQLite uploaded_files table
+    record_uploaded_file(
+        file_id=file_id,
+        task_id=task_id,
+        user_id=user_id,
+        filename=target_filename,
+        original_filename=clean_name,
+        file_path=target_path,
+        sha256=sha256_hash,
+        mime_type=file.content_type or "application/octet-stream",
+        size_bytes=size_bytes,
+        page_count=page_count,
+        detected_type=detected_type,
+        ocr_status=ocr_status,
+        vision_status="NOT_EVALUATED",
+        processing_status="READY",
+        extracted_text_preview=extracted_text[:1000]
+    )
+
+    # Log to audit ledger
+    audit_logger.log_event(
+        event_type="MULTIMODAL_FILE_INGESTED",
+        agent_name="MultimodalIngest",
+        action="STORE_FILE",
+        details={
+            "file_id": file_id,
+            "filename": clean_name,
+            "size_bytes": size_bytes,
+            "detected_type": detected_type,
+            "ocr_applied": ocr_applied
+        },
+        input_data=clean_name,
+        output_data=sha256_hash
+    )
+
+    return MultimodalUploadResponse(
+        file_id=file_id,
+        filename=target_filename,
+        original_filename=clean_name,
+        sha256=sha256_hash,
+        size_bytes=size_bytes,
+        mime_type=file.content_type or "application/octet-stream",
+        detected_type=detected_type,
+        page_count=page_count,
+        ocr_applied=ocr_applied,
+        ocr_status=ocr_status,
+        evidence_count=evidence_count,
+        preview_text=extracted_text[:300],
+        message=f"File '{clean_name}' successfully processed ({detected_type})."
+    )
+
+
+@api_router.get("/multimodal/files/{file_id}", response_model=UploadedFileResponse)
+async def get_uploaded_file_info(
+    file_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Retrieves metadata and processing state of an uploaded multimodal file."""
+    rec = get_uploaded_file(file_id)
+    if not rec:
+        raise HTTPException(status_code=404, detail=f"File '{file_id}' not found.")
+
+    role = current_user.get("role", "user")
+    user_id = str(current_user.get("id") or current_user.get("user_id") or current_user.get("username"))
+    if role != "admin" and rec.get("user_id") and rec["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized access to this file record.")
+
+    return UploadedFileResponse(**rec)
+
+
+@api_router.get("/multimodal/files", response_model=List[UploadedFileResponse])
+async def list_user_uploaded_files(
+    limit: int = 50,
+    offset: int = 0,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Lists uploaded multimodal files with user isolation."""
+    role = current_user.get("role", "user")
+    user_id = str(current_user.get("id") or current_user.get("user_id") or current_user.get("username"))
+    files = list_uploaded_files(user_id=user_id, role=role, limit=limit, offset=offset)
+    return [UploadedFileResponse(**f) for f in files]
+
+
+@api_router.get("/agent/tasks/{task_id}/evidence")
+async def get_task_evidence_endpoint(
+    task_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Retrieves structured evidence gathered for an agentic task."""
+    task = get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task '{task_id}' not found.")
+
+    role = current_user.get("role", "user")
+    user_id = str(current_user.get("id") or current_user.get("user_id") or current_user.get("username"))
+    if role != "admin" and task.get("user_id") and task["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized access.")
+
+    evidence = task.get("evidence", [])
+    return {
+        "task_id": task_id,
+        "evidence_count": len(evidence),
+        "evidence": evidence
+    }
 
 
 # ==========================================
