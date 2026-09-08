@@ -695,6 +695,220 @@
             min-width: 12px;
         }
 
+        /* Agentic Task Execution & Step Plan Monitor */
+        .task-monitor-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s ease;
+        }
+
+        .task-monitor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            padding-bottom: 0.65rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .task-monitor-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .task-monitor-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: 0.03em;
+        }
+
+        .task-actions-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .plan-steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .plan-step-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 7px;
+            padding: 0.65rem 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .plan-step-card.executing {
+            border-color: var(--accent-primary);
+            background: rgba(56, 189, 248, 0.04);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+        }
+
+        .plan-step-card.completed {
+            border-color: rgba(16, 185, 129, 0.4);
+            background: rgba(16, 185, 129, 0.03);
+        }
+
+        .plan-step-card.failed {
+            border-color: rgba(239, 68, 68, 0.4);
+            background: rgba(239, 68, 68, 0.04);
+        }
+
+        .step-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .step-num-badge {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            flex-shrink: 0;
+        }
+
+        .plan-step-card.executing .step-num-badge {
+            background: var(--accent-primary);
+            color: #000000;
+            border-color: var(--accent-primary);
+        }
+
+        .plan-step-card.completed .step-num-badge {
+            background: var(--success);
+            color: #000000;
+            border-color: var(--success);
+        }
+
+        .plan-step-card.failed .step-num-badge {
+            background: var(--danger);
+            color: #ffffff;
+            border-color: var(--danger);
+        }
+
+        .step-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            min-width: 0;
+        }
+
+        .step-desc {
+            font-size: 0.82rem;
+            color: var(--text-main);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .step-tool {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--text-dim);
+        }
+
+        .step-status-tag {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            flex-shrink: 0;
+        }
+
+        .tag-pending {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-dim);
+            border: 1px solid var(--border-color);
+        }
+
+        .tag-executing {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-primary);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            animation: pulse-ring 1.5s infinite;
+        }
+
+        .tag-completed {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+
+        .tag-failed {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+
+        .artifacts-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            padding-top: 0.65rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .artifacts-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .artifact-chip {
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            color: var(--accent-primary);
+            padding: 0.3rem 0.65rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .artifact-chip:hover {
+            background: rgba(56, 189, 248, 0.2);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+        }
+
         /* Streaming Terminal */
         .terminal-container {
             background: #05070a;
@@ -1412,6 +1626,37 @@
                     </div>
                 </div>
 
+                <!-- Active Task Monitor & Plan Progression -->
+                <div class="task-monitor-panel" id="taskMonitorPanel" style="display: none; margin-bottom: 1.25rem;">
+                    <div class="task-monitor-header">
+                        <div class="task-monitor-meta">
+                            <span class="task-monitor-title">⚙️ Task Plan Execution</span>
+                            <span class="badge badge-sih" id="taskCategoryBadge">MULTI_STEP</span>
+                            <span class="badge" id="taskStatusBadge" style="background: rgba(56, 189, 248, 0.1); color: var(--accent-primary);">INITIALIZING</span>
+                            <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim);" id="taskMetaId">ID: --</span>
+                        </div>
+                        <div class="task-actions-row">
+                            <button class="btn-action" id="btnCancelTask" onclick="cancelCurrentTask()" style="display: none; color: var(--danger); border-color: rgba(239, 68, 68, 0.3);">
+                                <span>⏹</span> Cancel Task
+                            </button>
+                            <button class="btn-action" id="btnRetryTask" onclick="retryCurrentTask()" style="display: none; color: var(--warning); border-color: rgba(245, 158, 11, 0.3);">
+                                <span>🔄</span> Retry Task
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Live Plan Steps Container -->
+                    <div class="plan-steps-container" id="planStepsContainer">
+                        <!-- Dynamically populated steps -->
+                    </div>
+                    
+                    <!-- Generated Artifacts Bar -->
+                    <div class="artifacts-container" id="artifactsContainer" style="display: none;">
+                        <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted);">GENERATED ARTIFACTS:</span>
+                        <div class="artifacts-chips" id="artifactsChips"></div>
+                    </div>
+                </div>
+
                 <!-- Execution Terminal & Intelligence Report Grid -->
                 <div class="workbench-grid">
                     <!-- Left: Real-Time Thought Stream -->
@@ -2022,6 +2267,8 @@
                     if (msg.type === "agent_thought") {
                         appendThoughtLog(msg.data);
                         highlightActivePipelineStage(msg.data.agent);
+                    } else if (msg.type === "agent_event") {
+                        handleAgentEvent(msg.data);
                     } else if (msg.type === "workflow_completed") {
                         handleWorkflowSuccess(msg.data);
                     }
@@ -2112,6 +2359,219 @@
         }
 
         // ==========================================
+        // Sovereign Agentic Task Engine (SIH26117)
+        // ==========================================
+        let currentTaskId = null;
+        let currentTaskPlan = [];
+        let currentArtifacts = [];
+
+        function handleAgentEvent(evt) {
+            if (!evt) return;
+
+            // Auto-correlate task if not already set
+            if (evt.task_id && !currentTaskId) {
+                currentTaskId = evt.task_id;
+                const metaId = document.getElementById("taskMetaId");
+                if (metaId) metaId.innerText = "ID: " + evt.task_id;
+            }
+
+            // Always log event to thought stream
+            const agentLabel = evt.tool_name ? `Tool:${evt.tool_name}` : (evt.event_type || "AgentEngine");
+            appendThoughtLog({
+                agent: agentLabel,
+                thought: evt.message || `Event: ${evt.event_type}`,
+                timestamp: evt.timestamp || new Date().toISOString()
+            });
+
+            const statusBadge = document.getElementById("taskStatusBadge");
+            const cancelBtn = document.getElementById("btnCancelTask");
+            const retryBtn = document.getElementById("btnRetryTask");
+            const monitorPanel = document.getElementById("taskMonitorPanel");
+
+            if (monitorPanel) monitorPanel.style.display = "flex";
+
+            if (evt.event_type === "PLAN_CREATED") {
+                const plan = evt.details?.plan || evt.data?.plan || [];
+                const category = evt.details?.category || evt.data?.category || "TASK_PLAN";
+                renderTaskPlan(plan, category);
+                if (statusBadge) {
+                    statusBadge.innerText = "EXECUTING";
+                    statusBadge.style.color = "var(--accent-primary)";
+                }
+                if (cancelBtn) cancelBtn.style.display = "inline-flex";
+                if (retryBtn) retryBtn.style.display = "none";
+            } else if (evt.event_type === "STEP_STARTED") {
+                updateStepStatus(evt.step, "EXECUTING");
+                highlightActivePipelineStage(evt.tool_name || "Analyst");
+            } else if (evt.event_type === "STEP_COMPLETED") {
+                updateStepStatus(evt.step, "COMPLETED");
+            } else if (evt.event_type === "STEP_FAILED") {
+                updateStepStatus(evt.step, "FAILED");
+            } else if (evt.event_type === "ARTIFACT_CREATED") {
+                addArtifactChip(evt.details || evt.data || {});
+            } else if (evt.event_type === "TASK_COMPLETED") {
+                if (statusBadge) {
+                    statusBadge.innerText = "COMPLETED";
+                    statusBadge.style.color = "var(--success)";
+                }
+                if (cancelBtn) cancelBtn.style.display = "none";
+                if (retryBtn) retryBtn.style.display = "none";
+                if (evt.details || evt.data) {
+                    handleWorkflowSuccess(evt.details || evt.data);
+                }
+            } else if (evt.event_type === "TASK_CANCELLED") {
+                if (statusBadge) {
+                    statusBadge.innerText = "CANCELLED";
+                    statusBadge.style.color = "var(--danger)";
+                }
+                if (cancelBtn) cancelBtn.style.display = "none";
+                if (retryBtn) retryBtn.style.display = "inline-flex";
+                showToast("Task was cancelled by operator.", "warning");
+            } else if (evt.event_type === "TASK_FAILED") {
+                if (statusBadge) {
+                    statusBadge.innerText = "FAILED";
+                    statusBadge.style.color = "var(--danger)";
+                }
+                if (cancelBtn) cancelBtn.style.display = "none";
+                if (retryBtn) retryBtn.style.display = "inline-flex";
+            }
+        }
+
+        function renderTaskPlan(plan, category) {
+            currentTaskPlan = plan || [];
+            const monitorPanel = document.getElementById("taskMonitorPanel");
+            if (monitorPanel) monitorPanel.style.display = "flex";
+
+            const catBadge = document.getElementById("taskCategoryBadge");
+            if (catBadge) catBadge.innerText = (category || "TASK_PLAN").toUpperCase().replace(/_/g, " ");
+
+            const container = document.getElementById("planStepsContainer");
+            if (!container) return;
+            container.innerHTML = "";
+
+            currentTaskPlan.forEach(s => {
+                const status = s.status || "PENDING";
+                const card = document.createElement("div");
+                card.className = `plan-step-card ${status.toLowerCase()}`;
+                card.id = `planStepCard-${s.step_number}`;
+                card.innerHTML = `
+                    <div class="step-info">
+                        <div class="step-num-badge">${s.step_number}</div>
+                        <div class="step-details">
+                            <div class="step-desc">${escapeHtml(s.description)}</div>
+                            <div class="step-tool">Tool: <strong>${escapeHtml(s.tool_name || "reasoning_engine")}</strong></div>
+                        </div>
+                    </div>
+                    <span class="step-status-tag tag-${status.toLowerCase()}" id="planStepTag-${s.step_number}">
+                        ${status}
+                    </span>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateStepStatus(stepNum, status) {
+            if (!stepNum) return;
+            const card = document.getElementById(`planStepCard-${stepNum}`);
+            const tag = document.getElementById(`planStepTag-${stepNum}`);
+            if (card) {
+                card.className = `plan-step-card ${status.toLowerCase()}`;
+            }
+            if (tag) {
+                tag.className = `step-status-tag tag-${status.toLowerCase()}`;
+                tag.innerText = status;
+            }
+        }
+
+        function renderArtifacts(artifacts) {
+            const artContainer = document.getElementById("artifactsContainer");
+            const artChips = document.getElementById("artifactsChips");
+            if (!artContainer || !artChips) return;
+
+            if (!artifacts || artifacts.length === 0) {
+                artContainer.style.display = "none";
+                return;
+            }
+
+            artContainer.style.display = "flex";
+            artChips.innerHTML = "";
+            artifacts.forEach(art => {
+                const fname = typeof art === "string" ? art : (art.filename || art.title || "artifact");
+                const hash = art.sha256_hash ? art.sha256_hash.substring(0, 8) : "";
+                const chip = document.createElement("a");
+                chip.className = "artifact-chip";
+                chip.href = `/api/v1/agent/artifacts/${encodeURIComponent(fname)}`;
+                chip.target = "_blank";
+                chip.title = `Download SHA-256 verified artifact (${hash || 'verified'})`;
+                chip.innerHTML = `
+                    <span>📄</span>
+                    <span>${escapeHtml(fname)}</span>
+                    ${hash ? `<span style="opacity:0.6; font-size:0.65rem;">[${hash}]</span>` : ""}
+                    <span>⬇</span>
+                `;
+                artChips.appendChild(chip);
+            });
+        }
+
+        function addArtifactChip(art) {
+            const fname = typeof art === "string" ? art : (art.filename || art.title || "artifact");
+            if (!fname) return;
+            const exists = currentArtifacts.some(a => (typeof a === "string" ? a : a.filename) === fname);
+            if (!exists) {
+                currentArtifacts.push(art);
+                renderArtifacts(currentArtifacts);
+                showToast(`Artifact generated: ${fname}`, "success");
+            }
+        }
+
+        async function cancelCurrentTask() {
+            if (!currentTaskId) return;
+            try {
+                const resp = await authFetch(`/api/v1/agent/tasks/${currentTaskId}/cancel`, {
+                    method: "POST"
+                });
+                if (resp.ok) {
+                    showToast("Task cancellation requested.", "warning");
+                    document.getElementById("btnCancelTask").style.display = "none";
+                    document.getElementById("btnRetryTask").style.display = "inline-flex";
+                    const badge = document.getElementById("taskStatusBadge");
+                    if (badge) {
+                        badge.innerText = "CANCELLED";
+                        badge.style.color = "var(--danger)";
+                    }
+                }
+            } catch (e) {
+                showToast("Cancellation failed: " + e.message, "error");
+            }
+        }
+
+        async function retryCurrentTask() {
+            if (!currentTaskId) return;
+            try {
+                showToast("Retrying sovereign task execution...", "info");
+                document.getElementById("btnRetryTask").style.display = "none";
+                document.getElementById("btnCancelTask").style.display = "inline-flex";
+                const badge = document.getElementById("taskStatusBadge");
+                if (badge) {
+                    badge.innerText = "EXECUTING";
+                    badge.style.color = "var(--accent-primary)";
+                }
+                const resp = await authFetch(`/api/v1/agent/tasks/${currentTaskId}/retry`, {
+                    method: "POST"
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    handleWorkflowSuccess(data);
+                } else {
+                    const err = await resp.json();
+                    showToast("Retry failed: " + (err.detail || "Error"), "error");
+                }
+            } catch (e) {
+                showToast("Retry failed: " + e.message, "error");
+            }
+        }
+
+        // ==========================================
         // Query Dispatch & Execution
         // ==========================================
         function dispatchFromDashboard() {
@@ -2132,37 +2592,65 @@
             btn.disabled = true;
             btnText.innerText = "Reasoning...";
 
+            // Reset artifacts & plan state
+            currentArtifacts = [];
+            currentTaskPlan = [];
+            currentTaskId = null;
+            const monitorPanel = document.getElementById("taskMonitorPanel");
+            if (monitorPanel) monitorPanel.style.display = "flex";
+            const statusBadge = document.getElementById("taskStatusBadge");
+            if (statusBadge) {
+                statusBadge.innerText = "INITIALIZING";
+                statusBadge.style.color = "var(--accent-primary)";
+            }
+            const metaId = document.getElementById("taskMetaId");
+            if (metaId) metaId.innerText = "ID: initializing...";
+            const cancelBtn = document.getElementById("btnCancelTask");
+            const retryBtn = document.getElementById("btnRetryTask");
+            if (cancelBtn) cancelBtn.style.display = "inline-flex";
+            if (retryBtn) retryBtn.style.display = "none";
+            document.getElementById("planStepsContainer").innerHTML = '<div style="color: var(--text-dim); font-size: 0.8rem; padding: 0.5rem;">Synthesizing structured task plan...</div>';
+            document.getElementById("artifactsContainer").style.display = "none";
+
             // Reset pipeline visualizer
             document.querySelectorAll(".pipeline-step").forEach(s => s.classList.remove("active", "completed"));
             document.getElementById("stepQuery").classList.add("active", "completed");
             document.getElementById("stepSanitizer").classList.add("active");
 
             appendThoughtLog({
-                agent: "System",
-                thought: `Initiating multi-agent consensus workflow for query: "${query}"`,
+                agent: "SecurityGate",
+                thought: `Security clearance verified. Initiating sovereign task for: "${query}"`,
                 timestamp: new Date().toISOString()
             });
 
             try {
-                if (socket && socket.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({ query: query }));
-                } else {
-                    const resp = await authFetch("/api/v1/query", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ query: query, session_id: sessionId })
-                    });
-                    const data = await resp.json();
-                    handleWorkflowSuccess(data);
+                const resp = await authFetch("/api/v1/agent/tasks", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: query, session_id: sessionId })
+                });
+                if (!resp.ok) {
+                    const errData = await resp.json();
+                    throw new Error(errData.detail || "Agent task dispatch failed");
                 }
+                const data = await resp.json();
+                currentTaskId = data.task_id;
+                if (metaId) metaId.innerText = "ID: " + data.task_id;
+                handleWorkflowSuccess(data);
             } catch (err) {
                 appendThoughtLog({
                     agent: "Error",
-                    thought: `Workflow error: ${err.message}`,
+                    thought: `Task execution error: ${err.message}`,
                     timestamp: new Date().toISOString()
                 });
                 btn.disabled = false;
                 btnText.innerText = "Dispatch Query";
+                if (cancelBtn) cancelBtn.style.display = "none";
+                if (retryBtn) retryBtn.style.display = "inline-flex";
+                if (statusBadge) {
+                    statusBadge.innerText = "FAILED";
+                    statusBadge.style.color = "var(--danger)";
+                }
                 showToast("Workflow execution failed: " + err.message, "error");
             }
         }
@@ -2172,6 +2660,38 @@
             const btnText = document.getElementById("dispatchBtnText");
             if (btn) btn.disabled = false;
             if (btnText) btnText.innerText = "Dispatch Query";
+
+            const cancelBtn = document.getElementById("btnCancelTask");
+            const retryBtn = document.getElementById("btnRetryTask");
+            if (cancelBtn) cancelBtn.style.display = "none";
+
+            const statusBadge = document.getElementById("taskStatusBadge");
+            const metaId = document.getElementById("taskMetaId");
+            if (data.task_id) {
+                currentTaskId = data.task_id;
+                if (metaId) metaId.innerText = "ID: " + data.task_id;
+            }
+
+            const taskStatus = data.status || "COMPLETED";
+            if (statusBadge) {
+                statusBadge.innerText = taskStatus;
+                statusBadge.style.color = taskStatus === "COMPLETED" ? "var(--success)" : taskStatus === "FAILED" || taskStatus === "CANCELLED" ? "var(--danger)" : "var(--accent-primary)";
+            }
+
+            if (taskStatus === "FAILED" || taskStatus === "CANCELLED") {
+                if (retryBtn) retryBtn.style.display = "inline-flex";
+            }
+
+            // Render task plan if provided
+            if (data.task_plan && data.task_plan.length > 0) {
+                renderTaskPlan(data.task_plan, data.category);
+            }
+
+            // Render generated artifacts
+            if (data.generated_artifacts && data.generated_artifacts.length > 0) {
+                currentArtifacts = data.generated_artifacts;
+                renderArtifacts(currentArtifacts);
+            }
 
             // Mark pipeline steps completed
             document.querySelectorAll(".pipeline-step").forEach(s => {
@@ -2184,7 +2704,8 @@
             });
 
             // Update stats
-            const conf = Math.round((data.confidence || 0) * 100);
+            const rawConf = data.confidence !== undefined ? data.confidence : (data.audit_confidence || 0.95);
+            const conf = Math.round(rawConf * 100);
             const confEl = document.getElementById("statConfidence");
             if (confEl) {
                 confEl.innerText = `${conf}%`;
@@ -2193,31 +2714,36 @@
 
             const verdictEl = document.getElementById("statVerdict");
             if (verdictEl) {
-                verdictEl.innerText = (data.verdict || "APPROVED").toUpperCase();
-                verdictEl.style.color = data.verdict === "APPROVED" ? "var(--success)" : "var(--warning)";
+                const verdict = data.verdict || data.audit_verdict || (taskStatus === "COMPLETED" ? "APPROVED" : taskStatus);
+                verdictEl.innerText = verdict.toUpperCase();
+                verdictEl.style.color = verdict === "APPROVED" ? "var(--success)" : "var(--warning)";
             }
 
             const iterEl = document.getElementById("statIterations");
             if (iterEl) iterEl.innerText = data.iteration_count || data.iterations || 1;
 
-            lastReportMarkdown = data.final_report || "";
+            lastReportMarkdown = data.final_answer || data.final_report || "";
             document.getElementById("reportContent").innerHTML = renderMarkdown(lastReportMarkdown);
 
             // Render evidence snippets if citations provided
             const evSection = document.getElementById("evidenceSection");
             const evList = document.getElementById("evidenceList");
-            if (data.citations && data.citations.length > 0) {
+            const rawEvidence = data.evidence || data.citations || [];
+            if (rawEvidence && rawEvidence.length > 0) {
                 evSection.style.display = "flex";
                 evList.innerHTML = "";
-                data.citations.forEach(c => {
+                rawEvidence.forEach(c => {
                     const card = document.createElement("div");
                     card.className = "evidence-card";
+                    const docName = typeof c === "string" ? c : (c.document_id || c.source || "Sovereign Evidence");
+                    const snippet = typeof c === "string" ? c : (c.snippet || c.claim || c.text || JSON.stringify(c));
+                    const score = c.similarity ? Math.round(c.similarity * 100) + "%" : "Grounding Verified";
                     card.innerHTML = `
                         <div class="evidence-card-header">
-                            <span>📄 ${escapeHtml(c.document_id || "Document Evidence")}</span>
-                            <span>Score: ${c.similarity ? Math.round(c.similarity * 100) + "%" : "Verified"}</span>
+                            <span>📄 ${escapeHtml(docName)}</span>
+                            <span>${score}</span>
                         </div>
-                        <div class="evidence-snippet">"${escapeHtml(c.snippet || c)}"</div>
+                        <div class="evidence-snippet">"${escapeHtml(snippet)}"</div>
                     `;
                     evList.appendChild(card);
                 });
@@ -2231,7 +2757,7 @@
                 if (tipEl) tipEl.innerText = data.audit_hash;
             }
 
-            showToast("Intelligence report finalized & ledger signed.", "success");
+            showToast(`Task ${taskStatus.toLowerCase()}: ledger signed & evidence grounded.`, taskStatus === "COMPLETED" ? "success" : "info");
         }
 
         function clearQuery() {
@@ -2489,13 +3015,13 @@
         // SIH Demonstration Mode
         // ==========================================
         function triggerSihDemo() {
-            showToast("Activating SIH26117 Autonomous Multi-Agent Guided Demo...", "info");
+            showToast("Activating SIH26117 Autonomous Multi-Step Industrial Inspection Task...", "info");
             switchTab("workbench");
-            const demoPrompt = "Conduct an air-gapped sovereign compliance evaluation: audit authentication integrity, verify PII redaction enforcement, and assess multi-agent consensus reliability under SIH26117 standards.";
+            const demoPrompt = "Inspect turbine report, compare findings against safety SOP, and prepare recommendation";
             document.getElementById("workbenchQueryInput").value = demoPrompt;
             setTimeout(() => {
                 submitQuery();
-            }, 600);
+            }, 500);
         }
 
         // ==========================================

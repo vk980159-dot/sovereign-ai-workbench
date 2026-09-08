@@ -38,9 +38,21 @@ from app.api.models import (
     UserResponse,
     OAuthProvidersResponse,
     DocumentItem,
-    AdminUserItem
+    AdminUserItem,
+    CreateTaskRequest,
+    TaskResponse,
+    TaskEventItem,
+    ArtifactItem
 )
+from fastapi.responses import FileResponse
 from app.database.vector_store import vector_store
+from app.database.task_store import (
+    get_task,
+    list_tasks,
+    get_task_events,
+    get_task_artifacts,
+    cancel_task
+)
 from app.security.audit_logger import audit_logger
 from app.security.auth import (
     authenticate_user,
@@ -56,7 +68,7 @@ from app.security.auth import (
     log_oauth_event,
     get_all_users
 )
-from app.agents.graph import run_agent_workflow
+from app.agents.graph import run_agent_workflow, run_agentic_task
 
 api_router = APIRouter()
 
@@ -73,33 +85,7 @@ def is_request_secure(req: Request) -> bool:
 
 
 # Active WebSocket Connection Manager
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: Dict[str, List[WebSocket]] = {}
-
-    async def connect(self, websocket: WebSocket, session_id: str):
-        await websocket.accept()
-        if session_id not in self.active_connections:
-            self.active_connections[session_id] = []
-        self.active_connections[session_id].append(websocket)
-
-    def disconnect(self, websocket: WebSocket, session_id: str):
-        if session_id in self.active_connections:
-            if websocket in self.active_connections[session_id]:
-                self.active_connections[session_id].remove(websocket)
-            if not self.active_connections[session_id]:
-                del self.active_connections[session_id]
-
-    async def broadcast_to_session(self, session_id: str, message: Dict[str, Any]):
-        if session_id in self.active_connections:
-            for connection in self.active_connections[session_id]:
-                try:
-                    await connection.send_json(message)
-                except Exception:
-                    pass
-
-
-ws_manager = ConnectionManager()
+from app.api.ws_manager import ws_manager, ConnectionManager
 
 
 # ==========================================
@@ -782,6 +768,177 @@ async def query_workbench(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Agent workflow error: {str(e)}")
+
+
+# ==========================================
+# 2B. MULTI-STEP AGENTIC TASK ENGINE ROUTES
+# ==========================================
+@api_router.post("/agent/tasks", response_model=TaskResponse)
+async def create_agent_task(
+    task_req: CreateTaskRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Submits a multi-step sovereign agentic task for execution.
+    Executes security gate, planning, tool operations, verification,
+    and streams events over WebSocket.
+    """
+    sid = task_req.session_id or f"session_{uuid.uuid4().hex[:8]}"
+    username = current_user.get("username", "anonymous")
+    user_id = str(current_user.get("id") or current_user.get("user_id") or username)
+
+    async def thought_emitter(evt: Dict[str, Any]):
+        await ws_manager.broadcast_to_session(sid, {
+            "type": "agent_event",
+            "data": evt
+        })
+
+    final_state = await run_agentic_task(
+        query=task_req.query,
+        user_id=user_id,
+        username=username,
+        session_id=sid,
+        ws_emitter=thought_emitter
+    )
+
+    t_data = get_task(final_state["task_id"])
+    if not t_data:
+        raise HTTPException(status_code=500, detail="Task record initialization failed.")
+
+    return TaskResponse(**t_data)
+
+
+@api_router.get("/agent/tasks", response_model=List[TaskResponse])
+async def list_agent_tasks(
+    limit: int = 50,
+    offset: int = 0,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """
+    Lists tasks. Enforces user isolation: standard users see only their tasks;
+    administrators have global oversight.
+    """
+    role = current_user.get("role", "user")
+    user_id = str(current_user.get("id") or current_user.get("user_id") or current_user.get("username"))
+    tasks = list_tasks(user_id=user_id, role=role, limit=limit, offset=offset)
+    return [TaskResponse(**t) for t in tasks]
+
+
+@api_router.get("/agent/tasks/{task_id}", response_model=TaskResponse)
+async def get_agent_task_details(
+    task_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Retrieves state and outputs of a specific agentic task."""
+    task = get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task '{task_id}' not found.")
+
+    role = current_user.get("role", "user")
+    user_id = str(current_user.get("id") or current_user.get("user_id") or current_user.get("username"))
+    if role != "admin" and task.get("user_id") and task["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized: Access to this sovereign task is restricted.")
+
+    return TaskResponse(**task)
+
+
+@api_router.post("/agent/tasks/{task_id}/cancel")
+async def cancel_agent_task_route(
+    task_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Signals cancellation to an active task."""
+    task = get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task '{task_id}' not found.")
+
+    role = current_user.get("role", "user")
+    user_id = str(current_user.get("id") or current_user.get("user_id") or current_user.get("username"))
+    if role != "admin" and task.get("user_id") and task["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized: Access restricted.")
+
+    success = cancel_task(task_id)
+    return {"task_id": task_id, "cancelled": success, "status": "CANCELLED"}
+
+
+@api_router.post("/agent/tasks/{task_id}/retry", response_model=TaskResponse)
+async def retry_agent_task_route(
+    task_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Re-executes a failed or cancelled agentic task."""
+    task = get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task '{task_id}' not found.")
+
+    role = current_user.get("role", "user")
+    user_id = str(current_user.get("id") or current_user.get("user_id") or current_user.get("username"))
+    if role != "admin" and task.get("user_id") and task["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized: Access restricted.")
+
+    sid = task.get("session_id") or f"session_{uuid.uuid4().hex[:8]}"
+    username = current_user.get("username", "anonymous")
+
+    final_state = await run_agentic_task(
+        query=task["query"],
+        user_id=user_id,
+        username=username,
+        session_id=sid
+    )
+    t_data = get_task(final_state["task_id"])
+    return TaskResponse(**t_data)
+
+
+@api_router.get("/agent/tasks/{task_id}/events", response_model=List[TaskEventItem])
+async def get_task_event_stream(
+    task_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Retrieves all telemetry and execution events recorded for a task."""
+    task = get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task '{task_id}' not found.")
+
+    role = current_user.get("role", "user")
+    user_id = str(current_user.get("id") or current_user.get("user_id") or current_user.get("username"))
+    if role != "admin" and task.get("user_id") and task["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized: Access restricted.")
+
+    events = get_task_events(task_id)
+    return [TaskEventItem(**e) for e in events]
+
+
+@api_router.get("/agent/tasks/{task_id}/artifacts", response_model=List[ArtifactItem])
+async def get_task_artifacts_list(
+    task_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Retrieves artifacts generated by a task."""
+    task = get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task '{task_id}' not found.")
+
+    role = current_user.get("role", "user")
+    user_id = str(current_user.get("id") or current_user.get("user_id") or current_user.get("username"))
+    if role != "admin" and task.get("user_id") and task["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized: Access restricted.")
+
+    artifacts = get_task_artifacts(task_id)
+    return [ArtifactItem(**a) for a in artifacts]
+
+
+@api_router.get("/agent/artifacts/{filename}")
+async def get_artifact_file(
+    filename: str,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Safely retrieves or downloads an artifact file from the designated OUTPUT_DIR."""
+    clean_name = os.path.basename(filename)
+    filepath = os.path.join(settings.OUTPUT_DIR, clean_name)
+    if not os.path.isfile(filepath):
+        raise HTTPException(status_code=404, detail=f"Artifact '{clean_name}' not found.")
+
+    return FileResponse(filepath, filename=clean_name)
 
 
 # ==========================================

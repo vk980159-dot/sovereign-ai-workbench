@@ -1,0 +1,30 @@
+SOVEREIGN INDUSTRIAL OPERATING PROCEDURE (SOP-HYD-2026-V3)
+Standard Operating Procedure: Hydraulic Actuator & Turbine Pressure Safety Thresholds
+Standard Classification: SIH-IND-COMPLIANCE-26117
+
+1. PRESSURE TOLERANCE THRESHOLDS:
+   - Normal Operating Range: 175.0 Bar to 190.0 Bar.
+   - Advisory Warning Level: Pressure drop exceeding 15.0 Bar below nominal (165.0 Bar or lower).
+   - Critical Safety Threshold: Pressure drop exceeding 30.0 Bar below nominal (150.0 Bar or lower).
+   - MANDATORY ACTION: When operating pressure drops below 150.0 Bar (delta >= 30.0 Bar), immediate controlled system isolation is required within 4 hours.
+
+2. FLUID LEAKAGE & SEAL INTEGRITY PROTOCOL:
+   - Class 1 Seep (< 10 ml/hour): Document and monitor during next shift.
+   - Class 2 Active Leak (10 - 50 ml/hour): Immediate mechanical isolation of flange, torque re-calibration, and seal gasket replacement within 8 hours.
+   - Class 3 Severe Leak (> 50 ml/hour): Emergency shutdown and fluid containment.
+
+3. THERMAL SAFETY THRESHOLDS:
+   - Nominal Bearing Temperature: <= 75.0 deg C.
+   - Advisory Temperature Alert: 75.1 deg C to 85.0 deg C.
+   - Critical Overheat Limit: > 85.0 deg C.
+   - MANDATORY ACTION: At temperatures exceeding 85.0 deg C, throttle turbine load by 40% immediately and inspect cooling jacket circulation.
+
+4. EMERGENCY ACTUATION LATENCY (EDV-01):
+   - Nominal Response Time: <= 2.5 seconds.
+   - Maximum Allowable Latency: 3.5 seconds.
+   - MANDATORY ACTION: Any EDV latency exceeding 3.5 seconds requires immediate bypass switch testing and solenoid replacement before restarting cycle.
+
+5. REMEDIATION & VERIFICATION REQUIREMENTS:
+   - Formulate written Remediation Recommendation Report.
+   - Verify all delta calculations against Section 1, 2, 3, and 4 limits.
+   - Secure sign-off from Chief Safety Engineer and record cryptographic hash in the Sovereign Audit Ledger.

@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # Sovereign AI Workbench - Git Ignore Rules (SIH26117)
 # ==============================================================================
 
@@ -24,8 +24,11 @@ ENV/
 # Local databases & user data
 auth.db
 auth.db-journal
+tasks.db
+tasks.db-journal
 chroma_db/
 uploaded_docs/
+generated_artifacts/
 audit_trail.jsonl
 
 # Logs & temp files

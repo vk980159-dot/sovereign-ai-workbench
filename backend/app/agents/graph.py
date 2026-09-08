@@ -1,81 +1,206 @@
 """
-LangGraph StateGraph Assembly & Workflow Execution.
-Configures explicit node transitions, fact-checking conditional re-routing,
-and in-memory checkpointed state persistence.
+LangGraph Multi-Step Agentic StateGraph (SIH26117).
+Orchestrates: Security Gate -> Task Planner -> Execution Loop -> Verification -> Synthesizer.
+Provides full lifecycle persistence and backward compatibility.
 """
 
 import uuid
-from typing import AsyncGenerator, Dict, Any, Callable, Optional
+from typing import Dict, Any, Callable, Optional, Awaitable
+from datetime import datetime, timezone
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 
 from app.config import settings
 from app.agents.state import AgentState
 from app.agents.nodes import (
-    retriever_node,
-    analyst_node,
-    auditor_node,
-    reporter_node
+    security_gate_node,
+    planner_node,
+    execution_node,
+    verifier_node,
+    synthesizer_node
 )
+from app.agents.events import (
+    emit_agent_event,
+    register_event_callback,
+    unregister_event_callback,
+    TASK_CREATED,
+    TASK_COMPLETED,
+    TASK_FAILED
+)
+from app.database.task_store import (
+    create_task,
+    update_task,
+    get_task
+)
+from app.security.audit_logger import audit_logger
 
 
-def audit_router(state: AgentState) -> str:
-    """
-    Conditional edge router following Auditor fact-checking.
-    If confidence < 0.80 and iteration ceiling has not been reached, re-routes to Analyst.
-    Otherwise advances to Reporter.
-    """
-    confidence = state.get("audit_confidence", 0.0)
-    verdict = state.get("audit_verdict", "APPROVED")
-    current_iter = state.get("iteration_count", 1)
-    max_iters = state.get("max_iterations", settings.MAX_AUDIT_ITERATIONS)
-
-    # Re-route condition: Low confidence and under iteration limit
-    if (confidence < settings.MIN_AUDIT_CONFIDENCE or verdict == "REJECTED") and current_iter < max_iters:
-        return "analyst"
-
-    return "reporter"
+def verification_router(state: AgentState) -> str:
+    """Routes to synthesizer upon verification."""
+    # In this multi-step architecture, executor handles inner bounded tool retries.
+    # The verifier assigns confidence and verdict, and routes to synthesizer.
+    return "synthesizer"
 
 
-def build_sovereign_agent_graph():
-    """
-    Constructs and compiles the 4-agent state machine.
-    Workflow: Retriever -> Analyst -> Auditor -> (Analyst <loop> OR Reporter) -> END
-    """
+def build_agentic_workflow():
+    """Compiles the sovereign agentic state machine."""
     workflow = StateGraph(AgentState)
 
-    # 1. Register Agents as Nodes
-    workflow.add_node("retriever", retriever_node)
-    workflow.add_node("analyst", analyst_node)
-    workflow.add_node("auditor", auditor_node)
-    workflow.add_node("reporter", reporter_node)
+    workflow.add_node("security_gate", security_gate_node)
+    workflow.add_node("planner", planner_node)
+    workflow.add_node("executor", execution_node)
+    workflow.add_node("verifier", verifier_node)
+    workflow.add_node("synthesizer", synthesizer_node)
 
-    # 2. Define Execution Graph Edges
-    workflow.set_entry_point("retriever")
-    workflow.add_edge("retriever", "analyst")
-    workflow.add_edge("analyst", "auditor")
+    workflow.set_entry_point("security_gate")
+    workflow.add_edge("security_gate", "planner")
+    workflow.add_edge("planner", "executor")
+    workflow.add_edge("executor", "verifier")
+    workflow.add_conditional_edges("verifier", verification_router, {"synthesizer": "synthesizer"})
+    workflow.add_edge("synthesizer", END)
 
-    # 3. Dynamic Self-Correction Feedback Loop
-    workflow.add_conditional_edges(
-        "auditor",
-        audit_router,
-        {
-            "analyst": "analyst",
-            "reporter": "reporter"
-        }
+    checkpointer = MemorySaver()
+    return workflow.compile(checkpointer=checkpointer)
+
+
+sovereign_agent_graph = build_agentic_workflow()
+build_sovereign_agent_graph = build_agentic_workflow
+
+
+async def run_agentic_task(
+    query: str,
+    user_id: Optional[str] = None,
+    username: Optional[str] = None,
+    session_id: Optional[str] = None,
+    task_id: Optional[str] = None,
+    ws_emitter: Optional[Callable[[Dict[str, Any]], Awaitable[None]]] = None
+) -> Dict[str, Any]:
+    """
+    Main entry point to execute an authentic multi-step agentic task.
+    Integrates with SQLite task persistence, SHA-256 audit ledger, and WebSocket events.
+    """
+    tid = task_id or f"task_{uuid.uuid4().hex[:12]}"
+    sid = session_id or tid
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    # 1. Initialize in task store
+    create_task(
+        task_id=tid,
+        query=query,
+        user_id=user_id,
+        username=username,
+        session_id=sid
     )
 
-    # 4. Final Termination Edge
-    workflow.add_edge("reporter", END)
+    # 2. Emit TASK_CREATED
+    await emit_agent_event(
+        task_id=tid,
+        event_type=TASK_CREATED,
+        message=f"Agentic task '{tid}' initialized for query: '{query[:80]}'",
+        status="PENDING",
+        callback=ws_emitter
+    )
 
-    # 5. Persistent Checkpointing for Air-Gapped State Recovery
-    checkpointer = MemorySaver()
-    app = workflow.compile(checkpointer=checkpointer)
-    return app
+    # 3. Log genesis in audit ledger
+    audit_logger.log_event(
+        event_type="TASK_CREATED",
+        agent_name="Orchestrator",
+        action="INIT_TASK",
+        details={"task_id": tid, "session_id": sid, "user": username or "anonymous"},
+        input_data=query[:150],
+        output_data="PENDING"
+    )
 
+    # 4. Construct initial state
+    initial_state: AgentState = {
+        "task_id": tid,
+        "session_id": sid,
+        "user_id": user_id,
+        "username": username,
+        "original_query": query,
+        "user_query": query,
+        "sanitized_query": query,
+        "task_category": "multi_step_agentic_task",
+        "task_plan": [],
+        "current_step": 0,
+        "total_steps": 0,
+        "completed_steps": [],
+        "failed_steps": [],
+        "step_retries": {},
+        "retrieved_documents": [],
+        "retrieved_docs": [],
+        "retrieval_summary": "",
+        "tool_calls": [],
+        "tool_results": [],
+        "observations": [],
+        "reasoning_summary": "",
+        "analysis_draft": "",
+        "verification_results": {},
+        "confidence": 0.0,
+        "audit_confidence": 0.0,
+        "audit_verdict": "PENDING",
+        "audit_feedback": "",
+        "audit_discrepancies": [],
+        "final_answer": "",
+        "final_report": "",
+        "evidence": [],
+        "citations": [],
+        "action_items": [],
+        "generated_artifacts": [],
+        "status": "INITIALIZED",
+        "current_agent": "SecurityGate",
+        "agent_logs": [],
+        "error": None,
+        "iteration_count": 0,
+        "max_iterations": settings.MAX_AUDIT_ITERATIONS,
+        "started_at": now_iso,
+        "completed_at": None
+    }
 
-# Pre-compiled workflow graph singleton
-sovereign_graph = build_sovereign_agent_graph()
+    config = {"configurable": {"thread_id": tid}}
+    final_state = initial_state
+
+    # 5. Stream LangGraph execution
+    if ws_emitter:
+        register_event_callback(tid, ws_emitter)
+        register_event_callback(sid, ws_emitter)
+
+    try:
+        async for output in sovereign_agent_graph.astream(initial_state, config=config):
+            for node_name, node_output in output.items():
+                final_state = {**final_state, **node_output}
+    finally:
+        if ws_emitter:
+            unregister_event_callback(tid)
+            unregister_event_callback(sid)
+
+    # 6. Update task store with completed state
+    update_task(
+        task_id=tid,
+        status=final_state.get("status", "COMPLETED"),
+        task_plan=final_state.get("task_plan", []),
+        completed_steps=final_state.get("completed_steps", []),
+        evidence=final_state.get("retrieved_documents", []),
+        artifacts=final_state.get("generated_artifacts", []),
+        final_report=final_state.get("final_answer", ""),
+        confidence=final_state.get("confidence", 0.0),
+        verdict=final_state.get("audit_verdict", "APPROVED"),
+        error=final_state.get("error"),
+        completed_at=datetime.now(timezone.utc).isoformat()
+    )
+
+    # 7. Emit terminal event
+    evt_type = TASK_COMPLETED if final_state.get("status") == "COMPLETED" else TASK_FAILED
+    await emit_agent_event(
+        task_id=tid,
+        event_type=evt_type,
+        message=f"Agentic task '{tid}' reached state: {final_state.get('status')}",
+        status=final_state.get("status"),
+        details={"confidence": final_state.get("confidence"), "verdict": final_state.get("audit_verdict")},
+        callback=ws_emitter
+    )
+
+    return final_state
 
 
 async def run_agent_workflow(
@@ -84,51 +209,24 @@ async def run_agent_workflow(
     on_thought_callback: Optional[Callable[[Dict[str, Any]], Any]] = None
 ) -> Dict[str, Any]:
     """
-    Executes the multi-agent workflow for a given query.
-    Optionally emits real-time agent thoughts to a WebSocket callback.
-
-    Returns:
-        Final combined AgentState dictionary.
+    Backward-compatible wrapper for existing endpoints and tests.
     """
-    sid = session_id or str(uuid.uuid4())
+    async def adapter_callback(event_dict: Dict[str, Any]):
+        if on_thought_callback:
+            # Convert to legacy thought format
+            legacy_thought = {
+                "timestamp": event_dict.get("timestamp"),
+                "agent": event_dict.get("event_type", "Agent"),
+                "thought": event_dict.get("message", ""),
+                "step": event_dict.get("event_type", "EXECUTION")
+            }
+            res = on_thought_callback(legacy_thought)
+            import inspect
+            if inspect.isawaitable(res):
+                await res
 
-    initial_state: AgentState = {
-        "session_id": sid,
-        "user_query": query,
-        "sanitized_query": "",
-        "retrieved_docs": [],
-        "retrieval_summary": "",
-        "analysis_draft": "",
-        "iteration_count": 0,
-        "max_iterations": settings.MAX_AUDIT_ITERATIONS,
-        "audit_confidence": 0.0,
-        "audit_verdict": "PENDING",
-        "audit_feedback": "",
-        "audit_discrepancies": [],
-        "final_report": "",
-        "citations": [],
-        "action_items": [],
-        "current_agent": "Retriever",
-        "status": "INITIALIZED",
-        "agent_logs": [],
-        "error": None
-    }
-
-    config = {"configurable": {"thread_id": sid}}
-    last_state = initial_state
-    emitted_log_count = 0
-
-    # Stream state updates node by node
-    async for output in sovereign_graph.astream(initial_state, config=config):
-        for node_name, node_output in output.items():
-            last_state = {**last_state, **node_output}
-
-            # Emit new logs to callback if attached
-            if on_thought_callback and "agent_logs" in node_output:
-                current_logs = node_output["agent_logs"]
-                # Stream newly added logs
-                while emitted_log_count < len(current_logs):
-                    await on_thought_callback(current_logs[emitted_log_count])
-                    emitted_log_count += 1
-
-    return last_state
+    return await run_agentic_task(
+        query=query,
+        session_id=session_id,
+        ws_emitter=adapter_callback
+    )

@@ -116,3 +116,50 @@ class AdminUserItem(BaseModel):
     is_active: bool
     created_at: str
     last_login: Optional[str] = None
+
+
+class CreateTaskRequest(BaseModel):
+    query: str = Field(..., min_length=2, description="Task instruction or research question")
+    session_id: Optional[str] = Field(None, description="Optional session identifier for WebSocket correlation")
+
+
+class TaskResponse(BaseModel):
+    task_id: str
+    session_id: str
+    user_id: Optional[str] = None
+    username: Optional[str] = None
+    query: str
+    category: Optional[str] = None
+    status: str
+    task_plan: List[Dict[str, Any]] = []
+    current_step: int = 0
+    total_steps: int = 0
+    completed_steps: List[Dict[str, Any]] = []
+    evidence: List[Dict[str, Any]] = []
+    artifacts: List[Dict[str, Any]] = []
+    final_report: Optional[str] = None
+    confidence: float = 0.0
+    verdict: Optional[str] = None
+    error: Optional[str] = None
+    created_at: str
+    completed_at: Optional[str] = None
+
+
+class TaskEventItem(BaseModel):
+    id: int
+    task_id: str
+    timestamp: str
+    event_type: str
+    message: str
+    step: Optional[int] = None
+    tool_name: Optional[str] = None
+    details: Dict[str, Any] = {}
+    status: Optional[str] = "OK"
+
+
+class ArtifactItem(BaseModel):
+    filename: str
+    filepath: str
+    size_bytes: int
+    sha256: str
+    created_at: str

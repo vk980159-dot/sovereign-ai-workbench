@@ -1,6 +1,6 @@
 """
 Agent State Definition for LangGraph State Machine.
-Defines typed immutable/mutable state passed across all multi-agent nodes.
+Defines strongly typed mutable state passed across all multi-step agentic nodes.
 """
 
 from typing import TypedDict, List, Dict, Any, Optional
@@ -8,36 +8,62 @@ from typing import TypedDict, List, Dict, Any, Optional
 
 class AgentState(TypedDict):
     """
-    Unified state schema for Sovereign Multi-Agent Workflow.
-    Preserves audit trails, intermediate thoughts, iterative corrections, and source citations.
+    Unified state schema for Sovereign Multi-Step Agentic Engine (SIH26117).
+    Maintains full lifecycle state: planning, tool executions, observations,
+    knowledge retrieval, verification, retry tracking, evidence, and audit logs.
     """
-    # Core Request Context
+    # Core Task & Identity Context
+    task_id: str
     session_id: str
+    user_id: Optional[str]
+    username: Optional[str]
+    original_query: str
     user_query: str
     sanitized_query: str
+    task_category: str
 
-    # Node 1: Retriever Outputs
+    # Planning & Dynamic Routing
+    task_plan: List[Dict[str, Any]]
+    current_step: int
+    total_steps: int
+    completed_steps: List[Dict[str, Any]]
+    failed_steps: List[Dict[str, Any]]
+    step_retries: Dict[str, int]
+
+    # Knowledge & Tool Execution
+    retrieved_documents: List[Dict[str, Any]]
     retrieved_docs: List[Dict[str, Any]]
     retrieval_summary: str
+    tool_calls: List[Dict[str, Any]]
+    tool_results: List[Dict[str, Any]]
+    observations: List[Dict[str, Any]]
 
-    # Node 2: Analyst Outputs
+    # Reasoning & Analysis
+    reasoning_summary: str
     analysis_draft: str
-    iteration_count: int
-    max_iterations: int
 
-    # Node 3: Auditor Outputs
+    # Verification & Quality Assurance
+    verification_results: Dict[str, Any]
+    confidence: float
     audit_confidence: float
     audit_verdict: str
     audit_feedback: str
     audit_discrepancies: List[str]
 
-    # Node 4: Reporter Outputs
+    # Final Synthesis & Generated Artifacts
+    final_answer: str
     final_report: str
+    evidence: List[Dict[str, Any]]
     citations: List[str]
     action_items: List[str]
+    generated_artifacts: List[Dict[str, Any]]
 
-    # System Status & Live Streamed Telemetry
-    current_agent: str
+    # Execution Telemetry & Lifecycle
     status: str
+    current_agent: str
     agent_logs: List[Dict[str, Any]]
     error: Optional[str]
+    iteration_count: int
+    max_iterations: int
+    started_at: str
+    completed_at: Optional[str]

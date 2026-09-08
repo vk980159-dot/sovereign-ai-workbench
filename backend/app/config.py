@@ -127,6 +127,9 @@ class WorkbenchSettings(BaseSettings):
     AUDIT_LOG_FILE: str = str(BASE_DIR / "audit_trail.jsonl")
     UPLOAD_DIR: str = str(BASE_DIR / "uploaded_docs")
     AUTH_DB_PATH: str = str(BASE_DIR / "auth.db")
+    OUTPUT_DIR: str = str(BASE_DIR / "generated_artifacts")
+    TASK_DB_PATH: str = str(BASE_DIR / "tasks.db")
+    DEMO_DATA_DIR: str = str(BASE_DIR / "demo_data")
 
     # Security & Cryptographic Auditing
     PII_REDACTION_TAG: str = "[REDACTED_CONFIDENTIAL]"
@@ -139,6 +142,10 @@ class WorkbenchSettings(BaseSettings):
     # Agent Loop Guardrails
     MAX_AUDIT_ITERATIONS: int = 3
     MIN_AUDIT_CONFIDENCE: float = 0.80
+    MAX_AGENT_STEPS: int = 10
+    MAX_TOOL_CALLS: int = 15
+    MAX_RETRIES: int = 2
+    MAX_EXECUTION_TIME_SECONDS: int = 120
 
     # Authentication & Session Security
     AUTH_SECRET_KEY: str = Field(
@@ -228,6 +235,9 @@ class WorkbenchSettings(BaseSettings):
             self.AUDIT_LOG_FILE = str(data_path / "audit_trail.jsonl")
             self.UPLOAD_DIR = str(data_path / "uploaded_docs")
             self.AUTH_DB_PATH = str(data_path / "auth.db")
+            self.OUTPUT_DIR = str(data_path / "generated_artifacts")
+            self.TASK_DB_PATH = str(data_path / "tasks.db")
+            self.DEMO_DATA_DIR = str(data_path / "demo_data")
 
         # Sanitize OAuth configurations against stray quotes or angle brackets
         self.GOOGLE_CLIENT_ID = _clean_credential(self.GOOGLE_CLIENT_ID)
