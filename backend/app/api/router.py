@@ -24,7 +24,7 @@ from fastapi import (
 )
 from fastapi.responses import RedirectResponse
 
-from app.config import settings
+from app.config import settings, BASE_DIR
 from app.api.models import (
     QueryRequest,
     QueryResponse,
@@ -73,7 +73,8 @@ from app.security.auth import (
     verify_oauth_state,
     resolve_social_user,
     log_oauth_event,
-    get_all_users
+    get_all_users,
+    get_current_user_optional
 )
 from app.agents.graph import run_agent_workflow, run_agentic_task
 
@@ -956,6 +957,100 @@ async def download_artifact_file(
 ):
     """Direct download endpoint for generated deliverable artifacts."""
     return await get_artifact_file(filename=filename, current_user=current_user)
+
+
+# ==========================================
+# 2B.1 SIH26117 JUDGE DEMO MODE
+# ==========================================
+@api_router.post("/agent/demo/sih26117")
+async def run_sih26117_judge_demo(
+    request: Request,
+    deliverable_format: str = "DOCX",
+    current_user: Optional[Dict[str, Any]] = Depends(get_current_user_optional)
+):
+    """
+    SIH26117 Judge Demo Task Runner.
+    Triggers the authentic on-premise industrial multimodal inspection workflow:
+    - Scanned Report Ingestion & Local Tesseract OCR
+    - Technical Image Analysis & Local LLaVA Vision
+    - ChromaDB SOP-IND-702 Knowledge Base Retrieval
+    - Deterministic Exceedance Calculation
+    - Authenticated Word Approval Note Generation
+    - Binary Artifact & Evidence Verification
+    Streams live telemetry events over WebSocket session.
+    """
+    import asyncio
+    import logging
+    logger = logging.getLogger("sovereign.judge_demo")
+
+    user = current_user or {"username": "judge_evaluator", "id": "judge_sih26117", "role": "admin"}
+    username = user.get("username", "judge_evaluator")
+    user_id = str(user.get("id") or user.get("user_id") or username)
+    tid = f"demo_sih26117_{uuid.uuid4().hex[:8]}"
+    sid = tid
+
+    query = (
+        "Inspect scanned turbine report, cross-reference SOP-IND-702 safety limits, "
+        "calculate thermal deviation, and generate signed Word Approval Note"
+    )
+
+    async def thought_emitter(evt: Dict[str, Any]):
+        await ws_manager.broadcast_to_session(sid, {
+            "type": "agent_event",
+            "data": evt
+        })
+
+    async def _execute_demo_bg():
+        try:
+            await run_agentic_task(
+                query=query,
+                user_id=user_id,
+                username=username,
+                session_id=sid,
+                task_id=tid,
+                deliverable_format=deliverable_format,
+                ws_emitter=thought_emitter
+            )
+        except Exception as e:
+            logger.error(f"Error executing judge demo task '{tid}': {e}", exc_info=True)
+
+    asyncio.create_task(_execute_demo_bg())
+    await asyncio.sleep(0.02)
+
+    return {
+        "status": "INITIALIZED",
+        "task_id": tid,
+        "session_id": sid,
+        "query": query,
+        "deliverable_format": deliverable_format,
+        "synthetic_files": [
+            "scanned_inspection_report.pdf",
+            "inspection_photo.png",
+            "equipment_sop.md",
+            "correspondence.md"
+        ],
+        "websocket_endpoint": f"/ws/agent-thoughts/{sid}"
+    }
+
+
+@api_router.get("/demo/files/{filename}")
+async def get_demo_file(filename: str):
+    """
+    Safely serves authentic demo data assets (such as inspection_photo.png)
+    for Judge Demo presentation previews without external network transfer.
+    """
+    clean_name = os.path.basename(filename)
+    candidates = [
+        os.path.join(settings.DEMO_DATA_DIR, clean_name),
+        os.path.join(str(BASE_DIR), "demo_data", clean_name),
+        os.path.join(settings.OUTPUT_DIR, clean_name),
+        os.path.join(str(BASE_DIR), "backend", "demo_data", clean_name)
+    ]
+    for path in candidates:
+        if os.path.isfile(path):
+            return FileResponse(path, filename=clean_name)
+
+    raise HTTPException(status_code=404, detail=f"Demo file '{clean_name}' not found.")
 
 
 # ==========================================
