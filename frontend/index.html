@@ -4,23 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sovereign AI Workbench | Secure On-Premise Multi-Agent Intelligence • SIH26117</title>
-    <!-- Offline Embedded Styling (Industrial Dark Theme) -->
     <style>
         :root {
-            --bg-base: #0a0c10;
-            --bg-surface: #12151d;
-            --bg-card: #181d28;
-            --border-color: #262f40;
+            --bg-base: #07090e;
+            --bg-surface: #0e121a;
+            --bg-card: #141923;
+            --bg-card-hover: #1a2230;
+            --border-color: #1f2737;
+            --border-light: #2b364c;
             --accent-primary: #38bdf8;
-            --accent-primary-hover: #0284c7;
-            --accent-glow: rgba(56, 189, 248, 0.15);
-            --text-main: #f1f5f9;
+            --accent-hover: #0284c7;
+            --accent-glow: rgba(56, 189, 248, 0.18);
+            --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            --mono-family: "JetBrains Mono", "Fira Code", Consolas, Menlo, monospace;
+            --text-dim: #64748b;
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.18);
+            --warning: #f59e0b;
+            --warning-glow: rgba(245, 158, 11, 0.18);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.18);
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-mono: "JetBrains Mono", "Fira Code", Consolas, Menlo, monospace;
+            --sidebar-width: 260px;
         }
 
         * {
@@ -32,7 +38,7 @@
         body {
             background-color: var(--bg-base);
             color: var(--text-main);
-            font-family: var(--font-family);
+            font-family: var(--font-sans);
             line-height: 1.5;
             min-height: 100vh;
             display: flex;
@@ -46,87 +52,113 @@
         ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
 
-        /* Navigation Header */
+        /* Top Header */
         header {
-            background: rgba(18, 21, 29, 0.95);
+            background: rgba(14, 18, 26, 0.95);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-color);
-            padding: 1rem 1.5rem;
+            padding: 0.75rem 1.25rem;
             position: sticky;
             top: 0;
-            z-index: 50;
+            z-index: 100;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn-menu-toggle {
+            display: none;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .btn-menu-toggle:hover {
+            border-color: var(--accent-primary);
         }
 
         .brand-container {
             display: flex;
             align-items: center;
-            gap: 0.85rem;
+            gap: 0.75rem;
         }
 
         .brand-logo {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             background: linear-gradient(135deg, #0284c7, #38bdf8);
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 900;
-            font-size: 1.25rem;
+            font-weight: 800;
+            font-size: 1.15rem;
             color: #ffffff;
-            box-shadow: 0 0 15px var(--accent-glow);
+            box-shadow: 0 0 16px var(--accent-glow);
+            flex-shrink: 0;
         }
 
         .brand-title {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             font-weight: 700;
             letter-spacing: -0.02em;
+            line-height: 1.2;
         }
 
         .brand-subtitle {
-            font-size: 0.72rem;
+            font-size: 0.68rem;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.06em;
+            display: block;
         }
 
-        .header-badges {
+        .header-right {
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
 
-        .status-badge {
+        .badge {
             display: inline-flex;
             align-items: center;
-            gap: 0.4rem;
-            padding: 0.35rem 0.75rem;
+            gap: 0.35rem;
+            padding: 0.25rem 0.65rem;
             border-radius: 9999px;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 600;
             border: 1px solid transparent;
+            white-space: nowrap;
         }
 
-        .badge-airgap {
-            background: rgba(16, 185, 129, 0.1);
-            color: #34d399;
+        .badge-sih {
+            background: rgba(56, 189, 248, 0.08);
+            color: var(--accent-primary);
+            border-color: rgba(56, 189, 248, 0.25);
+        }
+
+        .badge-health {
+            background: rgba(16, 185, 129, 0.08);
+            color: var(--success);
             border-color: rgba(16, 185, 129, 0.25);
         }
 
-        .badge-audit {
-            background: rgba(56, 189, 248, 0.1);
-            color: #7dd3fc;
-            border-color: rgba(56, 189, 248, 0.25);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .badge-audit:hover {
-            background: rgba(56, 189, 248, 0.2);
-            border-color: var(--accent-primary);
+        .badge-ws {
+            background: rgba(16, 185, 129, 0.08);
+            color: var(--success);
+            border-color: rgba(16, 185, 129, 0.25);
+            font-family: var(--font-mono);
         }
 
         .pulse-dot {
@@ -134,41 +166,324 @@
             height: 7px;
             border-radius: 50%;
             background-color: currentColor;
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
 
-        @keyframes pulse {
+        @keyframes pulse-ring {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.9); }
+            50% { opacity: 0.4; transform: scale(0.85); }
         }
 
-        /* Main Workspace Layout */
-        main {
-            display: grid;
-            grid-template-columns: 320px 1fr 420px;
-            gap: 1.25rem;
-            padding: 1.25rem;
+        .btn-demo {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(2, 132, 199, 0.25));
+            color: var(--accent-primary);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .btn-demo:hover {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(2, 132, 199, 0.4));
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding-left: 0.5rem;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #1f2737;
+            border: 1px solid var(--accent-primary);
+            color: var(--accent-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .user-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .user-role-badge {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.35rem 0.65rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-logout:hover {
+            color: var(--danger);
+            border-color: var(--danger);
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        /* App Container with Sidebar */
+        .app-container {
+            display: flex;
             flex: 1;
-            height: calc(100vh - 72px);
+            height: calc(100vh - 61px);
             overflow: hidden;
+            position: relative;
         }
 
-        @media (max-width: 1200px) {
-            main {
-                grid-template-columns: 1fr;
-                height: auto;
-                overflow: visible;
-            }
+        /* Left Sidebar */
+        aside.sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-shrink: 0;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 80;
         }
 
+        .sidebar-nav {
+            padding: 1rem 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            overflow-y: auto;
+        }
+
+        .nav-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            padding: 0.5rem 0.75rem 0.25rem 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.65rem 0.75rem;
+            border-radius: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .nav-item.active {
+            color: var(--accent-primary);
+            background: rgba(56, 189, 248, 0.08);
+            border-color: rgba(56, 189, 248, 0.2);
+            font-weight: 600;
+        }
+
+        .nav-item-content {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .nav-item-badge {
+            font-size: 0.68rem;
+            padding: 0.15rem 0.45rem;
+            border-radius: 9999px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .nav-item.active .nav-item-badge {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: rgba(56, 189, 248, 0.3);
+            color: var(--accent-primary);
+        }
+
+        .sidebar-footer {
+            padding: 1rem;
+            border-top: 1px solid var(--border-color);
+            background: rgba(7, 9, 14, 0.5);
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .sidebar-footer .status-line {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: var(--success);
+        }
+
+        /* Sidebar backdrop for mobile */
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            top: 61px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 75;
+        }
+
+        /* Main Workspace Content Area */
+        main.main-content {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--bg-base);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        /* Tab Panels */
+        .tab-panel {
+            display: none;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .tab-panel.active {
+            display: flex;
+        }
+
+        /* Metrics Strip */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .metric-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .metric-icon {
+            font-size: 1.15rem;
+        }
+
+        .metric-value {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-subtext {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .metric-card.accent-cyan::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: var(--accent-primary);
+        }
+
+        .metric-card.accent-green::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: var(--success);
+        }
+
+        .metric-card.accent-amber::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: var(--warning);
+        }
+
+        /* Generic Panels */
         .panel {
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
         }
 
         .panel-header {
@@ -178,6 +493,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 0.75rem;
         }
 
         .panel-title {
@@ -193,523 +509,1387 @@
 
         .panel-content {
             padding: 1.15rem;
-            overflow-y: auto;
-            flex: 1;
             display: flex;
             flex-direction: column;
             gap: 1rem;
         }
 
-        /* Ingestion Panel */
-        .dropzone {
-            border: 2px dashed var(--border-color);
-            border-radius: 10px;
-            padding: 1.5rem 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            background: rgba(24, 29, 40, 0.5);
+        /* Workbench Layout */
+        .workbench-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
         }
 
-        .dropzone:hover, .dropzone.dragover {
-            border-color: var(--accent-primary);
-            background: var(--accent-glow);
+        @media (max-width: 1100px) {
+            .workbench-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
-        .dropzone-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            color: var(--accent-primary);
-        }
-
-        .doc-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .doc-item {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.65rem 0.85rem;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .doc-name {
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 170px;
-        }
-
-        /* Center Column: Graph & Query */
-        .graph-wrapper {
+        /* Query Input Centerpiece */
+        .query-box-container {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 10px;
             padding: 1rem;
-            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
         }
 
-        .agent-pipeline {
+        .query-textarea {
+            width: 100%;
+            min-height: 80px;
+            max-height: 200px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .query-textarea:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .query-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: relative;
-            margin-bottom: 0.5rem;
+            gap: 0.75rem;
         }
 
-        .agent-node {
+        .query-hints {
+            font-size: 0.72rem;
+            color: var(--text-dim);
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .kbd-shortcut {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-color);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+        }
+
+        .query-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.45rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
             align-items: center;
             gap: 0.35rem;
-            z-index: 2;
         }
 
-        .node-icon-box {
-            width: 52px;
-            height: 52px;
-            border-radius: 12px;
-            background: var(--bg-surface);
-            border: 2px solid var(--border-color);
+        .btn-action:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0284c7, #38bdf8);
+            border: none;
+            color: #ffffff;
+            padding: 0.5rem 1.25rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 0 12px var(--accent-glow);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            opacity: 0.92;
+            transform: scale(1.02);
+            box-shadow: 0 0 18px var(--accent-glow);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+        }
+
+        /* Stage Pipeline Bar */
+        .pipeline-bar {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            justify-content: space-between;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            gap: 0.5rem;
+            overflow-x: auto;
         }
 
-        .agent-node.active .node-icon-box {
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 20px var(--accent-primary);
-            background: rgba(56, 189, 248, 0.15);
-            transform: scale(1.08);
+        .pipeline-step {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            white-space: nowrap;
+            transition: all 0.2s;
         }
 
-        .agent-node.completed .node-icon-box {
-            border-color: var(--success-color);
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--success-color);
+        .pipeline-step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-color);
+            transition: all 0.2s;
         }
 
-        .agent-node.looping .node-icon-box {
-            border-color: var(--warning-color);
-            background: rgba(245, 158, 11, 0.15);
-            animation: pulse 1s infinite;
-        }
-
-        .node-label {
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            letter-spacing: 0.03em;
-        }
-
-        .agent-node.active .node-label {
+        .pipeline-step.active {
             color: var(--accent-primary);
+            font-weight: 700;
+        }
+
+        .pipeline-step.active .pipeline-step-dot {
+            background: var(--accent-primary);
+            box-shadow: 0 0 8px var(--accent-primary);
+            animation: pulse-ring 1.5s infinite;
+        }
+
+        .pipeline-step.completed {
+            color: var(--success);
+        }
+
+        .pipeline-step.completed .pipeline-step-dot {
+            background: var(--success);
         }
 
         .pipeline-connector {
             flex: 1;
-            height: 2px;
+            height: 1px;
             background: var(--border-color);
-            margin: 0 0.5rem;
-            position: relative;
-            top: -12px;
-            z-index: 1;
-            transition: background 0.3s ease;
+            min-width: 12px;
         }
 
-        .pipeline-connector.active {
-            background: var(--accent-primary);
-            box-shadow: 0 0 8px var(--accent-primary);
-        }
-
-        .feedback-loop-path {
-            font-size: 0.7rem;
-            color: var(--warning-color);
-            text-align: center;
-            border-top: 1px dashed var(--warning-color);
-            padding-top: 0.35rem;
-            margin-top: 0.25rem;
-            opacity: 0.8;
-        }
-
-        /* Real-Time Terminal Box */
+        /* Streaming Terminal */
         .terminal-container {
-            background: #08090d;
+            background: #05070a;
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            flex: 1;
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            font-family: var(--mono-family);
+            height: 380px;
         }
 
-        .terminal-header {
-            background: #11131a;
-            padding: 0.5rem 0.75rem;
-            border-bottom: 1px solid #1e2430;
-            font-size: 0.72rem;
-            color: var(--text-muted);
+        .terminal-bar {
+            background: #0b0f17;
+            padding: 0.4rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            color: var(--text-dim);
+            font-size: 0.7rem;
         }
 
+        .terminal-dots {
+            display: flex;
+            gap: 5px;
+        }
+
+        .terminal-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2b364c;
+        }
+
+        .terminal-dot.red { background: #ef4444; }
+        .terminal-dot.yellow { background: #f59e0b; }
+        .terminal-dot.green { background: #10b981; }
+
         .terminal-logs {
-            padding: 0.75rem;
-            font-size: 0.75rem;
-            overflow-y: auto;
             flex: 1;
+            padding: 0.75rem;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 0.4rem;
         }
 
         .log-line {
-            line-height: 1.4;
+            display: flex;
+            gap: 0.4rem;
             word-break: break-word;
+            line-height: 1.4;
         }
 
-        .log-time { color: #64748b; }
-        .log-agent { font-weight: bold; }
+        .log-time { color: var(--text-dim); }
+        .log-agent { font-weight: 700; }
         .agent-Retriever { color: #38bdf8; }
-        .agent-Analyst { color: #a855f7; }
+        .agent-Analyst { color: #a78bfa; }
         .agent-Auditor { color: #f59e0b; }
         .agent-Reporter { color: #10b981; }
+        .agent-Security { color: #fb7185; }
+        .agent-System { color: #94a3b8; }
+        .agent-Error { color: #ef4444; }
 
-        /* Query Input Bar */
-        .query-box {
-            display: flex;
-            gap: 0.5rem;
+        /* Report & Evidence Output */
+        .report-panel {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 0.5rem;
-        }
-
-        .query-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            font-size: 0.9rem;
-            padding: 0.4rem 0.6rem;
-            outline: none;
-        }
-
-        .query-input::placeholder { color: #64748b; }
-
-        .btn-submit {
-            background: var(--accent-primary);
-            color: #000;
-            border: none;
-            padding: 0.6rem 1.25rem;
             border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-submit:hover {
-            background: #7dd3fc;
-            box-shadow: 0 0 15px var(--accent-glow);
-        }
-
-        .btn-submit:disabled {
-            background: #334155;
-            color: #64748b;
-            cursor: not-allowed;
-        }
-
-        /* Right Column: Executive Report */
-        .report-card {
-            background: var(--bg-card);
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            padding: 1.25rem;
-            flex: 1;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 380px;
+            max-height: 600px;
             overflow-y: auto;
+        }
+
+        .report-header-strip {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .stat-badge-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-box-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .stat-box-val {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .report-body {
             font-size: 0.88rem;
+            line-height: 1.6;
+            color: var(--text-main);
         }
 
-        .report-card h1, .report-card h2, .report-card h3 {
+        .report-body h1, .report-body h2, .report-body h3 {
             color: var(--accent-primary);
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
+            margin: 0.75rem 0 0.4rem 0;
         }
 
-        .report-card h1 { font-size: 1.25rem; }
-        .report-card h2 { font-size: 1.05rem; }
-        .report-card p { margin-bottom: 0.75rem; color: #cbd5e1; }
-        .report-card ul, .report-card ol { margin-left: 1.25rem; margin-bottom: 0.75rem; color: #cbd5e1; }
-        .report-card li { margin-bottom: 0.25rem; }
+        .report-body ul, .report-body ol {
+            padding-left: 1.25rem;
+            margin: 0.4rem 0;
+        }
+
+        .report-body strong {
+            color: #ffffff;
+        }
 
         .citation-tag {
-            background: rgba(56, 189, 248, 0.15);
-            color: #38bdf8;
-            padding: 0.1rem 0.35rem;
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent-primary);
+            border: 1px solid rgba(56, 189, 248, 0.3);
             border-radius: 4px;
-            font-family: var(--mono-family);
-            font-size: 0.75rem;
+            padding: 0.1rem 0.35rem;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
             font-weight: 600;
         }
 
-        /* Audit Badge Card */
-        .audit-stat-card {
-            background: #0d1117;
+        /* Evidence Cards Section */
+        .evidence-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 0.75rem;
+        }
+
+        .evidence-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .evidence-card {
+            background: var(--bg-surface);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem;
+            border-radius: 6px;
+            padding: 0.6rem;
+            font-size: 0.75rem;
+        }
+
+        .evidence-card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            margin-bottom: 0.3rem;
+            color: var(--accent-primary);
+            font-weight: 600;
+            font-family: var(--font-mono);
         }
 
-        .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
-        .stat-value { font-size: 1rem; font-weight: 800; }
-        .val-good { color: var(--success-color); }
-        .val-warn { color: var(--warning-color); }
+        .evidence-snippet {
+            color: var(--text-muted);
+            font-style: italic;
+        }
 
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
+        /* Drag & Drop Upload Zone */
+        .dropzone {
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            background: rgba(20, 25, 35, 0.4);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            z-index: 100;
+            gap: 0.75rem;
         }
 
-        .modal-overlay.open { display: flex; }
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(56, 189, 248, 0.04);
+        }
 
-        .modal-content {
+        .dropzone-icon {
+            font-size: 2.5rem;
+            color: var(--accent-primary);
+        }
+
+        .dropzone-formats {
+            display: flex;
+            gap: 0.35rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .format-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-family: var(--font-mono);
+            color: var(--text-dim);
+        }
+
+        /* Tables (Documents, Audit, Admin) */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            text-align: left;
+        }
+
+        table.data-table th {
+            background: var(--bg-card);
+            color: var(--text-muted);
+            padding: 0.65rem 0.85rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+        }
+
+        table.data-table td {
+            padding: 0.65rem 0.85rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        table.data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table.data-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Flowchart / Architecture Cards */
+        .pipeline-flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1.5rem 1rem;
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            padding: 1.5rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 10px;
+            overflow-x: auto;
         }
 
-        .btn-action {
+        .node-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.85rem;
+            width: 160px;
+            text-align: center;
+            position: relative;
+            flex-shrink: 0;
+            transition: all 0.25s;
+        }
+
+        .node-card.active {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 16px var(--accent-glow);
+            transform: scale(1.04);
+        }
+
+        .node-card.completed {
+            border-color: var(--success);
+        }
+
+        .node-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .node-name {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .node-role {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .flow-arrow {
+            color: var(--text-dim);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            padding: 0.45rem 0.85rem;
+            padding: 0.65rem 1rem;
             border-radius: 6px;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
+            font-size: 0.8rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: slide-in 0.25s ease-out;
         }
-        .btn-action:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.error { border-left: 3px solid var(--danger); }
+        .toast.info { border-left: 3px solid var(--accent-primary); }
+
+        @keyframes slide-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 900px) {
+            :root {
+                --sidebar-width: 240px;
+            }
+
+            .btn-menu-toggle {
+                display: block;
+            }
+
+            aside.sidebar {
+                position: fixed;
+                top: 61px;
+                bottom: 0;
+                left: 0;
+                transform: translateX(-100%);
+            }
+
+            aside.sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-backdrop.open {
+                display: block;
+            }
+
+            .header-badges {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 0.6rem 0.85rem;
+            }
+
+            .brand-subtitle {
+                display: none;
+            }
+
+            main.main-content {
+                padding: 0.85rem;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
 
     <!-- Header Navigation -->
     <header>
-        <div class="brand-container">
-            <div class="brand-logo">Δ</div>
-            <div>
-                <div class="brand-title">Sovereign AI Workbench</div>
-                <div class="brand-subtitle">Secure On-Premise Multi-Agent Intelligence • SIH26117</div>
+        <div class="header-left">
+            <button class="btn-menu-toggle" id="btnMenuToggle" onclick="toggleSidebar()" aria-label="Toggle navigation">☰</button>
+            <div class="brand-container">
+                <div class="brand-logo">🛡️</div>
+                <div>
+                    <div class="brand-title">Sovereign AI Workbench</div>
+                    <span class="brand-subtitle">Secure On-Premise Multi-Agent Intelligence • SIH26117</span>
+                </div>
             </div>
         </div>
-        <div class="header-badges">
-            <div class="status-badge badge-airgap">
+
+        <div class="header-right">
+            <span class="badge badge-sih">SIH26117</span>
+            <span class="badge badge-health" id="badgeHealth">
                 <span class="pulse-dot"></span>
-                <span>AIR-GAP ENFORCED</span>
-            </div>
-            <div class="status-badge badge-audit" onclick="showAuditModal()" title="Inspect SHA-256 Micro-Ledger" style="cursor: pointer;">
-                <span>🔒 SHA-256 AUDIT LEDGER</span>
-            </div>
-            <div class="status-badge" id="userBadge" style="background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.25); color: #cbd5e1;">
-                <span>👤</span>
-                <span id="currentUsername">admin</span>
-            </div>
-            <button class="btn-action" onclick="handleLogout()" title="Sign out of Sovereign Session" style="display: inline-flex; align-items: center; gap: 0.35rem; color: #f87171; border-color: rgba(239, 68, 68, 0.35); font-weight: 600;">
-                <span>🚪</span>
-                <span>Sign Out</span>
+                <span id="healthStatusText">ONLINE_SECURE</span>
+            </span>
+            <span class="badge badge-ws" id="badgeWs">
+                <span class="pulse-dot" style="color: var(--warning);"></span>
+                <span id="wsStatusText">WS CONNECTING</span>
+            </span>
+
+            <button class="btn-demo" onclick="triggerSihDemo()" title="Run guided sovereign multi-agent demonstration">
+                <span>⚡</span>
+                <span>SIH DEMO MODE</span>
             </button>
+
+            <div class="user-profile">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <div class="user-info">
+                    <div class="user-name" id="userNameText">Operator</div>
+                    <span class="user-role-badge" id="userRoleText">USER</span>
+                </div>
+                <button class="btn-logout" onclick="handleLogout()" title="Sign out from Sovereign Workbench">Sign Out</button>
+            </div>
         </div>
     </header>
 
-    <!-- Main Grid Workspace -->
-    <main>
+    <!-- App Body Container -->
+    <div class="app-container">
 
-        <!-- Left Column: Document Ingestion & Local Repo -->
-        <section class="panel">
-            <div class="panel-header">
-                <div class="panel-title">
-                    <span>📁</span>
-                    <span>Air-Gapped Knowledge</span>
+        <!-- Mobile Backdrop -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+
+        <!-- Left Navigation Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="sidebar-nav">
+                <div class="nav-label">Command Center</div>
+                <a class="nav-item active" onclick="switchTab('dashboard')">
+                    <div class="nav-item-content">
+                        <span>📊</span>
+                        <span>Dashboard</span>
+                    </div>
+                    <span class="nav-item-badge" id="navBadgeOverview">LIVE</span>
+                </a>
+
+                <a class="nav-item" onclick="switchTab('workbench')">
+                    <div class="nav-item-content">
+                        <span>🧠</span>
+                        <span>AI Workbench</span>
+                    </div>
+                </a>
+
+                <div class="nav-label">Intelligence Core</div>
+                <a class="nav-item" onclick="switchTab('knowledge')">
+                    <div class="nav-item-content">
+                        <span>📚</span>
+                        <span>Knowledge Base</span>
+                    </div>
+                    <span class="nav-item-badge" id="navBadgeDocs">0 Docs</span>
+                </a>
+
+                <a class="nav-item" onclick="switchTab('agents')">
+                    <div class="nav-item-content">
+                        <span>🤖</span>
+                        <span>Agent Pipeline</span>
+                    </div>
+                    <span class="nav-item-badge">4 Nodes</span>
+                </a>
+
+                <div class="nav-label">Security & Ops</div>
+                <a class="nav-item" onclick="switchTab('audit')">
+                    <div class="nav-item-content">
+                        <span>🔒</span>
+                        <span>Security & Audit</span>
+                    </div>
+                    <span class="nav-item-badge" id="navBadgeAudit">SHA-256</span>
+                </a>
+
+                <a class="nav-item" onclick="switchTab('health')">
+                    <div class="nav-item-content">
+                        <span>🩺</span>
+                        <span>System Health</span>
+                    </div>
+                </a>
+
+                <div class="nav-label" id="adminNavLabel" style="display: none;">Administration</div>
+                <a class="nav-item" id="adminNavItem" style="display: none;" onclick="switchTab('admin')">
+                    <div class="nav-item-content">
+                        <span>👥</span>
+                        <span>Admin Panel</span>
+                    </div>
+                    <span class="nav-item-badge">RBAC</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="status-line">
+                    <span class="pulse-dot"></span>
+                    <span>100% On-Premise Verified</span>
                 </div>
-                <span id="docCountBadge" style="font-size: 0.75rem; color: var(--accent-primary); font-weight: bold;">0 Chunks</span>
+                <div>Local LLM: llama3.1 & nomic-embed</div>
+                <div style="color: var(--text-dim); margin-top: 0.2rem;">Sovereign AI v1.0.0</div>
             </div>
-            <div class="panel-content">
-                <!-- Drag and Drop Zone -->
-                <div class="dropzone" id="dropzone">
-                    <div class="dropzone-icon">📤</div>
-                    <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem;">Drop Air-Gapped Files Here</div>
-                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.75rem;">PDF, TXT, MD, LOG (Zero Cloud Ingestion)</div>
-                    <button class="btn-action" onclick="document.getElementById('fileInput').click()">Select Local File</button>
-                    <input type="file" id="fileInput" style="display: none;" accept=".pdf,.txt,.md,.log,.csv,.json" onchange="handleFileUpload(this.files)">
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- TAB 1: COMMAND DASHBOARD OVERVIEW -->
+            <div class="tab-panel active" id="tab-dashboard">
+                <!-- System Status Cards -->
+                <div class="metrics-grid">
+                    <div class="metric-card accent-green">
+                        <div class="metric-header">
+                            <span class="metric-title">System Health</span>
+                            <span class="metric-icon">🛡️</span>
+                        </div>
+                        <div class="metric-value" id="cardSystemStatus">ONLINE</div>
+                        <div class="metric-subtext">
+                            <span class="pulse-dot" style="color: var(--success);"></span>
+                            <span id="cardEnvironment">Air-Gapped Local</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card accent-cyan">
+                        <div class="metric-header">
+                            <span class="metric-title">Audit Ledger</span>
+                            <span class="metric-icon">🔒</span>
+                        </div>
+                        <div class="metric-value" id="cardAuditStatus">VERIFIED</div>
+                        <div class="metric-subtext">
+                            <span>SHA-256 Blockchain Verified</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card accent-amber">
+                        <div class="metric-header">
+                            <span class="metric-title">Local AI Inference</span>
+                            <span class="metric-icon">🧠</span>
+                        </div>
+                        <div class="metric-value" id="cardLlmStatus">llama3.1</div>
+                        <div class="metric-subtext" id="cardLlmSubtext">
+                            <span>Ollama Inference Daemon</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card accent-cyan">
+                        <div class="metric-header">
+                            <span class="metric-title">Knowledge Vectors</span>
+                            <span class="metric-icon">📚</span>
+                        </div>
+                        <div class="metric-value" id="cardVectorCount">0</div>
+                        <div class="metric-subtext">
+                            <span>ChromaDB Semantic Chunks</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card accent-green">
+                        <div class="metric-header">
+                            <span class="metric-title">Autonomous Agents</span>
+                            <span class="metric-icon">🤖</span>
+                        </div>
+                        <div class="metric-value">4 NODES</div>
+                        <div class="metric-subtext">
+                            <span>LangGraph State Machine</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="uploadStatus" style="font-size: 0.75rem; display: none;"></div>
-
-                <!-- Ingested Documents List -->
-                <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-top: 0.5rem;">
-                    Indexed Documents
+                <!-- Quick Query Banner -->
+                <div class="query-box-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; font-size: 0.9rem; color: var(--accent-primary);">⚡ Quick AI Dispatch</span>
+                        <span class="badge badge-sih">Air-Gapped Multi-Agent Reasoning</span>
+                    </div>
+                    <textarea class="query-textarea" id="dashboardQueryInput" placeholder="Ask Sovereign AI a question, ingest request, or compliance audit prompt... (Press Enter or Dispatch)"></textarea>
+                    <div class="query-footer">
+                        <div class="query-hints">
+                            <span class="kbd-shortcut">Enter</span> to dispatch
+                            <span class="kbd-shortcut">Shift+Enter</span> for new line
+                        </div>
+                        <div class="query-actions">
+                            <button class="btn-primary" onclick="dispatchFromDashboard()">
+                                <span>🚀</span>
+                                <span>Dispatch Query</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="doc-list" id="docList">
-                    <div style="color: var(--text-muted); font-size: 0.75rem; text-align: center; padding: 1rem;">
-                        No documents loaded yet. Drop a PDF to begin grounding.
+
+                <!-- Overview Split Panels -->
+                <div class="workbench-grid">
+                    <!-- Recent Activity / Stream Preview -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span>⚡</span>
+                                <span>Live Agent Activity</span>
+                            </div>
+                            <button class="btn-action" onclick="switchTab('workbench')">Open Workbench</button>
+                        </div>
+                        <div class="panel-content" style="padding: 0;">
+                            <div class="terminal-container" style="height: 280px; border: none; border-radius: 0;">
+                                <div class="terminal-logs" id="dashboardActivityLogs">
+                                    <div class="log-line">
+                                        <span class="log-time">[BOOT]</span>
+                                        <span class="log-agent agent-System">[System]</span>
+                                        <span>Sovereign AI Command Center initialized. Zero cloud leaks detected.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security & Audit Snapshot -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span>🔒</span>
+                                <span>Cryptographic Ledger Status</span>
+                            </div>
+                            <button class="btn-action" onclick="verifyAuditLedger()">Verify Chain</button>
+                        </div>
+                        <div class="panel-content">
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                <div style="display: flex; justify-content: space-between; padding: 0.6rem; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color);">
+                                    <span style="color: var(--text-muted); font-size: 0.8rem;">Ledger State</span>
+                                    <span style="color: var(--success); font-weight: 700; font-size: 0.8rem;" id="dashLedgerStatus">TAMPER-PROOF (OK)</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.6rem; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color);">
+                                    <span style="color: var(--text-muted); font-size: 0.8rem;">Total Blocks</span>
+                                    <span style="color: var(--text-main); font-weight: 700; font-size: 0.8rem;" id="dashTotalRecords">0</span>
+                                </div>
+                                <div style="padding: 0.6rem; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color);">
+                                    <div style="color: var(--text-muted); font-size: 0.72rem; margin-bottom: 0.25rem;">Root Tip Hash (SHA-256)</div>
+                                    <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-primary); word-break: break-all;" id="dashTipHash">Genesis Block</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- Center Column: Multi-Agent Orchestration & Live Stream -->
-        <section class="panel">
-            <div class="panel-header">
-                <div class="panel-title">
-                    <span>⚡</span>
-                    <span>Multi-Agent State Graph</span>
+            <!-- TAB 2: AI WORKBENCH -->
+            <div class="tab-panel" id="tab-workbench">
+                <!-- Reasoning Input -->
+                <div class="query-box-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; font-size: 1rem; color: var(--text-main);">🧠 Ask Sovereign AI</span>
+                        <span class="badge badge-sih">Multi-Agent Consensus Engine</span>
+                    </div>
+                    <textarea class="query-textarea" id="workbenchQueryInput" rows="3" placeholder="Type your strategic query or investigative prompt... (e.g. 'Analyze access anomalies and verify ledger tamper resistance')"></textarea>
+                    <div class="query-footer">
+                        <div class="query-hints">
+                            <span class="kbd-shortcut">Enter</span> to execute
+                            <span class="kbd-shortcut">Ctrl+Enter</span> support
+                        </div>
+                        <div class="query-actions">
+                            <button class="btn-action" onclick="clearQuery()">Clear</button>
+                            <button class="btn-primary" id="btnDispatch" onclick="submitQuery()">
+                                <span>⚡</span>
+                                <span id="dispatchBtnText">Dispatch Query</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">LangGraph State Machine</div>
+
+                <!-- Agent State Pipeline Progression -->
+                <div class="pipeline-bar">
+                    <div class="pipeline-step" id="stepQuery">
+                        <div class="pipeline-step-dot"></div>
+                        <span>Query Received</span>
+                    </div>
+                    <div class="pipeline-connector"></div>
+                    <div class="pipeline-step" id="stepSanitizer">
+                        <div class="pipeline-step-dot"></div>
+                        <span>Security Sanitization</span>
+                    </div>
+                    <div class="pipeline-connector"></div>
+                    <div class="pipeline-step" id="stepRetriever">
+                        <div class="pipeline-step-dot"></div>
+                        <span>Vector Retrieval</span>
+                    </div>
+                    <div class="pipeline-connector"></div>
+                    <div class="pipeline-step" id="stepAnalyst">
+                        <div class="pipeline-step-dot"></div>
+                        <span>Analyst Reasoning</span>
+                    </div>
+                    <div class="pipeline-connector"></div>
+                    <div class="pipeline-step" id="stepAuditor">
+                        <div class="pipeline-step-dot"></div>
+                        <span>Auditor Verification</span>
+                    </div>
+                    <div class="pipeline-connector"></div>
+                    <div class="pipeline-step" id="stepReporter">
+                        <div class="pipeline-step-dot"></div>
+                        <span>Executive Report</span>
+                    </div>
+                </div>
+
+                <!-- Execution Terminal & Intelligence Report Grid -->
+                <div class="workbench-grid">
+                    <!-- Left: Real-Time Thought Stream -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span>📺</span>
+                                <span>Agent Thought Stream</span>
+                            </div>
+                            <div style="display: flex; gap: 0.35rem;">
+                                <button class="btn-action" onclick="copyTerminalLogs()">Copy Log</button>
+                                <button class="btn-action" onclick="clearTerminalLogs()">Clear</button>
+                            </div>
+                        </div>
+                        <div class="panel-content" style="padding: 0;">
+                            <div class="terminal-container">
+                                <div class="terminal-bar">
+                                    <div class="terminal-dots">
+                                        <div class="terminal-dot red"></div>
+                                        <div class="terminal-dot yellow"></div>
+                                        <div class="terminal-dot green"></div>
+                                    </div>
+                                    <span>/api/v1/ws/agent-thoughts</span>
+                                    <span id="termStatus">LISTENING</span>
+                                </div>
+                                <div class="terminal-logs" id="terminalLogs">
+                                    <div class="log-line">
+                                        <span class="log-time">[READY]</span>
+                                        <span class="log-agent agent-System">[System]</span>
+                                        <span>Agentic stream connection active. Waiting for query dispatch.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Final Answer & Evidence Panel -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span>📄</span>
+                                <span>Executive Intelligence</span>
+                            </div>
+                            <div style="display: flex; gap: 0.35rem;">
+                                <button class="btn-action" onclick="copyReport()">Copy Answer</button>
+                                <button class="btn-action" onclick="downloadReport()">Export .MD</button>
+                            </div>
+                        </div>
+                        <div class="panel-content">
+                            <!-- Verification Strip -->
+                            <div class="report-header-strip">
+                                <div class="stat-badge-box">
+                                    <span class="stat-box-label">Auditor Confidence</span>
+                                    <span class="stat-box-val" id="statConfidence">--%</span>
+                                </div>
+                                <div class="stat-badge-box">
+                                    <span class="stat-box-label">Consensus Verdict</span>
+                                    <span class="stat-box-val" id="statVerdict">PENDING</span>
+                                </div>
+                                <div class="stat-badge-box">
+                                    <span class="stat-box-label">Iterations</span>
+                                    <span class="stat-box-val" id="statIterations">0</span>
+                                </div>
+                            </div>
+
+                            <!-- Rendered Answer -->
+                            <div class="report-panel" id="reportContent">
+                                <div style="color: var(--text-muted); text-align: center; padding: 3rem 1rem;">
+                                    Awaiting agent task execution. Dispatch a query above to initiate multi-agent reasoning.
+                                </div>
+                            </div>
+
+                            <!-- Sources & Evidence Snippets -->
+                            <div class="evidence-section" id="evidenceSection" style="display: none;">
+                                <div class="evidence-title">📚 Retrieved Evidence & Citations</div>
+                                <div id="evidenceList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="panel-content">
-                <!-- Visual Agent Pipeline -->
-                <div class="graph-wrapper">
-                    <div class="agent-pipeline">
-                        <div class="agent-node" id="nodeRetriever">
-                            <div class="node-icon-box">🔍</div>
-                            <span class="node-label">Retriever</span>
+
+            <!-- TAB 3: KNOWLEDGE BASE & DOCUMENTS -->
+            <div class="tab-panel" id="tab-knowledge">
+                <!-- Vector Store Stats -->
+                <div class="metrics-grid">
+                    <div class="metric-card accent-cyan">
+                        <div class="metric-header">
+                            <span class="metric-title">Total Chunks</span>
+                            <span class="metric-icon">📑</span>
                         </div>
-                        <div class="pipeline-connector" id="conn1"></div>
-                        <div class="agent-node" id="nodeAnalyst">
-                            <div class="node-icon-box">🧠</div>
-                            <span class="node-label">Analyst</span>
-                        </div>
-                        <div class="pipeline-connector" id="conn2"></div>
-                        <div class="agent-node" id="nodeAuditor">
-                            <div class="node-icon-box">🛡️</div>
-                            <span class="node-label">Auditor</span>
-                        </div>
-                        <div class="pipeline-connector" id="conn3"></div>
-                        <div class="agent-node" id="nodeReporter">
-                            <div class="node-icon-box">📊</div>
-                            <span class="node-label">Reporter</span>
-                        </div>
+                        <div class="metric-value" id="kbChunkCount">0</div>
+                        <div class="metric-subtext">Indexed in ChromaDB</div>
                     </div>
-                    <div class="feedback-loop-path">
-                        ↺ Fact-Check Feedback Loop: Re-routes to Analyst if Auditor Confidence &lt; 80%
+                    <div class="metric-card accent-green">
+                        <div class="metric-header">
+                            <span class="metric-title">Embedding Engine</span>
+                            <span class="metric-icon">⚡</span>
+                        </div>
+                        <div class="metric-value" style="font-size: 1.1rem;">nomic-embed-text</div>
+                        <div class="metric-subtext">Local Ollama Embeddings</div>
+                    </div>
+                    <div class="metric-card accent-amber">
+                        <div class="metric-header">
+                            <span class="metric-title">Indexed Documents</span>
+                            <span class="metric-icon">📁</span>
+                        </div>
+                        <div class="metric-value" id="kbDocCount">0</div>
+                        <div class="metric-subtext">PDF, TXT, MD, CSV, LOG</div>
                     </div>
                 </div>
 
-                <!-- WebSocket Agent Thought Stream -->
-                <div class="terminal-container">
-                    <div class="terminal-header">
-                        <span>AGENT THOUGHT STREAM (WEBSOCKET LIVE)</span>
-                        <span id="socketStatus" style="color: var(--success-color);">● CONNECTED</span>
+                <!-- Drag & Drop Upload Zone -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>📥</span>
+                            <span>Secure Local Ingestion Sandbox</span>
+                        </div>
+                        <span class="badge badge-sih">Zero Cloud Exfiltration</span>
                     </div>
-                    <div class="terminal-logs" id="terminalLogs">
-                        <div class="log-line">
-                            <span class="log-time">[SYSTEM]</span> Sovereign Multi-Agent Engine initialized in air-gapped sandbox.
+                    <div class="panel-content">
+                        <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                            <div class="dropzone-icon">📄</div>
+                            <div>
+                                <div style="font-weight: 700; font-size: 1rem; color: var(--text-main);">Drop documents here or click to browse</div>
+                                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                    Files are parsed, sanitized for PII, chunked, and embedded into local ChromaDB storage.
+                                </div>
+                            </div>
+                            <div class="dropzone-formats">
+                                <span class="format-badge">.PDF</span>
+                                <span class="format-badge">.TXT</span>
+                                <span class="format-badge">.MD</span>
+                                <span class="format-badge">.CSV</span>
+                                <span class="format-badge">.JSON</span>
+                                <span class="format-badge">.LOG</span>
+                            </div>
+                            <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelected(this.files)" accept=".pdf,.txt,.md,.csv,.json,.log">
                         </div>
-                        <div class="log-line">
-                            <span class="log-time">[SECURITY]</span> PII Redactor active. SHA-256 Ledger chain verified.
-                        </div>
+                        <div id="uploadStatus" style="font-size: 0.8rem; font-family: var(--font-mono); display: none; padding: 0.5rem; background: var(--bg-card); border-radius: 6px;"></div>
                     </div>
                 </div>
 
-                <!-- Query Input Bar -->
-                <form class="query-box" id="queryForm" onsubmit="submitQuery(event)">
-                    <input type="text" id="queryInput" class="query-input" placeholder="Enter query for multi-agent reasoning (e.g., 'Summarize key risks in Section 3')..." autocomplete="off" required>
-                    <button type="submit" id="btnSubmit" class="btn-submit">Dispatch</button>
-                </form>
+                <!-- Indexed Documents Table -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>📚</span>
+                            <span>Indexed Document Repository</span>
+                        </div>
+                        <button class="btn-action" onclick="fetchDocuments()">Refresh Index</button>
+                    </div>
+                    <div class="panel-content" style="padding: 0;">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Document Name</th>
+                                        <th>Document ID</th>
+                                        <th>Type</th>
+                                        <th>Chunks</th>
+                                        <th>SHA-256 Hash</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="documentsTableBody">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                            Loading indexed documents...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </section>
 
-        <!-- Right Column: Final Executive Report & Audit Metrics -->
-        <section class="panel">
-            <div class="panel-header">
-                <div class="panel-title">
-                    <span>📄</span>
-                    <span>Executive Intelligence</span>
-                </div>
-                <div style="display: flex; gap: 0.35rem;">
-                    <button class="btn-action" onclick="copyReport()">Copy</button>
-                    <button class="btn-action" onclick="downloadReport()">Export .MD</button>
-                </div>
-            </div>
-            <div class="panel-content">
-                <!-- Audit Metrics Strip -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                    <div class="audit-stat-card">
-                        <div>
-                            <div class="stat-label">Auditor Confidence</div>
-                            <div class="stat-value val-good" id="statConfidence">--%</div>
+            <!-- TAB 4: AGENT PIPELINE VISUALIZATION -->
+            <div class="tab-panel" id="tab-agents">
+                <!-- Visual Pipeline Flowchart -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>🤖</span>
+                            <span>Autonomous Multi-Agent State Machine</span>
                         </div>
-                        <span style="font-size: 1.25rem;">🛡️</span>
+                        <span class="badge badge-sih">LangGraph Graph State Engine</span>
                     </div>
-                    <div class="audit-stat-card">
-                        <div>
-                            <div class="stat-label">Audit Iterations</div>
-                            <div class="stat-value" id="statIterations">0</div>
+                    <div class="panel-content">
+                        <div class="pipeline-flow-diagram">
+                            <div class="node-card" id="cardNodeSecurity">
+                                <div class="node-icon">🛡️</div>
+                                <div class="node-name">Security Node</div>
+                                <div class="node-role">PII Redaction & Air-Gap</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="node-card" id="cardNodeRetriever">
+                                <div class="node-icon">🔍</div>
+                                <div class="node-name">Retriever Node</div>
+                                <div class="node-role">Chroma Semantic Search</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="node-card" id="cardNodeAnalyst">
+                                <div class="node-icon">🧠</div>
+                                <div class="node-name">Analyst Node</div>
+                                <div class="node-role">llama3.1 Synthesizer</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="node-card" id="cardNodeAuditor">
+                                <div class="node-icon">⚖️</div>
+                                <div class="node-name">Auditor Node</div>
+                                <div class="node-role">Hallucination & Consensus</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="node-card" id="cardNodeReporter">
+                                <div class="node-icon">📝</div>
+                                <div class="node-name">Reporter Node</div>
+                                <div class="node-role">Executive Brief & Tip Hash</div>
+                            </div>
                         </div>
-                        <span style="font-size: 1.25rem;">🔁</span>
                     </div>
                 </div>
 
-                <!-- Rendered Executive Report Output -->
-                <div class="report-card" id="reportContent">
-                    <div style="color: var(--text-muted); text-align: center; padding: 2rem 1rem;">
-                        Awaiting agent task execution. Dispatch a query to trigger the sovereign agentic workflow.
+                <!-- Agent Architecture Cards Grid -->
+                <div class="metrics-grid">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title"><span>🛡️</span> Security & PII Redactor</div>
+                            <span class="badge badge-health">ACTIVE</span>
+                        </div>
+                        <div class="panel-content">
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                Inspects all input queries and document chunks before vector processing. Masks Aadhaar, SSN, email, credit cards, and private tokens locally.
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.5rem; font-family: var(--font-mono);">
+                                Enforces: Air-Gap Compliance Validator
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title"><span>🔍</span> Context Retriever</div>
+                            <span class="badge badge-sih">OLLAMA</span>
+                        </div>
+                        <div class="panel-content">
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                Queries the local ChromaDB vector store using dedicated <code>nomic-embed-text</code> embeddings. Computes cosine similarity scores on-premise.
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.5rem; font-family: var(--font-mono);">
+                                Top-K: 3 Chunks • Overlap: 50 Chars
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title"><span>🧠</span> Reasoning Analyst</div>
+                            <span class="badge badge-sih">LLAMA 3.1</span>
+                        </div>
+                        <div class="panel-content">
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                Synthesizes retrieved factual context with domain instructions. Enforces strict zero-hallucination constraint and attaches citations.
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.5rem; font-family: var(--font-mono);">
+                                Prompt Template: Enterprise Air-Gapped Analyst
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title"><span>⚖️</span> Verification Auditor</div>
+                            <span class="badge badge-health">GUARDRAIL</span>
+                        </div>
+                        <div class="panel-content">
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                Cross-checks analyst output against source evidence. If confidence &lt; 0.80, loops back to analyst with specific correction directives.
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 0.5rem; font-family: var(--font-mono);">
+                                Max Consensus Loops: 3 Iterations
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
 
-    </main>
+            <!-- TAB 5: SECURITY & CRYPTOGRAPHIC AUDIT -->
+            <div class="tab-panel" id="tab-audit">
+                <!-- Audit Ledger Overview -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>🔒</span>
+                            <span>SHA-256 Micro-Ledger Verification</span>
+                        </div>
+                        <button class="btn-primary" onclick="verifyAuditLedger()">
+                            <span>🛡️</span>
+                            <span>Verify Blockchain Integrity</span>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div class="stat-badge-box">
+                                <span class="stat-box-label">Integrity Status</span>
+                                <span class="stat-box-val" style="color: var(--success);" id="auditVerifyStatus">VERIFIED UNTAMPERED</span>
+                            </div>
+                            <div class="stat-badge-box">
+                                <span class="stat-box-label">Total Verified Records</span>
+                                <span class="stat-box-val" id="auditVerifyCount">0</span>
+                            </div>
+                            <div class="stat-badge-box">
+                                <span class="stat-box-label">Verification Message</span>
+                                <span class="stat-box-val" style="font-size: 0.8rem; color: var(--text-muted);" id="auditVerifyMsg">Ready for verification.</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 0.5rem; padding: 0.75rem; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-color);">
+                            <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.2rem;">Tip Hash (Current Blockchain Head):</div>
+                            <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent-primary); word-break: break-all;" id="auditTipHash">Calculating...</div>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- Audit Ledger Modal -->
-    <div class="modal-overlay" id="auditModal" onclick="closeModalOnBackdrop(event)">
-        <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="color: var(--accent-primary);">🔒 Cryptographic Audit Ledger</h3>
-                <button class="btn-action" onclick="document.getElementById('auditModal').classList.remove('open')">✕ Close</button>
+                <!-- Live Audit Event Timeline -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>📜</span>
+                            <span>Immutable Event Log Trail</span>
+                        </div>
+                        <button class="btn-action" onclick="fetchAuditLogs()">Refresh Log</button>
+                    </div>
+                    <div class="panel-content" style="padding: 0;">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Event Type</th>
+                                        <th>Agent / Actor</th>
+                                        <th>Action</th>
+                                        <th>Cryptographic Hash</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditLogsTableBody">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                            Loading cryptographic audit records...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="auditModalBody" style="font-size: 0.8rem; font-family: var(--mono-family); line-height: 1.6;">
-                Verifying hash chain...
+
+            <!-- TAB 6: SYSTEM HEALTH -->
+            <div class="tab-panel" id="tab-health">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>🩺</span>
+                            <span>Sovereign Infrastructure Diagnostics</span>
+                        </div>
+                        <button class="btn-action" onclick="fetchStats()">Refresh Diagnostics</button>
+                    </div>
+                    <div class="panel-content">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Subsystem Component</th>
+                                        <th>Operational Endpoint</th>
+                                        <th>State / Health</th>
+                                        <th>Configuration Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>FastAPI Application Core</strong></td>
+                                        <td><code>/api/v1</code></td>
+                                        <td><span class="badge badge-health">ONLINE_SECURE</span></td>
+                                        <td>Autonomous Uvicorn Backend</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Local AI Engine (Ollama)</strong></td>
+                                        <td id="healthOllamaEndpoint">http://127.0.0.1:11434</td>
+                                        <td id="healthOllamaStatus"><span class="badge badge-health">CONNECTED</span></td>
+                                        <td>Model: <span id="healthModelName">llama3.1</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Vector Embedding Engine</strong></td>
+                                        <td>OllamaEmbeddings</td>
+                                        <td><span class="badge badge-health">OPERATIONAL</span></td>
+                                        <td>Dedicated Model: nomic-embed-text</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>ChromaDB Vector Store</strong></td>
+                                        <td id="healthChromaCol">sovereign_knowledge_base</td>
+                                        <td><span class="badge badge-health">PERSISTENT</span></td>
+                                        <td><span id="healthTotalChunks">0</span> Chunks Indexed</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cryptographic Audit Ledger</strong></td>
+                                        <td>SHA-256 Hash Chain</td>
+                                        <td><span class="badge badge-health">VERIFIED</span></td>
+                                        <td>Immutable JSONL Hash-Chained Blocks</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Operating Environment</strong></td>
+                                        <td id="healthEnvMode">production-airgapped</td>
+                                        <td><span class="badge badge-sih" id="healthAirgapBadge">AIR-GAPPED</span></td>
+                                        <td>Zero Cloud Dependencies Required</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+
+            <!-- TAB 7: ADMIN PANEL (PROTECTED RBAC) -->
+            <div class="tab-panel" id="tab-admin">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>👥</span>
+                            <span>Sovereign User Directory & RBAC</span>
+                        </div>
+                        <span class="badge badge-sih">Role-Based Access Control</span>
+                    </div>
+                    <div class="panel-content" style="padding: 0;">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>User ID</th>
+                                        <th>Username</th>
+                                        <th>Email Address</th>
+                                        <th>Full Name</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Created At</th>
+                                        <th>Last Login</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminUsersTableBody">
+                                    <tr>
+                                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                            Loading user directory...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
     </div>
 
-    <!-- Client Application Logic -->
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Application Script -->
     <script>
+        // State
         const sessionId = "session_" + Math.random().toString(36).substring(2, 10);
         let socket = null;
         let lastReportMarkdown = "";
+        let currentUser = null;
 
         // ==========================================
-        // Authentication & Session Management
+        // Authentication & Session
         // ==========================================
         function getAuthToken() {
             return localStorage.getItem("sovereign_token") || "";
@@ -728,7 +1908,6 @@
             try {
                 const resp = await fetch(url, options);
                 if (resp.status === 401) {
-                    // Session invalid or expired - redirect to login
                     localStorage.removeItem("sovereign_token");
                     localStorage.removeItem("sovereign_user");
                     window.location.href = "/login";
@@ -744,13 +1923,19 @@
             try {
                 const resp = await authFetch("/api/v1/auth/me");
                 if (resp.ok) {
-                    const data = await resp.json();
-                    const userEl = document.getElementById("currentUsername");
-                    const displayName = data.full_name ? `${data.full_name} (${data.username})` : `${data.username} (${data.role})`;
-                    if (userEl) userEl.innerText = displayName;
+                    currentUser = await resp.json();
+                    document.getElementById("userNameText").innerText = currentUser.full_name || currentUser.username;
+                    document.getElementById("userRoleText").innerText = (currentUser.role || "USER").toUpperCase();
+                    document.getElementById("userAvatar").innerText = (currentUser.username || "U").substring(0, 1).toUpperCase();
+
+                    // Show admin tab if user has administrative rights
+                    if (currentUser.role === "admin") {
+                        document.getElementById("adminNavLabel").style.display = "block";
+                        document.getElementById("adminNavItem").style.display = "flex";
+                    }
                 }
             } catch (e) {
-                console.error("Could not fetch user profile:", e);
+                console.error("User profile lookup failed:", e);
             }
         }
 
@@ -766,7 +1951,53 @@
             }
         }
 
-        // Initialize WebSocket with authenticated session token
+        // ==========================================
+        // UI Navigation & Tab Switching
+        // ==========================================
+        function switchTab(tabId) {
+            document.querySelectorAll(".tab-panel").forEach(panel => panel.classList.remove("active"));
+            document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
+
+            const targetPanel = document.getElementById("tab-" + tabId);
+            if (targetPanel) targetPanel.classList.add("active");
+
+            // Find matching nav item
+            const navItems = document.querySelectorAll(".nav-item");
+            navItems.forEach(item => {
+                if (item.getAttribute("onclick") && item.getAttribute("onclick").includes(tabId)) {
+                    item.classList.add("active");
+                }
+            });
+
+            // Close sidebar on mobile after tab selection
+            if (window.innerWidth <= 900) {
+                toggleSidebar(false);
+            }
+
+            // Trigger data load for relevant tabs
+            if (tabId === "knowledge") fetchDocuments();
+            if (tabId === "audit") fetchAuditLogs();
+            if (tabId === "admin") fetchAdminUsers();
+            if (tabId === "health") fetchStats();
+        }
+
+        function toggleSidebar(forceState) {
+            const sidebar = document.getElementById("sidebar");
+            const backdrop = document.getElementById("sidebarBackdrop");
+            const isOpen = forceState !== undefined ? forceState : !sidebar.classList.contains("open");
+
+            if (isOpen) {
+                sidebar.classList.add("open");
+                backdrop.classList.add("open");
+            } else {
+                sidebar.classList.remove("open");
+                backdrop.classList.remove("open");
+            }
+        }
+
+        // ==========================================
+        // WebSocket Agent Thought Stream
+        // ==========================================
         function initWebSocket() {
             const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
             const token = getAuthToken();
@@ -776,8 +2007,13 @@
             socket = new WebSocket(wsUrl);
 
             socket.onopen = () => {
-                document.getElementById("socketStatus").innerHTML = "● CONNECTED";
-                document.getElementById("socketStatus").style.color = "var(--success-color)";
+                const badge = document.getElementById("badgeWs");
+                badge.className = "badge badge-ws";
+                badge.style.color = "var(--success)";
+                badge.style.borderColor = "rgba(16, 185, 129, 0.25)";
+                document.getElementById("wsStatusText").innerText = "WS LIVE";
+                const term = document.getElementById("termStatus");
+                if (term) term.innerText = "STREAMING";
             };
 
             socket.onmessage = (event) => {
@@ -785,83 +2021,132 @@
                     const msg = JSON.parse(event.data);
                     if (msg.type === "agent_thought") {
                         appendThoughtLog(msg.data);
-                        highlightActiveNode(msg.data.agent);
+                        highlightActivePipelineStage(msg.data.agent);
                     } else if (msg.type === "workflow_completed") {
                         handleWorkflowSuccess(msg.data);
                     }
                 } catch (e) {
-                    console.error("WebSocket message parse error:", e);
+                    console.error("WS event parse error:", e);
                 }
             };
 
             socket.onclose = (event) => {
                 if (event.code === 1008) {
-                    // Unauthorized websocket policy violation
                     localStorage.removeItem("sovereign_token");
                     localStorage.removeItem("sovereign_user");
                     window.location.href = "/login";
                     return;
                 }
-                document.getElementById("socketStatus").innerHTML = "○ RECONNECTING";
-                document.getElementById("socketStatus").style.color = "var(--warning-color)";
-                setTimeout(initWebSocket, 2000);
+                const badge = document.getElementById("badgeWs");
+                badge.style.color = "var(--warning)";
+                badge.style.borderColor = "rgba(245, 158, 11, 0.25)";
+                document.getElementById("wsStatusText").innerText = "WS RECONNECT";
+                const term = document.getElementById("termStatus");
+                if (term) term.innerText = "RECONNECTING";
+                setTimeout(initWebSocket, 2500);
             };
         }
 
-        // Highlight Active Agent Node in Pipeline Graph
-        function highlightActiveNode(agentName) {
-            const nodes = ["Retriever", "Analyst", "Auditor", "Reporter"];
-            nodes.forEach(name => {
-                const nodeEl = document.getElementById("node" + name);
-                if (nodeEl) nodeEl.classList.remove("active");
-            });
+        function highlightActivePipelineStage(agentName) {
+            // Pipeline steps
+            const stages = {
+                "Security": "stepSanitizer",
+                "Retriever": "stepRetriever",
+                "Analyst": "stepAnalyst",
+                "Auditor": "stepAuditor",
+                "Reporter": "stepReporter"
+            };
 
-            const activeEl = document.getElementById("node" + agentName);
-            if (activeEl) {
-                activeEl.classList.add("active");
+            // Flowchart nodes
+            const nodeCards = {
+                "Security": "cardNodeSecurity",
+                "Retriever": "cardNodeRetriever",
+                "Analyst": "cardNodeAnalyst",
+                "Auditor": "cardNodeAuditor",
+                "Reporter": "cardNodeReporter"
+            };
+
+            const activeStepId = stages[agentName];
+            if (activeStepId) {
+                document.querySelectorAll(".pipeline-step").forEach(s => s.classList.remove("active"));
+                const el = document.getElementById(activeStepId);
+                if (el) el.classList.add("active");
+            }
+
+            const activeNodeCard = nodeCards[agentName];
+            if (activeNodeCard) {
+                document.querySelectorAll(".node-card").forEach(c => c.classList.remove("active"));
+                const cardEl = document.getElementById(activeNodeCard);
+                if (cardEl) cardEl.classList.add("active");
             }
         }
 
-        // Append log line to terminal
         function appendThoughtLog(log) {
-            const container = document.getElementById("terminalLogs");
-            const time = log.timestamp ? log.timestamp.split("T")[1].substring(0, 8) : "LOG";
-            const agentClass = "agent-" + (log.agent || "System");
+            const terminal = document.getElementById("terminalLogs");
+            const dashLog = document.getElementById("dashboardActivityLogs");
+            const time = log.timestamp ? log.timestamp.split("T")[1].substring(0, 8) : new Date().toTimeString().split(" ")[0];
+            const agent = log.agent || "System";
+            const agentClass = "agent-" + agent;
 
-            const div = document.createElement("div");
-            div.className = "log-line";
-            div.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-agent ${agentClass}">[${log.agent}]</span> ${escapeHtml(log.thought)}`;
-            container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
+            const lineHtml = `
+                <span class="log-time">[${time}]</span>
+                <span class="log-agent ${agentClass}">[${agent}]</span>
+                <span>${escapeHtml(log.thought)}</span>
+            `;
+
+            if (terminal) {
+                const div = document.createElement("div");
+                div.className = "log-line";
+                div.innerHTML = lineHtml;
+                terminal.appendChild(div);
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+
+            if (dashLog) {
+                const div = document.createElement("div");
+                div.className = "log-line";
+                div.innerHTML = lineHtml;
+                dashLog.appendChild(div);
+                dashLog.scrollTop = dashLog.scrollHeight;
+            }
         }
 
-        // Handle Query Submission
-        async function submitQuery(e) {
-            e.preventDefault();
-            const input = document.getElementById("queryInput");
+        // ==========================================
+        // Query Dispatch & Execution
+        // ==========================================
+        function dispatchFromDashboard() {
+            const val = document.getElementById("dashboardQueryInput").value.trim();
+            if (!val) return;
+            document.getElementById("workbenchQueryInput").value = val;
+            switchTab("workbench");
+            submitQuery();
+        }
+
+        async function submitQuery() {
+            const input = document.getElementById("workbenchQueryInput");
             const query = input.value.trim();
             if (!query) return;
 
-            const btn = document.getElementById("btnSubmit");
+            const btn = document.getElementById("btnDispatch");
+            const btnText = document.getElementById("dispatchBtnText");
             btn.disabled = true;
-            btn.innerText = "Reasoning...";
+            btnText.innerText = "Reasoning...";
 
-            // Reset UI states
-            document.querySelectorAll(".agent-node").forEach(n => n.classList.remove("active", "completed", "looping"));
-            highlightActiveNode("Retriever");
+            // Reset pipeline visualizer
+            document.querySelectorAll(".pipeline-step").forEach(s => s.classList.remove("active", "completed"));
+            document.getElementById("stepQuery").classList.add("active", "completed");
+            document.getElementById("stepSanitizer").classList.add("active");
 
             appendThoughtLog({
                 agent: "System",
-                thought: `User Query Dispatched: "${query}"`,
+                thought: `Initiating multi-agent consensus workflow for query: "${query}"`,
                 timestamp: new Date().toISOString()
             });
 
             try {
-                // If socket is open, use websocket dispatch
                 if (socket && socket.readyState === WebSocket.OPEN) {
                     socket.send(JSON.stringify({ query: query }));
                 } else {
-                    // Fallback to REST endpoint
                     const resp = await authFetch("/api/v1/query", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -873,38 +2158,364 @@
             } catch (err) {
                 appendThoughtLog({
                     agent: "Error",
-                    thought: `Workflow invocation failed: ${err.message}`,
+                    thought: `Workflow error: ${err.message}`,
                     timestamp: new Date().toISOString()
                 });
                 btn.disabled = false;
-                btn.innerText = "Dispatch";
+                btnText.innerText = "Dispatch Query";
+                showToast("Workflow execution failed: " + err.message, "error");
             }
         }
 
-        // Render Final Report
         function handleWorkflowSuccess(data) {
-            const btn = document.getElementById("btnSubmit");
-            btn.disabled = false;
-            btn.innerText = "Dispatch";
+            const btn = document.getElementById("btnDispatch");
+            const btnText = document.getElementById("dispatchBtnText");
+            if (btn) btn.disabled = false;
+            if (btnText) btnText.innerText = "Dispatch Query";
 
-            document.querySelectorAll(".agent-node").forEach(n => n.classList.add("completed"));
+            // Mark pipeline steps completed
+            document.querySelectorAll(".pipeline-step").forEach(s => {
+                s.classList.remove("active");
+                s.classList.add("completed");
+            });
+            document.querySelectorAll(".node-card").forEach(c => {
+                c.classList.remove("active");
+                c.classList.add("completed");
+            });
 
             // Update stats
             const conf = Math.round((data.confidence || 0) * 100);
             const confEl = document.getElementById("statConfidence");
-            confEl.innerText = `${conf}%`;
-            confEl.className = conf >= 80 ? "stat-value val-good" : "stat-value val-warn";
+            if (confEl) {
+                confEl.innerText = `${conf}%`;
+                confEl.style.color = conf >= 80 ? "var(--success)" : "var(--warning)";
+            }
 
-            document.getElementById("statIterations").innerText = data.iteration_count || data.iterations || 1;
+            const verdictEl = document.getElementById("statVerdict");
+            if (verdictEl) {
+                verdictEl.innerText = (data.verdict || "APPROVED").toUpperCase();
+                verdictEl.style.color = data.verdict === "APPROVED" ? "var(--success)" : "var(--warning)";
+            }
+
+            const iterEl = document.getElementById("statIterations");
+            if (iterEl) iterEl.innerText = data.iteration_count || data.iterations || 1;
 
             lastReportMarkdown = data.final_report || "";
-            document.getElementById("reportContent").innerHTML = renderSimpleMarkdown(lastReportMarkdown);
+            document.getElementById("reportContent").innerHTML = renderMarkdown(lastReportMarkdown);
+
+            // Render evidence snippets if citations provided
+            const evSection = document.getElementById("evidenceSection");
+            const evList = document.getElementById("evidenceList");
+            if (data.citations && data.citations.length > 0) {
+                evSection.style.display = "flex";
+                evList.innerHTML = "";
+                data.citations.forEach(c => {
+                    const card = document.createElement("div");
+                    card.className = "evidence-card";
+                    card.innerHTML = `
+                        <div class="evidence-card-header">
+                            <span>📄 ${escapeHtml(c.document_id || "Document Evidence")}</span>
+                            <span>Score: ${c.similarity ? Math.round(c.similarity * 100) + "%" : "Verified"}</span>
+                        </div>
+                        <div class="evidence-snippet">"${escapeHtml(c.snippet || c)}"</div>
+                    `;
+                    evList.appendChild(card);
+                });
+            } else {
+                evSection.style.display = "none";
+            }
+
+            // Update Tip Hash if returned
+            if (data.audit_hash) {
+                const tipEl = document.getElementById("dashTipHash");
+                if (tipEl) tipEl.innerText = data.audit_hash;
+            }
+
+            showToast("Intelligence report finalized & ledger signed.", "success");
         }
 
-        // Simple Client Markdown Renderer
-        function renderSimpleMarkdown(md) {
-            if (!md) return "<p>No report available.</p>";
+        function clearQuery() {
+            document.getElementById("workbenchQueryInput").value = "";
+            document.getElementById("dashboardQueryInput").value = "";
+        }
 
+        function clearTerminalLogs() {
+            document.getElementById("terminalLogs").innerHTML = "";
+        }
+
+        function copyTerminalLogs() {
+            const term = document.getElementById("terminalLogs");
+            navigator.clipboard.writeText(term.innerText);
+            showToast("Terminal logs copied to clipboard.", "info");
+        }
+
+        function copyReport() {
+            if (!lastReportMarkdown) return;
+            navigator.clipboard.writeText(lastReportMarkdown);
+            showToast("Report Markdown copied to clipboard.", "info");
+        }
+
+        function downloadReport() {
+            if (!lastReportMarkdown) return;
+            const blob = new Blob([lastReportMarkdown], { type: "text/markdown" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Sovereign_AI_Report_${new Date().toISOString().substring(0, 10)}.md`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Report exported as Markdown file.", "success");
+        }
+
+        // ==========================================
+        // Knowledge Base & Ingestion
+        // ==========================================
+        async function handleFileSelected(files) {
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            const statusEl = document.getElementById("uploadStatus");
+            statusEl.style.display = "block";
+            statusEl.style.color = "var(--accent-primary)";
+            statusEl.innerText = `Ingesting & redacting '${file.name}' into local ChromaDB...`;
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const resp = await authFetch("/api/v1/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await resp.json();
+                if (resp.ok) {
+                    statusEl.style.color = "var(--success)";
+                    statusEl.innerText = `✓ Indexed ${result.chunks_created} chunks (${result.characters} chars). SHA-256: ${result.sha256.substring(0, 16)}...`;
+                    showToast(`Successfully indexed '${file.name}' (${result.chunks_created} chunks)`, "success");
+                    fetchDocuments();
+                    fetchStats();
+                } else {
+                    statusEl.style.color = "var(--danger)";
+                    statusEl.innerText = `Upload failed: ${result.detail}`;
+                    showToast("Upload failed: " + result.detail, "error");
+                }
+            } catch (err) {
+                statusEl.style.color = "var(--danger)";
+                statusEl.innerText = `Error: ${err.message}`;
+                showToast("Ingestion error: " + err.message, "error");
+            }
+        }
+
+        async function fetchDocuments() {
+            try {
+                const resp = await authFetch("/api/v1/documents");
+                const tbody = document.getElementById("documentsTableBody");
+                if (resp.ok) {
+                    const docs = await resp.json();
+                    document.getElementById("navBadgeDocs").innerText = `${docs.length} Docs`;
+                    document.getElementById("kbDocCount").innerText = docs.length;
+
+                    if (docs.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                    No documents indexed yet. Drop a PDF or TXT file above to build your on-premise knowledge base.
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+
+                    tbody.innerHTML = docs.map(d => `
+                        <tr>
+                            <td><strong>📄 ${escapeHtml(d.filename)}</strong></td>
+                            <td><code style="font-size: 0.72rem;">${escapeHtml(d.document_id)}</code></td>
+                            <td><span class="format-badge">${escapeHtml(d.extension || "DOC")}</span></td>
+                            <td><span class="citation-tag">${d.chunks_count} chunks</span></td>
+                            <td><code style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(d.sha256.substring(0, 16))}...</code></td>
+                            <td><span class="badge badge-health">INDEXED</span></td>
+                        </tr>
+                    `).join("");
+                }
+            } catch (e) {
+                console.error("Failed to fetch documents:", e);
+            }
+        }
+
+        // ==========================================
+        // Security & Cryptographic Audit
+        // ==========================================
+        async function verifyAuditLedger() {
+            showToast("Recalculating SHA-256 blockchain hash chain...", "info");
+            try {
+                const resp = await authFetch("/api/v1/audit/verify");
+                if (resp.ok) {
+                    const data = await resp.json();
+                    document.getElementById("cardAuditStatus").innerText = data.is_valid ? "VERIFIED" : "COMPROMISED";
+                    document.getElementById("dashLedgerStatus").innerText = data.is_valid ? "TAMPER-PROOF (OK)" : "TAMPERED";
+                    document.getElementById("dashLedgerStatus").style.color = data.is_valid ? "var(--success)" : "var(--danger)";
+                    document.getElementById("dashTotalRecords").innerText = data.total_records;
+                    document.getElementById("dashTipHash").innerText = data.latest_hash;
+
+                    document.getElementById("auditVerifyStatus").innerText = data.is_valid ? "VERIFIED UNTAMPERED" : "INTEGRITY ERROR";
+                    document.getElementById("auditVerifyStatus").style.color = data.is_valid ? "var(--success)" : "var(--danger)";
+                    document.getElementById("auditVerifyCount").innerText = data.total_records;
+                    document.getElementById("auditVerifyMsg").innerText = data.message;
+                    document.getElementById("auditTipHash").innerText = data.latest_hash;
+
+                    showToast("Audit chain verified: " + data.total_records + " records untampered.", "success");
+                }
+            } catch (e) {
+                showToast("Audit verification error: " + e.message, "error");
+            }
+        }
+
+        async function fetchAuditLogs() {
+            try {
+                const resp = await authFetch("/api/v1/audit/logs?limit=50");
+                const tbody = document.getElementById("auditLogsTableBody");
+                if (resp.ok) {
+                    const logs = await resp.json();
+                    if (!logs || logs.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                    Zero audit events recorded yet.
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+
+                    tbody.innerHTML = logs.map(l => {
+                        const time = l.timestamp ? l.timestamp.replace("T", " ").substring(0, 19) : "--";
+                        const hash = l.record_hash || l.prev_hash || "GENESIS";
+                        const isSuccess = !l.event_type.includes("FAIL");
+                        return `
+                            <tr>
+                                <td style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim);">${escapeHtml(time)}</td>
+                                <td><span class="badge ${isSuccess ? 'badge-health' : 'badge-sih'}">${escapeHtml(l.event_type)}</span></td>
+                                <td><strong>${escapeHtml(l.agent_name || "System")}</strong></td>
+                                <td>${escapeHtml(l.action || "")}</td>
+                                <td><code style="font-size: 0.7rem; color: var(--accent-primary);">${escapeHtml(hash.substring(0, 18))}...</code></td>
+                            </tr>
+                        `;
+                    }).join("");
+                }
+            } catch (e) {
+                console.error("Audit log lookup failed:", e);
+            }
+        }
+
+        // ==========================================
+        // System Health Diagnostics
+        // ==========================================
+        async function fetchStats() {
+            try {
+                const resp = await fetch("/api/v1/health");
+                if (resp.ok) {
+                    const data = await resp.json();
+
+                    // Update Top Badges & Metric Cards
+                    document.getElementById("cardSystemStatus").innerText = data.status === "ONLINE_SECURE" ? "ONLINE" : data.status;
+                    document.getElementById("cardEnvironment").innerText = data.environment || "Air-Gapped Local";
+                    document.getElementById("cardVectorCount").innerText = data.total_vectors;
+                    document.getElementById("kbChunkCount").innerText = data.total_vectors;
+
+                    // Ollama status
+                    const llmCard = document.getElementById("cardLlmStatus");
+                    const llmSub = document.getElementById("cardLlmSubtext");
+                    if (data.ollama_connected) {
+                        llmCard.innerText = data.default_model;
+                        llmCard.style.color = "var(--text-main)";
+                        llmSub.innerHTML = `<span class="pulse-dot" style="color: var(--success);"></span> <span>Daemon Connected</span>`;
+                    } else {
+                        llmCard.innerText = "Offline";
+                        llmCard.style.color = "var(--warning)";
+                        llmSub.innerText = "Inference Unavailable";
+                    }
+
+                    // Health Table
+                    const hOllama = document.getElementById("healthOllamaStatus");
+                    if (hOllama) {
+                        hOllama.innerHTML = data.ollama_connected
+                            ? `<span class="badge badge-health">CONNECTED</span>`
+                            : `<span class="badge badge-sih" style="color: var(--warning); border-color: rgba(245,158,11,0.3);">UNAVAILABLE</span>`;
+                    }
+                    const hModel = document.getElementById("healthModelName");
+                    if (hModel) hModel.innerText = data.default_model;
+                    const hEndpoint = document.getElementById("healthOllamaEndpoint");
+                    if (hEndpoint) hEndpoint.innerText = data.ollama_endpoint;
+                    const hChunks = document.getElementById("healthTotalChunks");
+                    if (hChunks) hChunks.innerText = data.total_vectors;
+                    const hEnv = document.getElementById("healthEnvMode");
+                    if (hEnv) hEnv.innerText = data.environment;
+                    const hAirgap = document.getElementById("healthAirgapBadge");
+                    if (hAirgap) hAirgap.innerText = data.air_gapped ? "AIR-GAPPED (STRICT)" : "CLOUD SECURE";
+                }
+            } catch (e) {
+                console.error("System health check failed:", e);
+            }
+        }
+
+        // ==========================================
+        // Admin Panel (Protected)
+        // ==========================================
+        async function fetchAdminUsers() {
+            if (!currentUser || currentUser.role !== "admin") return;
+            try {
+                const resp = await authFetch("/api/v1/admin/users");
+                const tbody = document.getElementById("adminUsersTableBody");
+                if (resp.ok) {
+                    const users = await resp.json();
+                    tbody.innerHTML = users.map(u => `
+                        <tr>
+                            <td>#${u.id}</td>
+                            <td><strong>${escapeHtml(u.username)}</strong></td>
+                            <td>${escapeHtml(u.email)}</td>
+                            <td>${escapeHtml(u.full_name || "--")}</td>
+                            <td><span class="badge ${u.role === 'admin' ? 'badge-sih' : 'badge-health'}">${escapeHtml(u.role.toUpperCase())}</span></td>
+                            <td><span style="color: ${u.is_active ? 'var(--success)' : 'var(--danger)'};">● ${u.is_active ? 'Active' : 'Inactive'}</span></td>
+                            <td style="font-size: 0.72rem; color: var(--text-dim);">${escapeHtml((u.created_at || "").substring(0, 10))}</td>
+                            <td style="font-size: 0.72rem; color: var(--text-dim);">${escapeHtml((u.last_login || "Never").substring(0, 19))}</td>
+                        </tr>
+                    `).join("");
+                }
+            } catch (e) {
+                console.error("Admin user directory fetch failed:", e);
+            }
+        }
+
+        // ==========================================
+        // SIH Demonstration Mode
+        // ==========================================
+        function triggerSihDemo() {
+            showToast("Activating SIH26117 Autonomous Multi-Agent Guided Demo...", "info");
+            switchTab("workbench");
+            const demoPrompt = "Conduct an air-gapped sovereign compliance evaluation: audit authentication integrity, verify PII redaction enforcement, and assess multi-agent consensus reliability under SIH26117 standards.";
+            document.getElementById("workbenchQueryInput").value = demoPrompt;
+            setTimeout(() => {
+                submitQuery();
+            }, 600);
+        }
+
+        // ==========================================
+        // Helpers & Formatters
+        // ==========================================
+        function showToast(message, type = "info") {
+            const container = document.getElementById("toastContainer");
+            const toast = document.createElement("div");
+            toast.className = `toast ${type}`;
+            const icon = type === "success" ? "✓" : type === "error" ? "✕" : "ℹ";
+            toast.innerHTML = `<span>${icon}</span> <span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = "0";
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function renderMarkdown(md) {
+            if (!md) return "<p>No report output generated.</p>";
             let html = md
                 .replace(/^# (.*$)/gim, '<h1>$1</h1>')
                 .replace(/^## (.*$)/gim, '<h2>$1</h2>')
@@ -917,118 +2528,6 @@
             return html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>').replace(/\n\n/g, '<p></p>');
         }
 
-        // File Upload Handler
-        async function handleFileUpload(files) {
-            if (!files || files.length === 0) return;
-            const file = files[0];
-            const statusEl = document.getElementById("uploadStatus");
-            statusEl.style.display = "block";
-            statusEl.style.color = "var(--accent-primary)";
-            statusEl.innerText = `Ingesting & redacting '${file.name}' locally...`;
-
-            const formData = new FormData();
-            formData.append("file", file);
-
-            try {
-                const resp = await authFetch("/api/v1/upload", {
-                    method: "POST",
-                    body: formData
-                });
-                const result = await resp.json();
-
-                if (resp.ok) {
-                    statusEl.style.color = "var(--success-color)";
-                    statusEl.innerText = `✓ Indexed ${result.chunks_created} chunks (${result.characters} chars).`;
-                    addDocToList(result.filename, result.chunks_created, result.sha256);
-                    fetchStats();
-                } else {
-                    statusEl.style.color = "var(--danger-color)";
-                    statusEl.innerText = `Upload failed: ${result.detail}`;
-                }
-            } catch (err) {
-                statusEl.style.color = "var(--danger-color)";
-                statusEl.innerText = `Error: ${err.message}`;
-            }
-        }
-
-        function addDocToList(filename, chunks, hash) {
-            const list = document.getElementById("docList");
-            if (list.innerText.includes("No documents loaded")) {
-                list.innerHTML = "";
-            }
-            const item = document.createElement("div");
-            item.className = "doc-item";
-            item.innerHTML = `
-                <div>
-                    <div class="doc-name" title="${filename}">📄 ${escapeHtml(filename)}</div>
-                    <div style="font-size: 0.68rem; color: var(--text-muted); font-family: var(--mono-family);">
-                        SHA: ${hash.substring(0, 10)}...
-                    </div>
-                </div>
-                <span class="citation-tag">${chunks} chunks</span>
-            `;
-            list.prepend(item);
-        }
-
-        // Fetch System Health & Stats
-        async function fetchStats() {
-            try {
-                const resp = await fetch("/api/v1/health");
-                if (resp.ok) {
-                    const data = await resp.json();
-                    document.getElementById("docCountBadge").innerText = `${data.total_vectors} Vectors Indexed`;
-                }
-            } catch (e) {
-                console.error("Error fetching stats:", e);
-            }
-        }
-
-        // Audit Modal
-        async function showAuditModal() {
-            const modal = document.getElementById("auditModal");
-            const body = document.getElementById("auditModalBody");
-            modal.classList.add("open");
-            body.innerHTML = "Auditing SHA-256 micro-ledger chain from Genesis block...";
-
-            try {
-                const resp = await authFetch("/api/v1/audit/verify");
-                const data = await resp.json();
-                body.innerHTML = `
-                    <div style="padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border-radius: 6px; border: 1px solid var(--success-color); margin-bottom: 1rem;">
-                        <strong>LEDGER STATUS:</strong> ${data.is_valid ? "VALID & UNTAMPERED" : "INTEGRITY COMPROMISED"}<br>
-                        <strong>TOTAL CHAINED RECORDS:</strong> ${data.total_records}<br>
-                        <strong>LATEST ROOT HASH:</strong> ${data.latest_hash}
-                    </div>
-                    <div style="color: var(--text-muted);">${escapeHtml(data.message)}</div>
-                `;
-            } catch (e) {
-                body.innerHTML = `<span style="color: var(--danger-color);">Verification request failed: ${e.message}</span>`;
-            }
-        }
-
-        function closeModalOnBackdrop(e) {
-            if (e.target.id === "auditModal") {
-                document.getElementById("auditModal").classList.remove("open");
-            }
-        }
-
-        function copyReport() {
-            if (!lastReportMarkdown) return;
-            navigator.clipboard.writeText(lastReportMarkdown);
-            alert("Report Markdown copied to clipboard!");
-        }
-
-        function downloadReport() {
-            if (!lastReportMarkdown) return;
-            const blob = new Blob([lastReportMarkdown], { type: "text/markdown" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `Sovereign_Report_${new Date().toISOString().substring(0, 10)}.md`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
         function escapeHtml(str) {
             return String(str || "")
                 .replace(/&/g, "&amp;")
@@ -1036,17 +2535,32 @@
                 .replace(/>/g, "&gt;");
         }
 
-        // Drag & Drop Listeners
+        // Setup Drag & Drop Handlers
         const dropzone = document.getElementById("dropzone");
-        dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
-        dropzone.addEventListener("dragleave", () => { dropzone.classList.remove("dragover"); });
-        dropzone.addEventListener("drop", (e) => {
-            e.preventDefault();
-            dropzone.classList.remove("dragover");
-            handleFileUpload(e.dataTransfer.files);
+        if (dropzone) {
+            dropzone.addEventListener("dragover", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
+            dropzone.addEventListener("dragleave", () => { dropzone.classList.remove("dragover"); });
+            dropzone.addEventListener("drop", (e) => {
+                e.preventDefault();
+                dropzone.classList.remove("dragover");
+                handleFileSelected(e.dataTransfer.files);
+            });
+        }
+
+        // Keybindings
+        document.addEventListener("keydown", (e) => {
+            if ((e.key === "Enter" && (e.ctrlKey || e.metaKey)) || (e.key === "Enter" && !e.shiftKey && document.activeElement.id === "workbenchQueryInput")) {
+                if (document.activeElement.id === "workbenchQueryInput") {
+                    e.preventDefault();
+                    submitQuery();
+                } else if (document.activeElement.id === "dashboardQueryInput") {
+                    e.preventDefault();
+                    dispatchFromDashboard();
+                }
+            }
         });
 
-        // Check query param for token (from social OAuth callback)
+        // Check Social OAuth Callback Token in URL
         function checkUrlToken() {
             const urlParams = new URLSearchParams(window.location.search);
             const tokenParam = urlParams.get("token");
@@ -1056,12 +2570,14 @@
             }
         }
 
-        // Initialize on boot
+        // Boot
         window.addEventListener("DOMContentLoaded", () => {
             checkUrlToken();
             fetchCurrentUser();
             initWebSocket();
             fetchStats();
+            verifyAuditLedger();
+            fetchDocuments();
         });
     </script>
 </body>

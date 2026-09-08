@@ -51,6 +51,33 @@ class TestDeploymentConfig(unittest.TestCase):
         self.assertIn("total_vectors", data)
         self.assertIn("audit_integrity", data)
 
+    def test_documents_and_admin_endpoints(self):
+        from app.security.auth import create_session_token
+        client = TestClient(app)
+
+        # 1. Unauthenticated requests should be 401
+        self.assertEqual(client.get("/api/v1/documents").status_code, 401)
+        self.assertEqual(client.get("/api/v1/admin/users").status_code, 401)
+
+        # 2. Standard user token
+        user_token = create_session_token({"username": "regular_user", "role": "user", "id": 99, "email": "user@sovereign.local"})
+        user_headers = {"Authorization": f"Bearer {user_token}"}
+
+        doc_resp = client.get("/api/v1/documents", headers=user_headers)
+        self.assertEqual(doc_resp.status_code, 200)
+        self.assertIsInstance(doc_resp.json(), list)
+
+        # Standard user forbidden on admin route
+        admin_forbidden = client.get("/api/v1/admin/users", headers=user_headers)
+        self.assertEqual(admin_forbidden.status_code, 403)
+
+        # 3. Admin user token
+        admin_token = create_session_token({"username": "admin", "role": "admin", "id": 1, "email": "admin@sovereign.local"})
+        admin_headers = {"Authorization": f"Bearer {admin_token}"}
+        admin_resp = client.get("/api/v1/admin/users", headers=admin_headers)
+        self.assertEqual(admin_resp.status_code, 200)
+        self.assertIsInstance(admin_resp.json(), list)
+
 
 if __name__ == "__main__":
     unittest.main()

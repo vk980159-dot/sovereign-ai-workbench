@@ -306,6 +306,31 @@ class LocalVectorStore:
             "persist_directory": self.persist_dir
         }
 
+    def get_indexed_documents(self) -> List[Dict[str, Any]]:
+        """Returns statistical overview of unique documents indexed in the local ChromaDB."""
+        if self.collection is None:
+            return []
+        try:
+            results = self.collection.get(include=["metadatas"])
+            metas = results.get("metadatas", [])
+            docs_map: Dict[str, Dict[str, Any]] = {}
+            for m in metas:
+                if not m:
+                    continue
+                doc_id = m.get("document_id") or m.get("filename") or "unknown"
+                if doc_id not in docs_map:
+                    docs_map[doc_id] = {
+                        "document_id": str(doc_id),
+                        "filename": str(m.get("filename", "document")),
+                        "chunks_count": 0,
+                        "sha256": str(m.get("file_sha256", "")),
+                        "extension": str(m.get("extension", ""))
+                    }
+                docs_map[doc_id]["chunks_count"] += 1
+            return list(docs_map.values())
+        except Exception:
+            return []
+
 
 # Global singleton instance
 vector_store = LocalVectorStore()

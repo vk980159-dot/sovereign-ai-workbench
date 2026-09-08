@@ -97,3 +97,22 @@ class SystemHealthResponse(BaseModel):
     chroma_collection: str
     total_vectors: int
     audit_integrity: bool
+
+
+class DocumentItem(BaseModel):
+    document_id: str
+    filename: str
+    chunks_count: int
+    sha256: str
+    extension: str
+
+
+class AdminUserItem(BaseModel):
+    id: int
+    username: str
+    email: str
+    full_name: str
+    role: str
+    is_active: bool
+    created_at: str
+    last_login: Optional[str] = None

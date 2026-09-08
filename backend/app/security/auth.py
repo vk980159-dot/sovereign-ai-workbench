@@ -1015,3 +1015,31 @@ def get_current_user_optional(request: Request) -> Optional[Dict[str, Any]]:
     if not token:
         return None
     return verify_session_token(token)
+
+
+def get_all_users(limit: int = 100) -> list:
+    """
+    Returns list of registered users for administrator oversight.
+    Guarantees that password hashes, salts, and secret credentials are never exposed.
+    """
+    with _get_db_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, username, email, full_name, role, is_active, created_at, last_login
+            FROM users
+            ORDER BY id ASC
+            LIMIT ?
+        """, (limit,))
+        users = []
+        for row in cur.fetchall():
+            users.append({
+                "id": row["id"],
+                "username": row["username"],
+                "email": row["email"],
+                "full_name": row["full_name"],
+                "role": row["role"],
+                "is_active": bool(row["is_active"]),
+                "created_at": row["created_at"],
+                "last_login": row["last_login"]
+            })
+        return users

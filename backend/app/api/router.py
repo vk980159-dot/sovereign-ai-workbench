@@ -36,7 +36,9 @@ from app.api.models import (
     LoginResponse,
     LogoutResponse,
     UserResponse,
-    OAuthProvidersResponse
+    OAuthProvidersResponse,
+    DocumentItem,
+    AdminUserItem
 )
 from app.database.vector_store import vector_store
 from app.security.audit_logger import audit_logger
@@ -51,7 +53,8 @@ from app.security.auth import (
     create_oauth_state,
     verify_oauth_state,
     resolve_social_user,
-    log_oauth_event
+    log_oauth_event,
+    get_all_users
 )
 from app.agents.graph import run_agent_workflow
 
@@ -717,6 +720,23 @@ async def upload_document(
                 os.remove(save_path)
             except Exception:
                 pass
+
+
+@api_router.get("/documents", response_model=List[DocumentItem])
+async def list_documents(current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Returns all indexed documents currently stored in the local vector database."""
+    return vector_store.get_indexed_documents()
+
+
+@api_router.get("/admin/users", response_model=List[AdminUserItem])
+async def list_admin_users(current_user: Dict[str, Any] = Depends(get_current_user)):
+    """Administrative user management endpoint. Protected by role-based access control."""
+    if current_user.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrative privileges required to access user ledger."
+        )
+    return get_all_users()
 
 
 # ==========================================
