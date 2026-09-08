@@ -47,6 +47,23 @@ except ImportError:
     pass
 
 
+def _clean_credential(val: str) -> str:
+    """Strips whitespace, accidental wrapping/leading/trailing quotes, and angle brackets from credentials."""
+    if not val:
+        return ""
+    v = str(val).strip()
+    changed = True
+    while changed:
+        orig = v
+        if (v.startswith('"') and v.endswith('"')) or (v.startswith("'") and v.endswith("'")):
+            v = v[1:-1].strip()
+        if v.startswith("<") and v.endswith(">"):
+            v = v[1:-1].strip()
+        v = v.lstrip('"\'<').rstrip('"\'>')
+        changed = (v != orig)
+    return v.strip()
+
+
 class WorkbenchSettings(BaseSettings):
     # Core Application Settings
     PROJECT_NAME: str = "Sovereign AI Workbench"
@@ -204,13 +221,21 @@ class WorkbenchSettings(BaseSettings):
     )
 
     def model_post_init(self, __context):
-        """Re-route storage directories to DATA_DIR if configured (e.g. Render Persistent Disk)."""
+        """Re-route storage directories to DATA_DIR if configured (e.g. Render Persistent Disk) and sanitize OAuth credentials."""
         if self.DATA_DIR and self.DATA_DIR.strip():
             data_path = Path(self.DATA_DIR.strip()).resolve()
             self.CHROMA_PERSIST_DIR = str(data_path / "chroma_db")
             self.AUDIT_LOG_FILE = str(data_path / "audit_trail.jsonl")
             self.UPLOAD_DIR = str(data_path / "uploaded_docs")
             self.AUTH_DB_PATH = str(data_path / "auth.db")
+
+        # Sanitize OAuth configurations against stray quotes or angle brackets
+        self.GOOGLE_CLIENT_ID = _clean_credential(self.GOOGLE_CLIENT_ID)
+        self.GOOGLE_CLIENT_SECRET = _clean_credential(self.GOOGLE_CLIENT_SECRET)
+        self.GOOGLE_REDIRECT_URI = _clean_credential(self.GOOGLE_REDIRECT_URI)
+        self.GITHUB_CLIENT_ID = _clean_credential(self.GITHUB_CLIENT_ID)
+        self.GITHUB_CLIENT_SECRET = _clean_credential(self.GITHUB_CLIENT_SECRET)
+        self.GITHUB_REDIRECT_URI = _clean_credential(self.GITHUB_REDIRECT_URI)
 
     def get_cors_origins(self) -> List[str]:
         """Returns verified origins allowed for CORS."""

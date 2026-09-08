@@ -238,9 +238,11 @@ async def google_login(request: Request):
     )
 
     state = create_oauth_state("google")
+    client_id = settings.GOOGLE_CLIENT_ID.strip().lstrip('"\'<').rstrip('"\'>')
+    redirect_uri = settings.GOOGLE_REDIRECT_URI.strip().lstrip('"\'<').rstrip('"\'>')
     params = {
-        "client_id": settings.GOOGLE_CLIENT_ID,
-        "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
         "response_type": "code",
         "scope": "openid email profile",
         "state": state,
@@ -450,9 +452,11 @@ async def github_login(request: Request):
     )
 
     state = create_oauth_state("github")
+    client_id = settings.GITHUB_CLIENT_ID.strip().lstrip('"\'<').rstrip('"\'>')
+    redirect_uri = settings.GITHUB_REDIRECT_URI.strip().lstrip('"\'<').rstrip('"\'>')
     params = {
-        "client_id": settings.GITHUB_CLIENT_ID,
-        "redirect_uri": settings.GITHUB_REDIRECT_URI,
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
         "scope": "read:user user:email",
         "state": state
     }
