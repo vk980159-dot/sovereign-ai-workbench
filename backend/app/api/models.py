@@ -30,6 +30,9 @@ class LoginRequest(BaseModel):
 class OAuthProvidersResponse(BaseModel):
     google: bool = Field(False, description="Whether Google OAuth is configured and enabled")
     github: bool = Field(False, description="Whether GitHub OAuth is configured and enabled")
+    environment: str = Field("production-airgapped", description="Current operating environment")
+    github_redirect_uri: Optional[str] = Field(None, description="Configured GitHub OAuth callback URI (sanitized)")
+    google_redirect_uri: Optional[str] = Field(None, description="Configured Google OAuth callback URI (sanitized)")
 
 
 class UserResponse(BaseModel):
@@ -91,8 +94,12 @@ class SystemHealthResponse(BaseModel):
     version: str
     environment: str = "production-airgapped"
     air_gapped: bool
+    runtime_mode: str = Field("LOCAL_AIR_GAPPED", description="Runtime mode: LOCAL_AIR_GAPPED or CLOUD_DEMO")
+    runtime_label: str = Field("AIR-GAPPED / ON-PREMISE VERIFIED", description="User-facing runtime label")
+    runtime_notice: Optional[str] = Field(None, description="Notice explaining runtime limitations in cloud demonstration")
     ollama_endpoint: str
     ollama_connected: Optional[bool] = None
+    embeddings_status: str = Field("OPERATIONAL", description="Status of local embedding engine")
     default_model: str
     chroma_collection: str
     total_vectors: int

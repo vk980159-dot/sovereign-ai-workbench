@@ -228,8 +228,12 @@ class WorkbenchSettings(BaseSettings):
     )
     GOOGLE_REDIRECT_URI: str = Field(
         default_factory=lambda: (
-            os.getenv("GOOGLE_REDIRECT_URI", os.getenv("WORKBENCH_GOOGLE_REDIRECT_URI", "http://127.0.0.1:8000/api/auth/google/callback")).strip()
-            or "http://127.0.0.1:8000/api/auth/google/callback"
+            os.getenv("GOOGLE_REDIRECT_URI", os.getenv("WORKBENCH_GOOGLE_REDIRECT_URI", "")).strip()
+            or (
+                "https://sovereign-ai-workbench-wb96.onrender.com/api/auth/google/callback"
+                if os.getenv("ENVIRONMENT", os.getenv("WORKBENCH_ENVIRONMENT", "production-airgapped")).strip() == "production-cloud"
+                else "http://127.0.0.1:8000/api/auth/google/callback"
+            )
         ),
         validation_alias=AliasChoices("GOOGLE_REDIRECT_URI", "WORKBENCH_GOOGLE_REDIRECT_URI") if AliasChoices else "GOOGLE_REDIRECT_URI",
         description="Google OAuth Callback URL"
@@ -248,8 +252,12 @@ class WorkbenchSettings(BaseSettings):
     )
     GITHUB_REDIRECT_URI: str = Field(
         default_factory=lambda: (
-            os.getenv("GITHUB_REDIRECT_URI", os.getenv("WORKBENCH_GITHUB_REDIRECT_URI", "http://127.0.0.1:8000/api/auth/github/callback")).strip()
-            or "http://127.0.0.1:8000/api/auth/github/callback"
+            os.getenv("GITHUB_REDIRECT_URI", os.getenv("WORKBENCH_GITHUB_REDIRECT_URI", "")).strip()
+            or (
+                "https://sovereign-ai-workbench-wb96.onrender.com/api/auth/github/callback"
+                if os.getenv("ENVIRONMENT", os.getenv("WORKBENCH_ENVIRONMENT", "production-airgapped")).strip() == "production-cloud"
+                else "http://127.0.0.1:8000/api/auth/github/callback"
+            )
         ),
         validation_alias=AliasChoices("GITHUB_REDIRECT_URI", "WORKBENCH_GITHUB_REDIRECT_URI") if AliasChoices else "GITHUB_REDIRECT_URI",
         description="GitHub OAuth Callback URL"
@@ -274,6 +282,18 @@ class WorkbenchSettings(BaseSettings):
         self.GITHUB_CLIENT_ID = _clean_credential(self.GITHUB_CLIENT_ID)
         self.GITHUB_CLIENT_SECRET = _clean_credential(self.GITHUB_CLIENT_SECRET)
         self.GITHUB_REDIRECT_URI = _clean_credential(self.GITHUB_REDIRECT_URI)
+        if not self.GITHUB_REDIRECT_URI:
+            self.GITHUB_REDIRECT_URI = (
+                "https://sovereign-ai-workbench-wb96.onrender.com/api/auth/github/callback"
+                if self.ENVIRONMENT == "production-cloud"
+                else "http://127.0.0.1:8000/api/auth/github/callback"
+            )
+        if not self.GOOGLE_REDIRECT_URI:
+            self.GOOGLE_REDIRECT_URI = (
+                "https://sovereign-ai-workbench-wb96.onrender.com/api/auth/google/callback"
+                if self.ENVIRONMENT == "production-cloud"
+                else "http://127.0.0.1:8000/api/auth/google/callback"
+            )
 
     def get_cors_origins(self) -> List[str]:
         """Returns verified origins allowed for CORS."""

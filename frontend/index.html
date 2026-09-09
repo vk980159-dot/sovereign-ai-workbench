@@ -1981,6 +1981,7 @@
 
         <div class="header-right">
             <span class="badge badge-sih">SIH26117</span>
+            <span class="badge" id="badgeRuntimeMode" style="background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700;">AIR-GAPPED / ON-PREMISE VERIFIED</span>
             <span class="badge badge-health" id="badgeHealth">
                 <span class="pulse-dot"></span>
                 <span id="healthStatusText">ONLINE_SECURE</span>
@@ -2143,9 +2144,10 @@
                                 <span>🛡️</span>
                                 <span>SOVEREIGNTY PROOF PANEL — ZERO CLOUD AI</span>
                             </div>
-                            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); border-color: rgba(16, 185, 129, 0.3);">100% AIR-GAPPED VERIFIED</span>
+                            <span class="badge" id="judgeProofBadge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); border-color: rgba(16, 185, 129, 0.3);">AIR-GAPPED / ON-PREMISE VERIFIED</span>
                         </div>
                         <div class="panel-body" style="padding: 1rem;">
+                            <div id="judgeCloudNotice" style="display: none; margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: 8px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; font-size: 0.85rem;"></div>
                             <div class="sovereignty-grid">
                                 <div class="sovereignty-item">
                                     <span class="sov-role">Reasoning Engine</span>
@@ -3333,7 +3335,7 @@
                                     <tr>
                                         <td><strong>Vector Embedding Engine</strong></td>
                                         <td>OllamaEmbeddings</td>
-                                        <td><span class="badge badge-health">OPERATIONAL</span></td>
+                                        <td id="healthEmbeddingsStatus"><span class="badge badge-health">OPERATIONAL</span></td>
                                         <td>Dedicated Model: nomic-embed-text</td>
                                     </tr>
                                     <tr>
@@ -4279,9 +4281,49 @@
 
                     // Update Top Badges & Metric Cards
                     document.getElementById("cardSystemStatus").innerText = data.status === "ONLINE_SECURE" ? "ONLINE" : data.status;
-                    document.getElementById("cardEnvironment").innerText = data.environment || "Air-Gapped Local";
+                    const isLocalAirgapped = (data.runtime_mode === "LOCAL_AIR_GAPPED");
+                    document.getElementById("cardEnvironment").innerText = isLocalAirgapped ? "AIR-GAPPED / ON-PREMISE" : "CLOUD DEMO";
                     document.getElementById("cardVectorCount").innerText = data.total_vectors;
                     document.getElementById("kbChunkCount").innerText = data.total_vectors;
+
+                    // Runtime mode badge in header
+                    const rtBadge = document.getElementById("badgeRuntimeMode");
+                    if (rtBadge) {
+                        rtBadge.innerText = data.runtime_label || (isLocalAirgapped ? "AIR-GAPPED / ON-PREMISE VERIFIED" : "CLOUD DEMO / LOCAL AI REQUIRED");
+                        if (isLocalAirgapped) {
+                            rtBadge.style.background = "rgba(16, 185, 129, 0.15)";
+                            rtBadge.style.color = "var(--success)";
+                            rtBadge.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                        } else {
+                            rtBadge.style.background = "rgba(245, 158, 11, 0.15)";
+                            rtBadge.style.color = "var(--warning)";
+                            rtBadge.style.borderColor = "rgba(245, 158, 11, 0.3)";
+                        }
+                    }
+
+                    // Judge Demo proof badge & notice
+                    const jBadge = document.getElementById("judgeProofBadge");
+                    if (jBadge) {
+                        jBadge.innerText = isLocalAirgapped ? "AIR-GAPPED / ON-PREMISE VERIFIED" : "CLOUD DEMO / LOCAL AI REQUIRED";
+                        if (isLocalAirgapped) {
+                            jBadge.style.background = "rgba(16, 185, 129, 0.15)";
+                            jBadge.style.color = "var(--success)";
+                            jBadge.style.borderColor = "rgba(16, 185, 129, 0.3)";
+                        } else {
+                            jBadge.style.background = "rgba(245, 158, 11, 0.15)";
+                            jBadge.style.color = "var(--warning)";
+                            jBadge.style.borderColor = "rgba(245, 158, 11, 0.3)";
+                        }
+                    }
+                    const jNotice = document.getElementById("judgeCloudNotice");
+                    if (jNotice) {
+                        if (data.runtime_notice) {
+                            jNotice.style.display = "block";
+                            jNotice.innerHTML = `<strong>ℹ️ Runtime Notice:</strong> ${escapeHtml(data.runtime_notice)}`;
+                        } else {
+                            jNotice.style.display = "none";
+                        }
+                    }
 
                     // Ollama status
                     const llmCard = document.getElementById("cardLlmStatus");
@@ -4293,26 +4335,40 @@
                     } else {
                         llmCard.innerText = "Offline";
                         llmCard.style.color = "var(--warning)";
-                        llmSub.innerText = "Inference Unavailable";
+                        llmSub.innerText = isLocalAirgapped ? "Inference Unavailable" : "Local AI Required (Cloud)";
                     }
 
                     // Health Table
                     const hOllama = document.getElementById("healthOllamaStatus");
                     if (hOllama) {
                         hOllama.innerHTML = data.ollama_connected
-                            ? `<span class="badge badge-health">CONNECTED</span>`
+                            ? `<span class="badge badge-health">AVAILABLE</span>`
                             : `<span class="badge badge-sih" style="color: var(--warning); border-color: rgba(245,158,11,0.3);">UNAVAILABLE</span>`;
                     }
                     const hModel = document.getElementById("healthModelName");
                     if (hModel) hModel.innerText = data.default_model;
                     const hEndpoint = document.getElementById("healthOllamaEndpoint");
                     if (hEndpoint) hEndpoint.innerText = data.ollama_endpoint;
+                    const hEmbed = document.getElementById("healthEmbeddingsStatus");
+                    if (hEmbed) {
+                        const isEmbedOk = (data.embeddings_status === "OPERATIONAL");
+                        hEmbed.innerHTML = isEmbedOk
+                            ? `<span class="badge badge-health">OPERATIONAL</span>`
+                            : `<span class="badge badge-sih" style="color: var(--warning); border-color: rgba(245,158,11,0.3);">${escapeHtml(data.embeddings_status || "DEGRADED / DEPENDENT ON OLLAMA")}</span>`;
+                    }
                     const hChunks = document.getElementById("healthTotalChunks");
                     if (hChunks) hChunks.innerText = data.total_vectors;
                     const hEnv = document.getElementById("healthEnvMode");
-                    if (hEnv) hEnv.innerText = data.environment;
+                    if (hEnv) hEnv.innerText = isLocalAirgapped ? "AIR-GAPPED / ON-PREMISE" : "CLOUD DEMO";
                     const hAirgap = document.getElementById("healthAirgapBadge");
-                    if (hAirgap) hAirgap.innerText = data.air_gapped ? "AIR-GAPPED (STRICT)" : "CLOUD SECURE";
+                    if (hAirgap) {
+                        hAirgap.className = isLocalAirgapped ? "badge badge-health" : "badge badge-sih";
+                        hAirgap.innerText = isLocalAirgapped ? "AIR-GAPPED / ON-PREMISE" : "CLOUD DEMO";
+                        if (!isLocalAirgapped) {
+                            hAirgap.style.color = "var(--warning)";
+                            hAirgap.style.borderColor = "rgba(245,158,11,0.3)";
+                        }
+                    }
                 }
 
                 try {
@@ -4529,7 +4585,12 @@
                 });
 
                 if (!resp.ok) {
-                    throw new Error(`Demo trigger failed with HTTP ${resp.status}`);
+                    let errMsg = `Demo trigger failed with HTTP ${resp.status}`;
+                    try {
+                        const errJson = await resp.json();
+                        if (errJson.detail) errMsg = errJson.detail;
+                    } catch (je) {}
+                    throw new Error(errMsg);
                 }
 
                 const data = await resp.json();
@@ -4546,11 +4607,12 @@
 
             } catch (err) {
                 console.error("Judge Demo Trigger Error:", err);
-                appendJudgeTelemetry("ERROR", `Failed to initiate demo: ${err.message}`, "danger");
+                appendJudgeTelemetry("SOVEREIGN_GATE", err.message, "warning");
+                showToast(err.message, "warning");
                 judgeDemoActive = false;
                 if (runBtn) runBtn.disabled = false;
                 if (banner) banner.style.display = "none";
-                updatePipelineStage(1, "failed", "Trigger Error");
+                updatePipelineStage(1, "failed", "Local AI Required");
             }
         }
 
