@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Sovereign AI Workbench - Public Share Mode Runner (SIH26117)
 ------------------------------------------------------------

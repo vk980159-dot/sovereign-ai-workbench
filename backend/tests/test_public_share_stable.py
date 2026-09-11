@@ -1,4 +1,4 @@
-﻿"""
+"""
 Sovereign AI Workbench - Stable Public Share Test Suite (SIH26117)
 -----------------------------------------------------------------
 Validates Cloudflare Named Tunnel mode:

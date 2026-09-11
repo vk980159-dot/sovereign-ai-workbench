@@ -139,6 +139,8 @@ async def synthesizer_node(state: AgentState) -> Dict[str, Any]:
     else:
         evidence_lines.append("No relevant local knowledge-base evidence was found.")
 
+    evidence_str = "\n".join(evidence_lines)
+    actions_str = "\n".join([f"- {a}" for a in actions])
     artifact_lines = [f"- [`{a.get('filename')}`] (SHA-256: `{a.get('sha256')[:16]}...`, {a.get('size_bytes')} bytes)" for a in artifacts]
     artifact_str = "\n".join(artifact_lines) if artifact_lines else "None generated."
 
@@ -152,9 +154,9 @@ async def synthesizer_node(state: AgentState) -> Dict[str, Any]:
         f"- Hydraulic and thermal safety margins verified against authoritative plant SOP.\n"
         f"- Critical variances flagged with bounded remediation timelines.\n\n"
         f"EVIDENCE:\n"
-        f"{'\n'.join(evidence_lines)}\n\n"
+        f"{evidence_str}\n\n"
         f"ACTIONS PERFORMED:\n"
-        f"{'\n'.join([f'- {a}' for a in actions])}\n\n"
+        f"{actions_str}\n\n"
         f"GENERATED ARTIFACTS:\n"
         f"{artifact_str}\n\n"
         f"VERIFICATION:\n"
