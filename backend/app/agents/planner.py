@@ -6,7 +6,7 @@ Supports dynamic local LLM planning with deterministic fallback for industrial a
 
 import json
 import re
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 from app.agents.model_provider import get_model_provider
 
 
