@@ -61,7 +61,7 @@ class OllamaModelProvider(ModelProvider):
             "stream": False,
             "options": {
                 "temperature": temperature,
-                "num_predict": 2048
+                "num_predict": 384
             }
         }
         if system:

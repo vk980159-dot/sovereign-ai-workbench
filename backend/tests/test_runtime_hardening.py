@@ -18,6 +18,20 @@ from app.api.router import _is_ollama_connection_error
 class TestOAuthAndRuntimeHardening(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
+        mock_file = MagicMock()
+        mock_file.is_file.return_value = False
+        self._patches = [
+            patch.dict(os.environ, {"PUBLIC_BASE_URL": "", "PUBLIC_SHARE_ENABLED": "false"}, clear=False),
+            patch("app.config.PUBLIC_SHARE_FILE", mock_file),
+            patch.object(settings, "PUBLIC_BASE_URL", None),
+            patch.object(settings, "PUBLIC_SHARE_ENABLED", False),
+        ]
+        for p in self._patches:
+            p.start()
+
+    def tearDown(self):
+        for p in reversed(self._patches):
+            p.stop()
 
     # -------------------------------------------------------------
     # 1. GitHub local redirect URI generation
@@ -223,7 +237,9 @@ class TestOAuthAndRuntimeHardening(unittest.TestCase):
     # -------------------------------------------------------------
     def test_13_existing_google_oauth_remains_working(self):
         """Verify Google OAuth flow and state generation remain intact."""
-        with patch.object(settings, "GOOGLE_CLIENT_ID", "google_id"),              patch.object(settings, "GOOGLE_CLIENT_SECRET", "google_sec"),              patch.object(settings, "GOOGLE_REDIRECT_URI", "http://127.0.0.1:8000/api/auth/google/callback"):
+        with patch.object(settings, "GOOGLE_CLIENT_ID", "google_id"), \
+             patch.object(settings, "GOOGLE_CLIENT_SECRET", "google_sec"), \
+             patch.object(settings, "GOOGLE_REDIRECT_URI", "http://127.0.0.1:8000/api/auth/google/callback"):
             resp = self.client.get("/api/auth/google/login", follow_redirects=False)
             self.assertEqual(resp.status_code, 302)
             location = resp.headers["location"]
@@ -232,6 +248,85 @@ class TestOAuthAndRuntimeHardening(unittest.TestCase):
             self.assertEqual(qs["redirect_uri"][0], "http://127.0.0.1:8000/api/auth/google/callback")
             self.assertEqual(qs["client_id"][0], "google_id")
             self.assertIn("oauth_state_google", resp.cookies)
+
+    # -------------------------------------------------------------
+    # 14. Google OAuth token exchange redirect URI matching
+    # -------------------------------------------------------------
+    def test_14_google_oauth_token_exchange_redirect_uri_matching(self):
+        """Verify Google OAuth callback uses the exact same redirect URI in token exchange POST as was generated in authorization step."""
+        state = create_oauth_state("google")
+        local_uri = "http://127.0.0.1:8000/api/auth/google/callback"
+
+        mock_token_resp = MagicMock()
+        mock_token_resp.status_code = 200
+        mock_token_resp.json.return_value = {"access_token": "mock_google_access_token"}
+
+        mock_userinfo_resp = MagicMock()
+        mock_userinfo_resp.status_code = 200
+        mock_userinfo_resp.json.return_value = {
+            "sub": "google-10928374",
+            "email": "testjudge@sovereign.local",
+            "name": "Judge Evaluator"
+        }
+
+        with patch.object(settings, "GOOGLE_CLIENT_ID", "google_client_test"), \
+             patch.object(settings, "GOOGLE_CLIENT_SECRET", "google_secret_test"), \
+             patch.object(settings, "GOOGLE_REDIRECT_URI", local_uri), \
+             patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post, \
+             patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get:
+
+            mock_post.return_value = mock_token_resp
+            mock_get.return_value = mock_userinfo_resp
+
+            # 1. Check authorization URL redirect_uri
+            login_resp = self.client.get("/api/auth/google/login", follow_redirects=False)
+            qs = parse_qs(urlparse(login_resp.headers["location"]).query)
+            auth_redirect_uri = qs["redirect_uri"][0]
+            self.assertEqual(auth_redirect_uri, local_uri)
+
+            # 2. Check callback token exchange redirect_uri
+            client = TestClient(app, cookies={"oauth_state_google": state})
+            cb_resp = client.get(f"/api/auth/google/callback?code=mock_code&state={state}", follow_redirects=False)
+
+            mock_post.assert_called_once()
+            called_data = mock_post.call_args[1].get("data") or mock_post.call_args.kwargs.get("data")
+            # CRITICAL: Token exchange redirect_uri MUST be identical to authorization redirect_uri
+            self.assertEqual(called_data["redirect_uri"], auth_redirect_uri)
+            self.assertEqual(called_data["client_id"], "google_client_test")
+            self.assertEqual(called_data["code"], "mock_code")
+
+    # -------------------------------------------------------------
+    # 15. Dynamic redirect URI resolution consistency across all runtime modes
+    # -------------------------------------------------------------
+    def test_15_dynamic_redirect_uri_resolution_consistency(self):
+        """Verify get_google_redirect_uri and get_github_redirect_uri resolve identically and consistently across runtime modes."""
+        # A. Local default mode
+        with patch.object(settings, "PUBLIC_SHARE_ENABLED", False), \
+             patch.dict(os.environ, {"PUBLIC_BASE_URL": ""}), \
+             patch.object(settings, "PUBLIC_BASE_URL", None), \
+             patch.object(settings, "ENVIRONMENT", "production-airgapped"):
+            self.assertEqual(settings.get_google_redirect_uri(), "http://127.0.0.1:8000/api/auth/google/callback")
+            self.assertEqual(settings.get_github_redirect_uri(), "http://127.0.0.1:8000/api/auth/github/callback")
+
+        # B. Tailscale Funnel mode
+        with patch.dict(os.environ, {"PUBLIC_BASE_URL": "https://laptop-5shove4t.tail907df1.ts.net"}):
+            self.assertEqual(settings.get_google_redirect_uri(), "https://laptop-5shove4t.tail907df1.ts.net/api/auth/google/callback")
+            self.assertEqual(settings.get_github_redirect_uri(), "https://laptop-5shove4t.tail907df1.ts.net/api/auth/github/callback")
+
+        # C. Cloudflare Quick Tunnel mode
+        with patch.dict(os.environ, {"PUBLIC_BASE_URL": "https://quick-tunnel-demo.trycloudflare.com"}):
+            self.assertEqual(settings.get_google_redirect_uri(), "https://quick-tunnel-demo.trycloudflare.com/api/auth/google/callback")
+            self.assertEqual(settings.get_github_redirect_uri(), "https://quick-tunnel-demo.trycloudflare.com/api/auth/github/callback")
+
+        # D. Render Cloud mode
+        with patch.object(settings, "PUBLIC_SHARE_ENABLED", False), \
+             patch.dict(os.environ, {"PUBLIC_BASE_URL": ""}), \
+             patch.object(settings, "PUBLIC_BASE_URL", None), \
+             patch.object(settings, "ENVIRONMENT", "production-cloud"), \
+             patch.object(settings, "GOOGLE_REDIRECT_URI", ""), \
+             patch.object(settings, "GITHUB_REDIRECT_URI", ""):
+            self.assertEqual(settings.get_google_redirect_uri(), "https://sovereign-ai-workbench-wb96.onrender.com/api/auth/google/callback")
+            self.assertEqual(settings.get_github_redirect_uri(), "https://sovereign-ai-workbench-wb96.onrender.com/api/auth/github/callback")
 
 
 if __name__ == "__main__":

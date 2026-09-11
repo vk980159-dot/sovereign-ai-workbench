@@ -6,8 +6,14 @@ Zero external HuggingFace / cloud dependencies.
 """
 
 import os
+import sys
 import hashlib
 from typing import List, Dict, Any, Optional
+
+from app.config import settings
+from app.security.pii_redactor import PIIRedactor
+from app.security.audit_logger import audit_logger
+
 try:
     import pypdf
 except ImportError:
@@ -19,10 +25,6 @@ try:
 except ImportError:
     chromadb = None
     ChromaSettings = None
-
-from app.config import settings
-from app.security.pii_redactor import PIIRedactor
-from app.security.audit_logger import audit_logger
 
 # Initialize local OllamaEmbeddings (removes HuggingFace dependency)
 try:
@@ -208,6 +210,26 @@ class LocalVectorStore:
 
         return chunk_ids
 
+    def add_documents(self, texts: List[str], metadatas: List[Dict[str, Any]], ids: List[str]) -> List[str]:
+        """Directly embeds and registers pre-chunked documents into ChromaDB."""
+        if not texts or not ids or self.collection is None:
+            return []
+        try:
+            if hasattr(self.embedder, "embed_documents"):
+                embeddings = self.embedder.embed_documents(texts)
+            else:
+                embeddings = self.embedder.encode(texts, normalize_embeddings=True).tolist()
+            self.collection.upsert(
+                ids=ids,
+                embeddings=embeddings,
+                documents=texts,
+                metadatas=metadatas
+            )
+            return ids
+        except Exception as e:
+            print(f"[VECTOR STORE ADD_DOCUMENTS WARNING]: {e}")
+            return []
+
     def ingest_file(self, file_path: str, original_filename: str) -> Dict[str, Any]:
         """
         Extracts content from PDF or Text files, sanitizes, and ingests.
@@ -258,6 +280,9 @@ class LocalVectorStore:
             query_embedding = [self.embedder.embed_query(sanitized_query)]
         else:
             query_embedding = self.embedder.encode([sanitized_query], normalize_embeddings=True).tolist()
+
+        if self.collection is None:
+            return []
 
         results = self.collection.query(
             query_embeddings=query_embedding,

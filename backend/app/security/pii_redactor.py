@@ -159,3 +159,6 @@ class PIIRedactor:
             cat = r["entity_type"]
             summary[cat] = summary.get(cat, 0) + 1
         return summary
+
+
+pii_redactor = PIIRedactor()

@@ -38,7 +38,7 @@ except Exception:
 
 # Validation regular expressions
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
-USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9_-]{3,32}$")
+USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9_.-]{3,32}$")
 
 
 def _get_db_connection() -> sqlite3.Connection:
@@ -375,10 +375,25 @@ def register_user(
         )
 
     # 2. Username format validation
+    if " " in username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username cannot contain spaces."
+        )
+    if len(username) < 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username must be at least 3 characters."
+        )
+    if len(username) > 32:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username cannot exceed 32 characters."
+        )
     if not USERNAME_REGEX.match(username):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username must be 3-32 characters long and contain only letters, numbers, underscores, or hyphens."
+            detail="Username can only contain letters, numbers, underscores, hyphens, and periods."
         )
 
     # 3. Email format validation
@@ -392,7 +407,7 @@ def register_user(
     if password != confirm_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password and Confirm Password do not match."
+            detail="Passwords do not match."
         )
 
     # 5. Password complexity requirement
@@ -407,15 +422,23 @@ def register_user(
     with _get_db_connection() as conn:
         cur = conn.cursor()
         cur.execute(
-            "SELECT username, email FROM users WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)",
-            (username, email)
+            "SELECT username FROM users WHERE LOWER(username) = LOWER(?)",
+            (username,)
         )
-        existing = cur.fetchone()
-        if existing:
-            # Safe generic error message preventing unauthorized enumeration
+        if cur.fetchone():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Username or email is already registered."
+                detail="Username already exists."
+            )
+
+        cur.execute(
+            "SELECT email FROM users WHERE LOWER(email) = LOWER(?)",
+            (email,)
+        )
+        if cur.fetchone():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered."
             )
 
         # 7. Hash password with Argon2 and persist

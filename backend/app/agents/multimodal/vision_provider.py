@@ -15,6 +15,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 from PIL import Image
 import io
+import time
 
 from app.config import settings
 
@@ -83,50 +84,56 @@ class OllamaVisionProvider(VisionProvider):
         self.base_url = (base_url or settings.OLLAMA_BASE_URL).rstrip("/")
         self.model_name = model_name or settings.VISION_MODEL_NAME
         self._cached_available: Optional[bool] = None
+        self._models_cache: Optional[List[str]] = None
+        self._models_cache_time: float = 0.0
+
+    def _fetch_installed_raw(self) -> List[str]:
+        """Fetches raw model names from Ollama with a 15-second TTL cache."""
+        now = time.time()
+        if self._models_cache is not None and (now - self._models_cache_time) < 15.0:
+            return self._models_cache
+        try:
+            req = urllib.request.Request(f"{self.base_url}/api/tags")
+            with urllib.request.urlopen(req, timeout=2.0) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    self._models_cache = [m.get("name", "").strip() for m in data.get("models", [])]
+                    self._models_cache_time = now
+                    return self._models_cache
+        except Exception:
+            pass
+        return self._models_cache or []
 
     def _get_installed_vision_model(self) -> Optional[str]:
         """Queries local Ollama to find the active vision model tag following preferred order."""
-        try:
-            req = urllib.request.Request(f"{self.base_url}/api/tags")
-            with urllib.request.urlopen(req, timeout=3.0) as resp:
-                if resp.status == 200:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    installed_full = [m.get("name", "").strip() for m in data.get("models", [])]
+        installed_full = self._fetch_installed_raw()
+        if not installed_full:
+            return None
 
-                    # 1. Configured model exact or base match
-                    if self.model_name:
-                        for m in installed_full:
-                            base = m.split(":")[0].lower()
-                            if (m == self.model_name or base == self.model_name.lower()) and self._is_multimodal_model(m):
-                                return m
+        # 1. Configured model exact or base match
+        if self.model_name:
+            for m in installed_full:
+                base = m.split(":")[0].lower()
+                if (m == self.model_name or base == self.model_name.lower()) and self._is_multimodal_model(m):
+                    return m
 
-                    # 2. Preferred order
-                    for pref in self.PREFERRED_VISION_ORDER:
-                        for m in installed_full:
-                            base = m.split(":")[0].lower()
-                            if (m.lower() == pref or base == pref) and self._is_multimodal_model(m):
-                                return m
+        # 2. Preferred order
+        for pref in self.PREFERRED_VISION_ORDER:
+            for m in installed_full:
+                base = m.split(":")[0].lower()
+                if (m.lower() == pref or base == pref) and self._is_multimodal_model(m):
+                    return m
 
-                    # 3. Any known vision model
-                    for m in installed_full:
-                        if self._is_multimodal_model(m):
-                            return m
-        except Exception:
-            pass
+        # 3. Any known vision model
+        for m in installed_full:
+            if self._is_multimodal_model(m):
+                return m
         return None
 
     def _query_local_models(self) -> List[str]:
         """Queries local Ollama tags endpoint to list installed models."""
-        try:
-            req = urllib.request.Request(f"{self.base_url}/api/tags")
-            with urllib.request.urlopen(req, timeout=3.0) as resp:
-                if resp.status == 200:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    models = [m.get("name", "").split(":")[0].lower() for m in data.get("models", [])]
-                    return models
-        except Exception:
-            pass
-        return []
+        installed_full = self._fetch_installed_raw()
+        return [m.split(":")[0].lower() for m in installed_full]
 
     async def is_available(self) -> bool:
         if not settings.VISION_ENABLED:

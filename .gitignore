@@ -8,6 +8,10 @@
 .env.*.local
 *.env
 !.env.example
+*.bin
+*.key
+*.pem
+*.enc
 
 # Python cache & compiled bytecode
 __pycache__/
@@ -21,17 +25,30 @@ venv/
 env/
 ENV/
 
-# Local databases & user data
+# Local databases & runtime storage
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
 auth.db
 auth.db-journal
 tasks.db
 tasks.db-journal
 chroma_db/
+.chroma/
+backend/data/
+data/
 uploaded_docs/
 multimodal_uploads/
 generated_artifacts/
 audit_trail.jsonl
+.public_share_url
 
 # Logs & temp files
 *.log
+*.zip
 scratch/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

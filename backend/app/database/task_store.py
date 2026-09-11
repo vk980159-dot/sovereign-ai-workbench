@@ -452,6 +452,9 @@ def record_artifact(
     }
 
 
+register_artifact = record_artifact
+
+
 def get_artifact_record(filename: str, user_id: Optional[str] = None, is_admin: bool = False) -> Optional[Dict[str, Any]]:
     """Looks up artifact record by filename with user isolation."""
     with _get_db_conn() as conn:

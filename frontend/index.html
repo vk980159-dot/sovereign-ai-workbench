@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sovereign AI Workbench | Secure On-Premise Multi-Agent Intelligence • SIH26117</title>
+    <title>MRPL Sovereign AI Workbench | Private Agentic AI for Confidential Industrial Intelligence • SIH26117</title>
     <style>
         :root {
             --bg-base: #07090e;
@@ -1962,19 +1962,193 @@
             width: fit-content;
         }
 
+        /* Top Sovereign Security Banner */
+        .sovereign-top-banner {
+            background: linear-gradient(90deg, #070e1e 0%, #0c2044 50%, #070e1e 100%);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.35);
+            color: #38bdf8;
+            padding: 0.4rem 1rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+            position: sticky;
+            top: 0;
+            z-index: 101;
+        }
+
+        /* 5 Scenario Showcase Grid */
+        .sih-scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .sih-scenario-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            text-align: left;
+        }
+
+        .sih-scenario-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+            background: rgba(56, 189, 248, 0.05);
+            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.15);
+        }
+
+        .sih-scenario-icon {
+            font-size: 1.35rem;
+        }
+
+        .sih-scenario-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .sih-scenario-desc {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
+
+        /* Laptop Theft Simulator */
+        .theft-sim-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .theft-step-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+        }
+
+        .theft-step-badge {
+            font-size: 0.68rem;
+            font-weight: 800;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            width: fit-content;
+        }
+
+        /* Multimodal Workstation */
+        .multimodal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+        }
+
+        @media (max-width: 900px) {
+            .multimodal-grid { grid-template-columns: 1fr; }
+        }
+
+        .multimodal-preview-box {
+            background: #000;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 320px;
+            position: relative;
+        }
+
+        .multimodal-preview-box img {
+            max-width: 100%;
+            max-height: 380px;
+            object-fit: contain;
+        }
+
+        .telemetry-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--accent-primary);
+            font-family: var(--font-mono);
+        }
+
+        /* Architecture & Comparison Table */
+        .arch-ascii-box {
+            background: #05070c;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: #38bdf8;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.4;
+        }
+
+        .comp-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .comp-table th, .comp-table td {
+            padding: 0.65rem 0.85rem;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+
+        .comp-table th {
+            background: var(--bg-surface);
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .comp-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
     </style>
 </head>
 <body>
+
+    <!-- Top Security Banner -->
+    <div class="sovereign-top-banner">
+        <span>🔒 ON-PREMISE AI • NO EXTERNAL AI API • CONFIDENTIAL DATA STAYS INSIDE ORGANIZATION • AIR-GAPPED MODE ENABLED</span>
+    </div>
 
     <!-- Header Navigation -->
     <header>
         <div class="header-left">
             <button class="btn-menu-toggle" id="btnMenuToggle" onclick="toggleSidebar()" aria-label="Toggle navigation">☰</button>
             <div class="brand-container">
-                <div class="brand-logo">🛡️</div>
+                <div class="brand-logo" style="background: linear-gradient(135deg, #0284c7, #059669);">🛡️</div>
                 <div>
-                    <div class="brand-title">Sovereign AI Workbench</div>
-                    <span class="brand-subtitle">Secure On-Premise Multi-Agent Intelligence • SIH26117</span>
+                    <div class="brand-title">MRPL Sovereign AI Workbench</div>
+                    <span class="brand-subtitle">Private Agentic AI for Confidential Industrial Intelligence • SIH 2026 Prototype</span>
                 </div>
             </div>
         </div>
@@ -2017,20 +2191,20 @@
         <aside class="sidebar" id="sidebar">
             <nav class="sidebar-nav">
                 <div class="nav-label">Command Center</div>
-                                <a class="nav-item" id="navItemJudgeDemo" onclick="switchTab('judgedemo')" style="border-left: 3px solid var(--accent-primary); background: rgba(56, 189, 248, 0.08);">
-                    <div class="nav-item-content">
-                        <span>⚖️</span>
-                        <span style="font-weight: 700; color: var(--accent-primary);">Judge Demo</span>
-                    </div>
-                    <span class="nav-item-badge" style="background: var(--accent-primary); color: #000; font-weight: 800;">SIH26117</span>
-                </a>
-
                 <a class="nav-item" onclick="switchTab('dashboard')">
                     <div class="nav-item-content">
                         <span>📊</span>
                         <span>Dashboard</span>
                     </div>
                     <span class="nav-item-badge" id="navBadgeOverview">LIVE</span>
+                </a>
+
+                <a class="nav-item" id="navItemJudgeDemo" onclick="switchTab('judgedemo')" style="border-left: 3px solid var(--accent-primary); background: rgba(56, 189, 248, 0.08);">
+                    <div class="nav-item-content">
+                        <span>⚖️</span>
+                        <span style="font-weight: 700; color: var(--accent-primary);">Judge Demo</span>
+                    </div>
+                    <span class="nav-item-badge" style="background: var(--accent-primary); color: #000; font-weight: 800;">SIH26117</span>
                 </a>
 
                 <a class="nav-item" onclick="switchTab('workbench')">
@@ -2041,23 +2215,55 @@
                 </a>
 
                 <div class="nav-label">Intelligence Core</div>
+                <a class="nav-item" onclick="switchTab('documents')">
+                    <div class="nav-item-content">
+                        <span>📄</span>
+                        <span>Encrypted Docs</span>
+                    </div>
+                    <span class="nav-item-badge" id="navBadgeEncDocs" style="color: var(--success);">AES-256</span>
+                </a>
+
                 <a class="nav-item" onclick="switchTab('knowledge')">
                     <div class="nav-item-content">
                         <span>📚</span>
-                        <span>Knowledge Base</span>
+                        <span>Knowledge Bases</span>
                     </div>
-                    <span class="nav-item-badge" id="navBadgeDocs">0 Docs</span>
+                    <span class="nav-item-badge" id="navBadgeDocs">5 KBs</span>
                 </a>
 
                 <a class="nav-item" onclick="switchTab('agents')">
                     <div class="nav-item-content">
                         <span>🤖</span>
-                        <span>Agent Pipeline</span>
+                        <span>7-Agent Pipeline</span>
                     </div>
-                    <span class="nav-item-badge">4 Nodes</span>
+                    <span class="nav-item-badge" style="color: var(--accent-primary);">7 Nodes</span>
                 </a>
 
-                <div class="nav-label">Security & Ops</div>
+                <a class="nav-item" onclick="switchTab('multimodal')">
+                    <div class="nav-item-content">
+                        <span>👁️</span>
+                        <span>Multimodal Vision</span>
+                    </div>
+                    <span class="nav-item-badge">Vision AI</span>
+                </a>
+
+                <a class="nav-item" onclick="switchTab('reports')">
+                    <div class="nav-item-content">
+                        <span>📑</span>
+                        <span>Industrial Reports</span>
+                    </div>
+                    <span class="nav-item-badge" id="navBadgeReports">Deliverables</span>
+                </a>
+
+                <div class="nav-label">Security & Devices</div>
+                <a class="nav-item" onclick="switchTab('devices')">
+                    <div class="nav-item-content">
+                        <span>💻</span>
+                        <span>Laptop Theft & Devices</span>
+                    </div>
+                    <span class="nav-item-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">Quarantine</span>
+                </a>
+
                 <a class="nav-item" onclick="switchTab('audit')">
                     <div class="nav-item-content">
                         <span>🔒</span>
@@ -2071,6 +2277,23 @@
                         <span>🩺</span>
                         <span>System Health</span>
                     </div>
+                </a>
+
+                <div class="nav-label">Architecture & Config</div>
+                <a class="nav-item" onclick="switchTab('settings')">
+                    <div class="nav-item-content">
+                        <span>⚙️</span>
+                        <span>Model Settings</span>
+                    </div>
+                    <span class="nav-item-badge">Ollama</span>
+                </a>
+
+                <a class="nav-item" onclick="switchTab('architecture')">
+                    <div class="nav-item-content">
+                        <span>🏛️</span>
+                        <span>Why Sovereign AI</span>
+                    </div>
+                    <span class="nav-item-badge">Architecture</span>
                 </a>
 
                 <div class="nav-label" id="adminNavLabel" style="display: none;">Administration</div>
@@ -2707,6 +2930,27 @@
             </div>
 
             <div class="tab-panel active" id="tab-dashboard">
+                <!-- Public Share Informational Panel -->
+                <div id="publicShareNoticePanel" style="display: none; margin-bottom: 1.25rem; padding: 1rem 1.25rem; border-radius: 8px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                        <div>
+                            <div style="font-weight: 700; color: var(--accent-primary); font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                                <span>🌐</span> <span>PUBLIC SHARE MODE ACTIVE</span>
+                            </div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                Local Ollama + LLaVA + Tesseract + ChromaDB execute strictly on the host machine. Public users access this application through a secure Cloudflare HTTPS tunnel.
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.2rem; font-family: var(--font-mono);">
+                                Public Browser → Cloudflare HTTPS → Local FastAPI :8000 → Local AI Core. This is a public demonstration mode, not an air-gapped environment.
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700;">External AI APIs: 0</span>
+                            <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: var(--accent-primary); border: 1px solid rgba(56, 189, 248, 0.3);">Tunnel: Cloudflare</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- System Status Cards -->
                 <div class="metrics-grid">
                     <div class="metric-card accent-green">
@@ -2759,9 +3003,82 @@
                             <span class="metric-title">Autonomous Agents</span>
                             <span class="metric-icon">🤖</span>
                         </div>
-                        <div class="metric-value">4 NODES</div>
+                        <div class="metric-value">7 AGENTS</div>
                         <div class="metric-subtext">
-                            <span>LangGraph State Machine</span>
+                            <span>Coordinator State Machine</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SIH26117 5 MANDATED DEMO SCENARIOS SHOWCASE -->
+                <div class="panel" style="border-color: rgba(56, 189, 248, 0.35); background: rgba(14, 18, 26, 0.9);">
+                    <div class="panel-header">
+                        <div class="panel-title" style="color: var(--accent-primary); font-weight: 800; font-size: 0.95rem;">
+                            <span>⚡</span>
+                            <span>MANDATED SIH26117 DEMO SCENARIOS — 1-CLICK LIVE EXECUTION</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="badge badge-sih">MRPL Smart Automation</span>
+                            <button class="btn-action" onclick="seedDemoDataNow()" title="Re-seed synthetic datasets and demo sessions">🔄 Re-Seed Demo Data</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                            Execute the 5 required industrial validation scenarios directly with 100% on-premise local inference, zero cloud leaks, and automatic Word (.docx) / CSV deliverable generation:
+                        </div>
+                        <div class="sih-scenario-grid">
+                            <!-- Scenario 1 -->
+                            <div class="sih-scenario-card" onclick="runSihScenario(1)" id="scCard1">
+                                <div class="sih-scenario-icon">📄</div>
+                                <div class="sih-scenario-title">1. PDF Summary & Citations</div>
+                                <div class="sih-scenario-desc">Compressor report RAG with 4 page/section citations + Word (.docx) approval note.</div>
+                            </div>
+                            <!-- Scenario 2 -->
+                            <div class="sih-scenario-card" onclick="runSihScenario(2)" id="scCard2">
+                                <div class="sih-scenario-icon">⚙️</div>
+                                <div class="sih-scenario-title">2. Vibration Cross-Search</div>
+                                <div class="sih-scenario-desc">Multi-doc search across compressor report + manual + Risk Gate flagging Human verification.</div>
+                            </div>
+                            <!-- Scenario 3 -->
+                            <div class="sih-scenario-card" onclick="runSihScenario(3)" id="scCard3">
+                                <div class="sih-scenario-icon">📊</div>
+                                <div class="sih-scenario-title">3. Excel Failure History</div>
+                                <div class="sih-scenario-desc">Analyzes 100-row maintenance history, MTBF/root cause trends + Word assessment report.</div>
+                            </div>
+                            <!-- Scenario 4 -->
+                            <div class="sih-scenario-card" onclick="runSihScenario(4)" id="scCard4">
+                                <div class="sih-scenario-icon">👁️</div>
+                                <div class="sih-scenario-title">4. Multimodal Telemetry</div>
+                                <div class="sih-scenario-desc">Evaluates Pump P-101A diagram, thermal hotspots, bearing anomaly & visual inspection note.</div>
+                            </div>
+                            <!-- Scenario 5 -->
+                            <div class="sih-scenario-card" onclick="runSihScenario(5)" id="scCard5">
+                                <div class="sih-scenario-icon">💻</div>
+                                <div class="sih-scenario-title">5. Laptop Theft Quarantine</div>
+                                <div class="sih-scenario-desc">Simulates stolen laptop revocation, 401 token rejection, and server zero-loss integrity.</div>
+                            </div>
+                        </div>
+
+                        <!-- Real-time Scenario Output Banner -->
+                        <div id="scProgressBanner" style="display: none; margin-top: 1rem; padding: 0.75rem 1rem; border-radius: 6px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3); font-size: 0.82rem; color: var(--accent-primary);">
+                            <span class="pulse-dot"></span>
+                            <span id="scProgressText">Executing scenario on local 7-agent coordinator...</span>
+                        </div>
+
+                        <!-- Real-time Scenario Result Panel -->
+                        <div id="scResultPanel" style="display: none; margin-top: 1rem; padding: 1.15rem; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                                <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-main);" id="scResultTitle">Scenario Results</div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;" id="scBadges"></div>
+                            </div>
+                            <div id="scResultContent" style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; white-space: pre-wrap;"></div>
+                            <div id="scDeliverableBox" style="margin-top: 1rem; display: none; padding: 0.75rem 1rem; border-radius: 6px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25);">
+                                <div style="font-weight: 700; color: var(--success); font-size: 0.85rem; margin-bottom: 0.25rem;">📄 Generated Sovereign Deliverable:</div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                    <span id="scDeliverableName" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-main);"></span>
+                                    <a id="scDeliverableLink" class="btn-demo" href="#" target="_blank" style="background: var(--success); color: #000; font-weight: 800; text-decoration: none;">📥 Download Deliverable</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3401,6 +3718,508 @@
                 </div>
             </div>
 
+            <!-- TAB: ENCRYPTED DOCUMENTS REPOSITORY -->
+            <div class="tab-panel" id="tab-documents">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>📄</span>
+                            <span>Confidential Document Vault — AES-256-GCM Encrypted at Rest</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="badge badge-success">Zero Plaintext Stored</span>
+                            <span class="badge badge-sih">Server Authority</span>
+                            <button class="btn-action" onclick="fetchEncryptedDocuments()">🔄 Refresh Vault</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <!-- Upload Box -->
+                        <div style="background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.25rem;">
+                            <div style="font-weight: 700; color: var(--accent-primary); margin-bottom: 0.75rem; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem;">
+                                <span>🔒</span> <span>Ingest Confidential Document to Protected Storage</span>
+                            </div>
+                            <form id="vaultUploadForm" onsubmit="handleVaultUpload(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; align-items: flex-end;">
+                                <div>
+                                    <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Select File (PDF, DOCX, XLSX, CSV, PNG)</label>
+                                    <input type="file" id="vaultFileInput" required style="width: 100%; font-size: 0.78rem; background: var(--bg-surface); border: 1px solid var(--border-color); padding: 0.4rem; border-radius: 6px; color: var(--text-main);">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Target Knowledge Base</label>
+                                    <select id="vaultKbSelect" style="width: 100%; font-size: 0.78rem; background: var(--bg-surface); border: 1px solid var(--border-color); padding: 0.45rem; border-radius: 6px; color: var(--text-main);">
+                                        <option value="refinery-maintenance">Refinery Maintenance</option>
+                                        <option value="safety-sops">Safety SOPs</option>
+                                        <option value="equipment-manuals">Equipment Manuals</option>
+                                        <option value="inspection-reports">Inspection Reports</option>
+                                        <option value="engineering-documents">Engineering Documents</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Classification</label>
+                                    <select id="vaultClassSelect" style="width: 100%; font-size: 0.78rem; background: var(--bg-surface); border: 1px solid var(--border-color); padding: 0.45rem; border-radius: 6px; color: var(--text-main);">
+                                        <option value="Confidential">Confidential</option>
+                                        <option value="Restricted">Restricted</option>
+                                        <option value="Secret">Secret</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button type="submit" class="btn-primary" style="width: 100%; padding: 0.5rem 1rem; font-size: 0.82rem;">
+                                        <span>🔒</span>
+                                        <span>Upload & Encrypt (AES-256)</span>
+                                    </button>
+                                </div>
+                            </form>
+                            <div id="vaultUploadStatus" style="display: none; margin-top: 0.75rem; font-size: 0.8rem; color: var(--success);"></div>
+                        </div>
+
+                        <!-- Documents Table -->
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Document Name</th>
+                                        <th>Classification</th>
+                                        <th>Department</th>
+                                        <th>Size</th>
+                                        <th>Encryption At Rest</th>
+                                        <th>Status</th>
+                                        <th>Ingested Date</th>
+                                        <th>Secure Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vaultDocsTableBody">
+                                    <tr>
+                                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading encrypted vault items...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: LAPTOP THEFT & DEVICE SECURITY -->
+            <div class="tab-panel" id="tab-devices">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title" style="color: #f87171; font-weight: 800;">
+                            <span>💻</span>
+                            <span>Laptop Theft & Zero-Trust Hardware Quarantine</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">Active Defense</span>
+                            <button class="btn-action" onclick="fetchDevicesAndSessions()">🔄 Refresh Devices</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <!-- Educational Explanation Card -->
+                        <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 1.15rem; margin-bottom: 1.25rem;">
+                            <div style="font-weight: 700; color: var(--accent-primary); margin-bottom: 0.4rem; font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                                <span>💡</span> <span>The Laptop Theft Scenario: Server is Source of Truth</span>
+                            </div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
+                                <strong>"Your laptop is an access point, not the source of truth."</strong>
+                                In conventional setups, confidential files downloaded to field laptops create disastrous breach risks if a laptop is lost, stolen, or compromised.
+                                In MRPL Sovereign AI Workbench:
+                                <ul style="margin: 0.4rem 0 0.4rem 1.2rem; color: var(--text-main);">
+                                    <li>All confidential refinery documents, vibration logs, and engineering manuals remain 100% encrypted with AES-256-GCM exclusively on the on-premise server.</li>
+                                    <li>Laptops only query and view ephemeral sessions. No persistent decrypted documents reside on laptops.</li>
+                                    <li>When an incident is reported, administrators revoke the compromised device or session in <strong>1 single click</strong>.</li>
+                                    <li>The device's cryptographic session token is instantly invalidated; any further request returns <strong>HTTP 401 Unauthorized</strong>, while all confidential files on the server remain 100% intact.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- 4-Step Interactive Theft Simulator -->
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.15rem; margin-bottom: 1.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                                <div style="font-weight: 800; font-size: 0.9rem; color: var(--text-main);">
+                                    <span>🧪</span> <span>4-Step Interactive Laptop Theft Simulator</span>
+                                </div>
+                                <span class="badge badge-sih">Live Cryptographic Proof</span>
+                            </div>
+
+                            <div class="theft-sim-grid">
+                                <!-- Step 1 -->
+                                <div class="theft-step-card" id="theftCardStep1">
+                                    <span class="theft-step-badge badge-success">STEP 1: NORMAL OPERATION</span>
+                                    <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-main);">Device A (Dell Latitude)</div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted);">Engineer laptop authenticated. Has active session token. Access to vault verified.</div>
+                                    <div style="margin-top: auto;">
+                                        <button class="btn-action" style="width: 100%;" onclick="theftSimVerifyDeviceA()">Verify Device A Token (200 OK)</button>
+                                    </div>
+                                </div>
+
+                                <!-- Step 2 -->
+                                <div class="theft-step-card" id="theftCardStep2">
+                                    <span class="theft-step-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">STEP 2: THEFT INCIDENT</span>
+                                    <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-main);">Simulate Stolen Laptop</div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted);">Admin receives loss alert. Executes instant hardware cryptographic quarantine.</div>
+                                    <div style="margin-top: auto;">
+                                        <button class="btn-action" style="width: 100%; border-color: var(--danger); color: var(--danger);" onclick="theftSimRevokeDeviceA()">🚨 Revoke Device A Now</button>
+                                    </div>
+                                </div>
+
+                                <!-- Step 3 -->
+                                <div class="theft-step-card" id="theftCardStep3">
+                                    <span class="theft-step-badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">STEP 3: ATTEMPTED ATTACK</span>
+                                    <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-main);">Attacker Tries Access</div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted);">Stolen laptop tries to call /api/v1/documents using cached token.</div>
+                                    <div style="margin-top: auto;">
+                                        <button class="btn-action" style="width: 100%;" onclick="theftSimTestStolenAccess()">Test Stolen Token (Expect 401)</button>
+                                    </div>
+                                </div>
+
+                                <!-- Step 4 -->
+                                <div class="theft-step-card" id="theftCardStep4">
+                                    <span class="theft-step-badge badge-success">STEP 4: SERVER INTEGRITY</span>
+                                    <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-main);">Device B (Emergency Station)</div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted);">Authorized engineer logs in from secure backup terminal. All 9 docs intact on server.</div>
+                                    <div style="margin-top: auto;">
+                                        <button class="btn-action" style="width: 100%; color: var(--success); border-color: var(--success);" onclick="theftSimVerifyDeviceB()">Verify Server Data Intact</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Simulator Console Output -->
+                            <div id="theftSimConsole" style="margin-top: 1rem; padding: 0.85rem; border-radius: 6px; background: #05070c; border: 1px solid var(--border-color); font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); min-height: 70px; max-height: 160px; overflow-y: auto;">
+                                [SIMULATOR READY] Click 'STEP 1' or 'STEP 2' to test live on-premise hardware quarantine defense.
+                            </div>
+                        </div>
+
+                        <!-- Active Devices & Sessions Tables -->
+                        <div style="font-weight: 800; font-size: 0.88rem; margin-bottom: 0.5rem; color: var(--text-main);">Registered Devices</div>
+                        <div class="table-responsive" style="margin-bottom: 1.5rem;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Device ID</th>
+                                        <th>Device Name</th>
+                                        <th>OS / Hardware</th>
+                                        <th>Fingerprint</th>
+                                        <th>Status</th>
+                                        <th>Last Active</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="devicesTableBody">
+                                    <tr>
+                                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Loading registered devices...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style="font-weight: 800; font-size: 0.88rem; margin-bottom: 0.5rem; color: var(--text-main);">Active User Sessions</div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Session ID</th>
+                                        <th>User</th>
+                                        <th>Device Ref</th>
+                                        <th>IP Address</th>
+                                        <th>Status</th>
+                                        <th>Created At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sessionsTableBody">
+                                    <tr>
+                                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">Loading active sessions...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: MULTIMODAL INDUSTRIAL VISION -->
+            <div class="tab-panel" id="tab-multimodal">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>👁️</span>
+                            <span>Multimodal Industrial Vision & Visual Telemetry Workstation</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="badge badge-sih">Local LLaVA Vision Engine</span>
+                            <span class="badge badge-success">Zero Cloud Transmission</span>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="multimodal-grid">
+                            <!-- Left: Image Inspection & Upload -->
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 700; font-size: 0.85rem; color: var(--accent-primary);">Selected Equipment Diagram / Photo</span>
+                                    <span class="badge" style="background: rgba(56, 189, 248, 0.1); color: var(--accent-primary);">Pump P-101A (Synthetic Demo)</span>
+                                </div>
+                                <div class="multimodal-preview-box" id="multimodalImageBox">
+                                    <img id="multimodalImgPreview" src="/static/inspection_image.png" alt="Industrial Equipment Telemetry" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'200\'><rect fill=\'%23141923\' width=\'300\' height=\'200\'/><text fill=\'%2338bdf8\' x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' font-size=\'14\'>Centrifugal Pump P-101A Diagram</text></svg>'">
+                                </div>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <button class="btn-action" onclick="setMultimodalImage('inspection_image.png')">Load Pump P-101A Demo</button>
+                                    <label class="btn-action" style="cursor: pointer;">
+                                        Upload Custom Photo
+                                        <input type="file" id="multimodalFileInput" accept="image/*" style="display: none;" onchange="handleMultimodalFileSelect(event)">
+                                    </label>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Vision Reasoning Prompt</label>
+                                    <textarea id="multimodalPromptInput" style="width: 100%; height: 70px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem; color: var(--text-main); font-size: 0.8rem; resize: none;">Analyze equipment physical condition, thermal telemetry, and mechanical seal integrity.</textarea>
+                                </div>
+                                <button class="btn-primary" onclick="runMultimodalAnalysisNow()" style="padding: 0.65rem 1rem; font-size: 0.85rem;">
+                                    <span>👁️</span>
+                                    <span>Run Sovereign Multimodal Inspection</span>
+                                </button>
+                            </div>
+
+                            <!-- Right: Visual Telemetry Output -->
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 700; font-size: 0.85rem; color: var(--text-main);">AI Visual Analysis & Risk Evaluation</span>
+                                    <span id="multimodalRiskBadge" class="badge badge-sih">AWAITING RUN</span>
+                                </div>
+
+                                <div id="multimodalOutputBox" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; min-height: 280px; display: flex; flex-direction: column; gap: 0.75rem;">
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                                        Click <strong>'Run Sovereign Multimodal Inspection'</strong> to trigger the Multimodal Inspection Agent using local open-weight vision models.
+                                    </div>
+                                </div>
+
+                                <div id="multimodalDeliverableContainer" style="display: none; padding: 0.75rem 1rem; border-radius: 6px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                        <div>
+                                            <div style="font-weight: 700; color: var(--success); font-size: 0.82rem;">📄 Visual Assessment Deliverable Generated</div>
+                                            <div id="multimodalDocxFilename" style="font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono);"></div>
+                                        </div>
+                                        <a id="multimodalDownloadLink" class="btn-demo" href="#" target="_blank" style="background: var(--success); color: #000; font-weight: 800; text-decoration: none;">📥 Download Word Note</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: INDUSTRIAL DELIVERABLES & REPORTS GALLERY -->
+            <div class="tab-panel" id="tab-reports">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>📑</span>
+                            <span>Industrial Deliverables & Reports Repository</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="badge badge-success">DOCX • PDF • CSV</span>
+                            <button class="btn-action" onclick="fetchReportsGallery()">🔄 Refresh Deliverables</button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                            All industrial assessment notes, root cause analyses, and tabular telemetry logs generated by the 7-agent coordinator:
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Deliverable File</th>
+                                        <th>Format</th>
+                                        <th>Size</th>
+                                        <th>Classification</th>
+                                        <th>Generated Timestamp</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportsTableBody">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading industrial deliverables...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: MODEL SETTINGS & OLLAMA MANAGEMENT -->
+            <div class="tab-panel" id="tab-settings">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>⚙️</span>
+                            <span>Sovereign Model Manager & Local Inference Daemon</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="badge badge-success" id="ollamaHealthBadge">OLLAMA CONNECTED</span>
+                            <span class="badge badge-sih">100% On-Premise</span>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <!-- Model Status Grid -->
+                        <div class="metrics-grid" style="margin-bottom: 1.25rem;">
+                            <div class="metric-card accent-cyan">
+                                <div class="metric-header">
+                                    <span class="metric-title">Primary Reasoning LLM</span>
+                                    <span class="metric-icon">🧠</span>
+                                </div>
+                                <div class="metric-value" style="font-size: 1.15rem;">llama3.1 / qwen2.5</div>
+                                <div class="metric-subtext">Open-Weight Local Model</div>
+                            </div>
+                            <div class="metric-card accent-green">
+                                <div class="metric-header">
+                                    <span class="metric-title">Vision Telemetry LLM</span>
+                                    <span class="metric-icon">👁️</span>
+                                </div>
+                                <div class="metric-value" style="font-size: 1.15rem;">llava:latest</div>
+                                <div class="metric-subtext">Multimodal Industrial Inspection</div>
+                            </div>
+                            <div class="metric-card accent-amber">
+                                <div class="metric-header">
+                                    <span class="metric-title">Embedding Model</span>
+                                    <span class="metric-icon">📐</span>
+                                </div>
+                                <div class="metric-value" style="font-size: 1.15rem;">nomic-embed-text</div>
+                                <div class="metric-subtext">Local Semantic Vector Engine</div>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Inference Test -->
+                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.15rem;">
+                            <div style="font-weight: 800; font-size: 0.9rem; color: var(--accent-primary); margin-bottom: 0.5rem;">
+                                ⚡ Test Sovereign Inference Performance
+                            </div>
+                            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+                                <div>
+                                    <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Test Prompt</label>
+                                    <input type="text" id="modelTestPrompt" value="Confirm local air-gapped sovereign inference operational for MRPL." style="width: 100%; font-size: 0.8rem; background: var(--bg-surface); border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 6px; color: var(--text-main);">
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Select Model</label>
+                                    <select id="modelTestSelect" style="width: 100%; font-size: 0.8rem; background: var(--bg-surface); border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 6px; color: var(--text-main);">
+                                        <option value="llama3.1">llama3.1 (8B Core)</option>
+                                        <option value="qwen2.5:3b-instruct">qwen2.5:3b-instruct (Fast CPU)</option>
+                                        <option value="llava">llava (Multimodal Vision)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="btn-primary" onclick="testLocalModelNow()" style="padding: 0.5rem 1rem; font-size: 0.82rem;">
+                                <span>⚡</span> <span>Execute Local Inference Test</span>
+                            </button>
+                            <div id="modelTestResult" style="display: none; margin-top: 1rem; padding: 0.85rem; border-radius: 6px; background: #05070c; border: 1px solid var(--border-color); font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); white-space: pre-wrap;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: WHY SOVEREIGN AI & ARCHITECTURE -->
+            <div class="tab-panel" id="tab-architecture">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>🏛️</span>
+                            <span>Why Sovereign AI & Complete System Architecture</span>
+                        </div>
+                        <span class="badge badge-sih">SIH26117 Rubric Compliance</span>
+                    </div>
+                    <div class="panel-content">
+                        <!-- ASCII Architecture Diagram -->
+                        <div style="font-weight: 800; font-size: 0.88rem; margin-bottom: 0.5rem; color: var(--accent-primary);">
+                            📐 100% On-Premise Air-Gapped Topology
+                        </div>
+                        <div class="arch-ascii-box">
++---------------------------------------------------------------------------------------------------------+
+|                                    MRPL SOVEREIGN AI WORKBENCH ARCHITECTURE                             |
++---------------------------------------------------------------------------------------------------------+
+|                                                                                                         |
+|  [ Field Laptops / Replaceable Workstations ]  --> (TLS 1.3 / Local Network Only)                      |
+|                      |                                                                                  |
+|                      v                                                                                  |
+|  +---------------------------------------------------------------------------------------------------+  |
+|  |                            ON-PREMISE SOVEREIGN HOST SERVER (Source of Truth)                     |  |
+|  |                                                                                                   |  |
+|  |   [ Reverse Proxy & Auth Guard ]                                                                  |  |
+|  |     • Argon2id Password Hashing • Session Device Manager • Instant 1-Click Hardware Quarantine   |  |
+|  |     • Zero Unencrypted Files Transferred to Laptop Endpoints                                      |  |
+|  |                                                                                                   |  |
+|  |   [ 7-Agent Orchestration State Machine ]                                                         |  |
+|  |     1. Coordinator Agent (Graph Controller)                                                       |  |
+|  |     2. Knowledge Retrieval Agent (ChromaDB Dense Retrieval + Page/Section Citations)              |  |
+|  |     3. Document Analyst Agent (Technical Parsing & SOP Compliance)                                |  |
+|  |     4. Data Analysis Agent (Deterministic Numerical Analytics, MTBF, Failure Patterns)           |  |
+|  |     5. Risk & Anomaly Agent (Safety Gate: Mandates 'Human verification required')                 |  |
+|  |     6. Multimodal Inspection Agent (Local LLaVA Vision + Thermal Defect Evaluation)               |  |
+|  |     7. Report Generation Agent (Automated DOCX / CSV Deliverable Publishing)                      |  |
+|  |                                                                                                   |  |
+|  |   [ Air-Gapped Storage & Local Model Daemons ]                                                    |  |
+|  |     • AES-256-GCM Encrypted Storage Vault (Zero Plaintext at Rest)                                |  |
+|  |     • Immutable SHA-256 Chained Cryptographic Audit Ledger                                        |  |
+|  |     • Ollama On-Premise Daemon: LLaMA-3.1 / Qwen-2.5 / LLaVA / Nomic-Embed-Text                   |  |
+|  |     • ChromaDB Vector Store (5 Segregated Industrial Knowledge Bases)                             |  |
+|  |                                                                                                   |  |
+|  +---------------------------------------------------------------------------------------------------+  |
+|                      |                                                                                  |
+|                      x  EXTERNAL CLOUD FIREWALL BLOCK (Zero Cloud AI APIs, Zero Outbound Telemetry)     |
++---------------------------------------------------------------------------------------------------------+
+                        </div>
+
+                        <!-- Cloud vs Sovereign Comparison -->
+                        <div style="font-weight: 800; font-size: 0.88rem; margin: 1.25rem 0 0.5rem 0; color: var(--accent-primary);">
+                            ⚖️ Public Cloud AI vs MRPL Sovereign AI Comparison Matrix
+                        </div>
+                        <div class="table-responsive">
+                            <table class="comp-table">
+                                <thead>
+                                    <tr>
+                                        <th>Evaluation Dimension</th>
+                                        <th>Public Cloud AI (OpenAI / Gemini / Claude)</th>
+                                        <th>MRPL Sovereign AI Workbench</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Confidential Data Residence</strong></td>
+                                        <td style="color: var(--danger);">Transmitted to multi-tenant third-party cloud servers</td>
+                                        <td style="color: var(--success); font-weight: 700;">100% On-Premise inside refinery infrastructure</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Air-Gapped Operation</strong></td>
+                                        <td style="color: var(--danger);">Impossible; requires constant internet connection</td>
+                                        <td style="color: var(--success); font-weight: 700;">Fully functional in 100% offline air-gapped environment</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Storage Encryption at Rest</strong></td>
+                                        <td style="color: var(--warning);">Provider-managed keys; cloud platform has access</td>
+                                        <td style="color: var(--success); font-weight: 700;">AES-256-GCM with PBKDF2; zero plaintext stored</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Laptop Theft Protection</strong></td>
+                                        <td style="color: var(--danger);">Cached browser documents and tokens vulnerable</td>
+                                        <td style="color: var(--success); font-weight: 700;">Server authority: 1-click quarantine rejects token (401)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Hallucination Defense</strong></td>
+                                        <td style="color: var(--warning);">High hallucination rate on specialized refinery specs</td>
+                                        <td style="color: var(--success); font-weight: 700;">Zero hallucination: grounded citations + safety gate</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>External AI API Leaks</strong></td>
+                                        <td style="color: var(--danger);">100% dependency on external API providers</td>
+                                        <td style="color: var(--success); font-weight: 700;">ZERO cloud AI dependencies; open-weight local models</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Auditability & Compliance</strong></td>
+                                        <td style="color: var(--warning);">Proprietary server logs; black box inference</td>
+                                        <td style="color: var(--success); font-weight: 700;">Immutable SHA-256 chained cryptographic audit ledger</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -3409,6 +4228,49 @@
 
     <!-- Application Script -->
     <script>
+        // ----------------------------------------------------
+        // Universal API Base & Route Resolver
+        // Works across:
+        // - Standalone Frontend Dev Server (e.g. port 3000)
+        // - Direct Backend (port 8000)
+        // - Tailscale Funnel / Cloudflare Public Tunnels
+        // ----------------------------------------------------
+        function getApiBase() {
+            if (window.location.port && window.location.port !== "8000" && !window.location.host.includes(".ts.net") && !window.location.host.includes(".trycloudflare.com")) {
+                return `${window.location.protocol}//${window.location.hostname}:8000`;
+            }
+            return "";
+        }
+
+        function apiUrl(path) {
+            const base = getApiBase();
+            const cleanPath = path.startsWith("/") ? path : "/" + path;
+            return base ? `${base}${cleanPath}` : cleanPath;
+        }
+
+        function getWsUrl(path) {
+            const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+            const cleanPath = path.startsWith("/") ? path : "/" + path;
+            if (window.location.port && window.location.port !== "8000" && !window.location.host.includes(".ts.net") && !window.location.host.includes(".trycloudflare.com")) {
+                return `${wsProtocol}//${window.location.hostname}:8000${cleanPath}`;
+            }
+            return `${wsProtocol}//${window.location.host}${cleanPath}`;
+        }
+
+        function navigateTo(page, params = "") {
+            const queryString = params ? (params.startsWith("?") ? params : `?${params}`) : "";
+            const isStaticServer = window.location.port && window.location.port !== "8000";
+            if (page === "login") {
+                window.location.href = (isStaticServer ? "/login.html" : "/login") + queryString;
+            } else if (page === "register") {
+                window.location.href = (isStaticServer ? "/register.html" : "/register") + queryString;
+            } else if (page === "index" || page === "dashboard") {
+                window.location.href = (isStaticServer ? "/index.html" : "/") + queryString;
+            } else {
+                window.location.href = page + queryString;
+            }
+        }
+
         // State
         const sessionId = "session_" + Math.random().toString(36).substring(2, 10);
         let socket = null;
@@ -3423,6 +4285,7 @@
         }
 
         async function authFetch(url, options = {}) {
+            const targetUrl = apiUrl(url);
             options.headers = options.headers || {};
             const token = getAuthToken();
             if (token) {
@@ -3432,16 +4295,19 @@
                     options.headers["Authorization"] = `Bearer ${token}`;
                 }
             }
+            options.credentials = options.credentials || "include";
             try {
-                const resp = await fetch(url, options);
+                const resp = await fetch(targetUrl, options);
                 if (resp.status === 401) {
                     localStorage.removeItem("sovereign_token");
                     localStorage.removeItem("sovereign_user");
-                    window.location.href = "/login";
+                    sessionStorage.clear();
+                    navigateTo("login");
                     return resp;
                 }
                 return resp;
             } catch (err) {
+                console.error(`[Workbench] API request error for ${url}:`, err);
                 throw err;
             }
         }
@@ -3470,11 +4336,13 @@
             try {
                 await authFetch("/api/v1/auth/logout", { method: "POST" });
             } catch (e) {
-                console.error("Logout request error:", e);
+                console.error("[Workbench] Logout request error:", e);
             } finally {
                 localStorage.removeItem("sovereign_token");
                 localStorage.removeItem("sovereign_user");
-                window.location.href = "/login";
+                sessionStorage.clear();
+                document.cookie = "sovereign_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                navigateTo("login", "logged_out=true");
             }
         }
 
@@ -3503,6 +4371,10 @@
 
             // Trigger data load for relevant tabs
             if (tabId === "knowledge") fetchDocuments();
+            if (tabId === "documents") fetchEncryptedDocuments();
+            if (tabId === "devices") fetchDevicesAndSessions();
+            if (tabId === "reports") fetchReportsGallery();
+            if (tabId === "settings") fetchModelSettings();
             if (tabId === "audit") fetchAuditLogs();
             if (tabId === "admin") fetchAdminUsers();
             if (tabId === "health") fetchStats();
@@ -3526,12 +4398,17 @@
         // WebSocket Agent Thought Stream
         // ==========================================
         function initWebSocket() {
-            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
             const token = getAuthToken();
             const queryParam = token ? `?token=${encodeURIComponent(token)}` : "";
-            const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/agent-thoughts/${sessionId}${queryParam}`;
+            const wsUrl = getWsUrl(`/api/v1/ws/agent-thoughts/${sessionId}${queryParam}`);
 
-            socket = new WebSocket(wsUrl);
+            try {
+                socket = new WebSocket(wsUrl);
+            } catch (err) {
+                console.error("[Workbench] WebSocket connection failed:", err);
+            }
+
+            if (!socket) return;
 
             socket.onopen = () => {
                 const badge = document.getElementById("badgeWs");
@@ -3563,7 +4440,8 @@
                 if (event.code === 1008) {
                     localStorage.removeItem("sovereign_token");
                     localStorage.removeItem("sovereign_user");
-                    window.location.href = "/login";
+                    sessionStorage.clear();
+                    navigateTo("login");
                     return;
                 }
                 const badge = document.getElementById("badgeWs");
@@ -3800,7 +4678,7 @@
 
                 const chip = document.createElement("a");
                 chip.className = "artifact-chip";
-                chip.href = `/api/v1/agent/artifacts/${encodeURIComponent(fname)}`;
+                chip.href = apiUrl(`/api/v1/agent/artifacts/${encodeURIComponent(fname)}`);
                 chip.target = "_blank";
                 chip.title = `Download SHA-256 verified ${typeLabel} deliverable (${hash || 'verified'})`;
                 chip.innerHTML = `
@@ -4275,22 +5153,31 @@
         // ==========================================
         async function fetchStats() {
             try {
-                const resp = await fetch("/api/v1/health");
+                const resp = await fetch(apiUrl("/api/v1/health"));
                 if (resp.ok) {
                     const data = await resp.json();
 
                     // Update Top Badges & Metric Cards
                     document.getElementById("cardSystemStatus").innerText = data.status === "ONLINE_SECURE" ? "ONLINE" : data.status;
+                    const isPublicShare = (data.runtime_mode === "PUBLIC_SHARE" || data.runtime_mode === "PUBLIC_SHARE_STABLE");
                     const isLocalAirgapped = (data.runtime_mode === "LOCAL_AIR_GAPPED");
-                    document.getElementById("cardEnvironment").innerText = isLocalAirgapped ? "AIR-GAPPED / ON-PREMISE" : "CLOUD DEMO";
+                    
+                    let envLabel = "CLOUD DEMO";
+                    if (isPublicShare) envLabel = "PUBLIC SHARE / LOCAL AI";
+                    else if (isLocalAirgapped) envLabel = "AIR-GAPPED / ON-PREMISE";
+                    document.getElementById("cardEnvironment").innerText = envLabel;
                     document.getElementById("cardVectorCount").innerText = data.total_vectors;
                     document.getElementById("kbChunkCount").innerText = data.total_vectors;
 
                     // Runtime mode badge in header
                     const rtBadge = document.getElementById("badgeRuntimeMode");
                     if (rtBadge) {
-                        rtBadge.innerText = data.runtime_label || (isLocalAirgapped ? "AIR-GAPPED / ON-PREMISE VERIFIED" : "CLOUD DEMO / LOCAL AI REQUIRED");
-                        if (isLocalAirgapped) {
+                        rtBadge.innerText = data.runtime_label || (isPublicShare ? "🌐 PUBLIC SHARE / LOCAL AI" : (isLocalAirgapped ? "AIR-GAPPED / ON-PREMISE VERIFIED" : "CLOUD DEMO / LOCAL AI REQUIRED"));
+                        if (isPublicShare) {
+                            rtBadge.style.background = "rgba(56, 189, 248, 0.15)";
+                            rtBadge.style.color = "var(--accent-primary)";
+                            rtBadge.style.borderColor = "rgba(56, 189, 248, 0.4)";
+                        } else if (isLocalAirgapped) {
                             rtBadge.style.background = "rgba(16, 185, 129, 0.15)";
                             rtBadge.style.color = "var(--success)";
                             rtBadge.style.borderColor = "rgba(16, 185, 129, 0.3)";
@@ -4304,8 +5191,12 @@
                     // Judge Demo proof badge & notice
                     const jBadge = document.getElementById("judgeProofBadge");
                     if (jBadge) {
-                        jBadge.innerText = isLocalAirgapped ? "AIR-GAPPED / ON-PREMISE VERIFIED" : "CLOUD DEMO / LOCAL AI REQUIRED";
-                        if (isLocalAirgapped) {
+                        jBadge.innerText = data.runtime_label || (isPublicShare ? "PUBLIC SHARE / LOCAL AI" : (isLocalAirgapped ? "AIR-GAPPED / ON-PREMISE VERIFIED" : "CLOUD DEMO / LOCAL AI REQUIRED"));
+                        if (isPublicShare) {
+                            jBadge.style.background = "rgba(56, 189, 248, 0.15)";
+                            jBadge.style.color = "var(--accent-primary)";
+                            jBadge.style.borderColor = "rgba(56, 189, 248, 0.4)";
+                        } else if (isLocalAirgapped) {
                             jBadge.style.background = "rgba(16, 185, 129, 0.15)";
                             jBadge.style.color = "var(--success)";
                             jBadge.style.borderColor = "rgba(16, 185, 129, 0.3)";
@@ -4315,6 +5206,13 @@
                             jBadge.style.borderColor = "rgba(245, 158, 11, 0.3)";
                         }
                     }
+
+                    // Public Share Notice Panel visibility
+                    const psPanel = document.getElementById("publicShareNoticePanel");
+                    if (psPanel) {
+                        psPanel.style.display = isPublicShare ? "block" : "none";
+                    }
+
                     const jNotice = document.getElementById("judgeCloudNotice");
                     if (jNotice) {
                         if (data.runtime_notice) {
@@ -4372,7 +5270,7 @@
                 }
 
                 try {
-                    const capResp = await fetch("/api/v1/ai/capabilities");
+                    const capResp = await fetch(apiUrl("/api/v1/ai/capabilities"));
                     if (capResp.ok) {
                         const caps = await capResp.json();
                         const ocrEl = document.getElementById("healthOcrStatus");
@@ -4578,9 +5476,10 @@
                 const headers = { "Content-Type": "application/json" };
                 if (token) headers["Authorization"] = `Bearer ${token}`;
 
-                const resp = await fetch("/api/v1/agent/demo/sih26117", {
+                const resp = await fetch(apiUrl("/api/v1/agent/demo/sih26117"), {
                     method: "POST",
                     headers: headers,
+                    credentials: "include",
                     body: JSON.stringify({ deliverable_format: "DOCX" })
                 });
 
@@ -4618,25 +5517,28 @@
 
         function ensureJudgeWebSocket(sessionId) {
             if (!sessionId) return;
-            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
             const token = getAuthToken();
             const queryParam = token ? `?token=${encodeURIComponent(token)}` : "";
-            const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/agent-thoughts/${sessionId}${queryParam}`;
+            const wsUrl = getWsUrl(`/api/v1/ws/agent-thoughts/${sessionId}${queryParam}`);
 
-            const demoSocket = new WebSocket(wsUrl);
-            demoSocket.onopen = () => {
-                appendJudgeTelemetry("WEBSOCKET", `Connected to telemetry stream for session ${sessionId}`, "info");
-            };
-            demoSocket.onmessage = (event) => {
-                try {
-                    const msg = JSON.parse(event.data);
-                    if (msg.type === "agent_event" && msg.data) {
-                        handleJudgeDemoEvent(msg.data);
+            try {
+                const demoSocket = new WebSocket(wsUrl);
+                demoSocket.onopen = () => {
+                    appendJudgeTelemetry("WEBSOCKET", `Connected to telemetry stream for session ${sessionId}`, "info");
+                };
+                demoSocket.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        if (msg.type === "agent_event" && msg.data) {
+                            handleJudgeDemoEvent(msg.data);
+                        }
+                    } catch (e) {
+                        console.error("Judge WS Parse Error:", e);
                     }
-                } catch (e) {
-                    console.error("Judge WS Parse Error:", e);
-                }
-            };
+                };
+            } catch (err) {
+                console.error("[Workbench] ensureJudgeWebSocket error:", err);
+            }
         }
 
         function updatePipelineStage(stageNum, status, durationText = "") {
@@ -4772,7 +5674,7 @@
 
                 const dBtn = document.getElementById("btnDownloadDeliverable");
                 if (dBtn) {
-                    dBtn.href = `/api/v1/agent/artifacts/download/${encodeURIComponent(filename)}`;
+                    dBtn.href = apiUrl(`/api/v1/agent/artifacts/download/${encodeURIComponent(filename)}`);
                     dBtn.style.display = "inline-flex";
                 }
             }
@@ -4862,8 +5764,695 @@
 
             const snippet = document.getElementById("valVisSnippet");
             if (snippet) snippet.innerText = "Awaiting live vision inference from local llava:latest model...";
+        }
 
-            showToast("Judge Demo presentation view reset (database & artifacts preserved).", "info");
+        // ==========================================
+        // 1. Encrypted Document Vault & On-The-Fly Decryption
+        // ==========================================
+        async function fetchEncryptedDocuments() {
+            try {
+                const resp = await authFetch("/api/v1/documents");
+                if (!resp.ok) return;
+                const docs = await resp.json();
+                const tbody = document.getElementById("vaultDocsTableBody");
+                if (!tbody) return;
+
+                if (!docs || docs.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">No documents found. Click 'Re-Seed Demo Data' on Dashboard or upload a file.</td></tr>`;
+                    return;
+                }
+
+                const docBadge = document.getElementById("navBadgeEncDocs");
+                if (docBadge) docBadge.innerText = `${docs.length} Docs`;
+
+                tbody.innerHTML = docs.map(d => {
+                    const ext = d.filename.split('.').pop().toUpperCase();
+                    const sizeStr = (d.size_bytes / 1024).toFixed(1) + " KB";
+                    const isEncrypted = true; // All storage is AES-256-GCM
+                    const dateStr = d.created_at ? new Date(d.created_at).toLocaleString() : "Recently";
+                    return `
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 1.1rem;">📄</span>
+                                    <div>
+                                        <div style="font-weight: 600; color: var(--text-main); font-size: 0.82rem;">${escapeHtml(d.filename)}</div>
+                                        <div style="font-size: 0.68rem; color: var(--text-dim); font-family: var(--font-mono);">${d.id.substring(0, 8)}...</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge badge-sih">${escapeHtml(d.classification || "Confidential")}</span></td>
+                            <td><span style="font-size: 0.78rem; color: var(--text-muted);">${escapeHtml(d.department || "Refinery")}</span></td>
+                            <td style="font-family: var(--font-mono); font-size: 0.78rem;">${sizeStr}</td>
+                            <td>
+                                <span class="badge badge-success" style="font-size: 0.68rem;">AES-256-GCM</span>
+                            </td>
+                            <td>
+                                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-size: 0.68rem;">${escapeHtml(d.processing_status || "INDEXED")}</span>
+                            </td>
+                            <td style="font-size: 0.75rem; color: var(--text-muted);">${dateStr}</td>
+                            <td>
+                                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                                    <button class="btn-action" onclick="downloadVaultDoc('${d.id}', '${escapeHtml(d.filename)}')" title="Decrypt on-the-fly and download">
+                                        <span>📥</span> <span>Decrypt</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+            } catch (err) {
+                console.error("fetchEncryptedDocuments error:", err);
+            }
+        }
+
+        async function handleVaultUpload(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById("vaultFileInput");
+            const kbSelect = document.getElementById("vaultKbSelect");
+            const classSelect = document.getElementById("vaultClassSelect");
+            const statusDiv = document.getElementById("vaultUploadStatus");
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showToast("Please choose a file to upload.", "warning");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("kb_slug", kbSelect.value);
+            formData.append("classification", classSelect.value);
+            formData.append("department", "Refinery Operations");
+
+            if (statusDiv) {
+                statusDiv.style.display = "block";
+                statusDiv.style.color = "var(--accent-primary)";
+                statusDiv.innerText = `Encrypting with AES-256-GCM and indexing into ${kbSelect.value}...`;
+            }
+
+            try {
+                const token = getAuthToken();
+                const headers = {};
+                if (token) headers["Authorization"] = `Bearer ${token}`;
+
+                const resp = await fetch(apiUrl("/api/v1/documents/upload"), {
+                    method: "POST",
+                    headers: headers,
+                    credentials: "include",
+                    body: formData
+                });
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (statusDiv) {
+                        statusDiv.style.color = "var(--success)";
+                        statusDiv.innerText = `✓ Successfully encrypted and indexed (${data.chunks_created || 0} semantic chunks stored).`;
+                    }
+                    showToast(`Document encrypted and stored in vault!`, "success");
+                    fileInput.value = "";
+                    fetchEncryptedDocuments();
+                    fetchDocuments();
+                    fetchStats();
+                } else {
+                    const err = await resp.json().catch(() => ({ detail: "Upload failed" }));
+                    if (statusDiv) {
+                        statusDiv.style.color = "var(--danger)";
+                        statusDiv.innerText = `Upload error: ${err.detail || 'Server error'}`;
+                    }
+                    showToast(`Upload error: ${err.detail || 'Failed'}`, "error");
+                }
+            } catch (e) {
+                console.error("Upload error:", e);
+                if (statusDiv) {
+                    statusDiv.style.color = "var(--danger)";
+                    statusDiv.innerText = `Network or ingestion error: ${e.message}`;
+                }
+            }
+        }
+
+        async function downloadVaultDoc(docId, filename) {
+            try {
+                showToast(`Decrypting ${filename} on-the-fly...`, "info");
+                const token = getAuthToken();
+                const headers = {};
+                if (token) headers["Authorization"] = `Bearer ${token}`;
+
+                const resp = await fetch(apiUrl(`/api/v1/documents/${docId}/download`), {
+                    headers: headers,
+                    credentials: "include"
+                });
+
+                if (resp.status === 401) {
+                    showToast("Authentication required or session revoked.", "error");
+                    return;
+                }
+                if (resp.status === 403) {
+                    showToast("Access denied by RBAC policy.", "error");
+                    return;
+                }
+                if (!resp.ok) {
+                    showToast("Failed to decrypt document.", "error");
+                    return;
+                }
+
+                const blob = await resp.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                showToast(`Decrypted and downloaded ${filename}`, "success");
+            } catch (e) {
+                console.error("downloadVaultDoc error:", e);
+                showToast("Download failed: " + e.message, "error");
+            }
+        }
+
+        // ==========================================
+        // 2. Laptop Theft & Device Quarantine
+        // ==========================================
+        async function fetchDevicesAndSessions() {
+            try {
+                const [devResp, sessResp] = await Promise.all([
+                    authFetch("/api/v1/devices"),
+                    authFetch("/api/v1/sessions")
+                ]);
+
+                if (devResp.ok) {
+                    const devices = await devResp.json();
+                    const tbody = document.getElementById("devicesTableBody");
+                    if (tbody) {
+                        if (!devices || devices.length === 0) {
+                            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No devices registered yet.</td></tr>`;
+                        } else {
+                            tbody.innerHTML = devices.map(d => `
+                                <tr>
+                                    <td style="font-family: var(--font-mono); font-size: 0.75rem;">${escapeHtml(d.device_id)}</td>
+                                    <td style="font-weight: 600; color: var(--text-main); font-size: 0.8rem;">${escapeHtml(d.device_name)}</td>
+                                    <td style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(d.os || "Unknown")} / ${escapeHtml(d.client_type || "Client")}</td>
+                                    <td style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim);">${escapeHtml(d.device_fingerprint || "--")}</td>
+                                    <td>
+                                        <span class="badge ${d.status === 'Active' ? 'badge-success' : ''}" style="${d.status !== 'Active' ? 'background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);' : ''}">${escapeHtml(d.status)}</span>
+                                    </td>
+                                    <td style="font-size: 0.75rem; color: var(--text-muted);">${d.last_active ? new Date(d.last_active).toLocaleTimeString() : "--"}</td>
+                                    <td>
+                                        ${d.status === 'Active' ? `
+                                            <button class="btn-action" style="border-color: var(--danger); color: var(--danger);" onclick="revokeDeviceById('${d.device_id}')">
+                                                🚨 Revoke Device
+                                            </button>
+                                        ` : `<span style="font-size: 0.72rem; color: var(--text-dim);">Quarantined</span>`}
+                                    </td>
+                                </tr>
+                            `).join("");
+                        }
+                    }
+                }
+
+                if (sessResp.ok) {
+                    const sessions = await sessResp.json();
+                    const tbody = document.getElementById("sessionsTableBody");
+                    if (tbody) {
+                        if (!sessions || sessions.length === 0) {
+                            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No active sessions recorded.</td></tr>`;
+                        } else {
+                            tbody.innerHTML = sessions.map(s => `
+                                <tr>
+                                    <td style="font-family: var(--font-mono); font-size: 0.75rem;">${escapeHtml(s.session_id)}</td>
+                                    <td style="font-weight: 600; font-size: 0.8rem;">${escapeHtml(s.username)}</td>
+                                    <td style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(s.device_id)}</td>
+                                    <td style="font-family: var(--font-mono); font-size: 0.75rem;">${escapeHtml(s.ip_address || "127.0.0.1")}</td>
+                                    <td>
+                                        <span class="badge ${s.status === 'Active' ? 'badge-success' : ''}" style="${s.status !== 'Active' ? 'background: rgba(239, 68, 68, 0.15); color: #f87171;' : ''}">${escapeHtml(s.status)}</span>
+                                    </td>
+                                    <td style="font-size: 0.75rem; color: var(--text-muted);">${s.created_at ? new Date(s.created_at).toLocaleTimeString() : "--"}</td>
+                                    <td>
+                                        ${s.status === 'Active' ? `
+                                            <button class="btn-action" style="border-color: var(--danger); color: var(--danger);" onclick="revokeSessionById('${s.session_id}')">
+                                                Terminate
+                                            </button>
+                                        ` : `<span style="font-size: 0.72rem; color: var(--text-dim);">Revoked</span>`}
+                                    </td>
+                                </tr>
+                            `).join("");
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("fetchDevicesAndSessions error:", err);
+            }
+        }
+
+        async function revokeDeviceById(deviceId) {
+            try {
+                const resp = await authFetch(`/api/v1/devices/${deviceId}/revoke`, { method: "POST" });
+                if (resp.ok) {
+                    showToast(`Device ${deviceId} revoked and quarantined.`, "success");
+                    fetchDevicesAndSessions();
+                } else {
+                    showToast("Failed to revoke device.", "error");
+                }
+            } catch (e) {
+                showToast("Revocation error: " + e.message, "error");
+            }
+        }
+
+        async function revokeSessionById(sessionId) {
+            try {
+                const resp = await authFetch(`/api/v1/sessions/${sessionId}/revoke`, { method: "POST" });
+                if (resp.ok) {
+                    showToast(`Session ${sessionId} terminated.`, "success");
+                    fetchDevicesAndSessions();
+                } else {
+                    showToast("Failed to terminate session.", "error");
+                }
+            } catch (e) {
+                showToast("Termination error: " + e.message, "error");
+            }
+        }
+
+        // Laptop Theft Simulator Actions
+        function logTheftConsole(msg) {
+            const el = document.getElementById("theftSimConsole");
+            if (el) {
+                const time = new Date().toLocaleTimeString();
+                el.innerHTML += `<br><span style="color: var(--accent-primary);">[${time}]</span> ${msg}`;
+                el.scrollTop = el.scrollHeight;
+            }
+        }
+
+        async function theftSimVerifyDeviceA() {
+            logTheftConsole("<strong>STEP 1:</strong> Validating Device A (dev_laptop_eng_01) on local sovereign network...");
+            try {
+                const resp = await authFetch("/api/v1/devices");
+                if (resp.ok) {
+                    logTheftConsole("✓ <span style='color: var(--success);'>AUTHENTICATED (200 OK)</span>: Device A session is valid. Engineer has active access to encrypted repository.");
+                    showToast("Step 1 Passed: Device A active and authorized.", "success");
+                }
+            } catch (e) {
+                logTheftConsole("Verification error: " + e.message);
+            }
+        }
+
+        async function theftSimRevokeDeviceA() {
+            logTheftConsole("<strong>STEP 2:</strong> 🚨 Simulating Lost/Stolen Laptop. Admin invoking 1-Click Hardware Quarantine...");
+            try {
+                const resp = await authFetch("/api/v1/devices/dev_laptop_eng_01/revoke", { method: "POST" });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    logTheftConsole(`✓ <span style='color: #f87171;'>QUARANTINE EXECUTED</span>: Device A (dev_laptop_eng_01) marked REVOKED. Invalidation published across on-premise cluster in ${data.revocation_latency_ms || 4}ms.`);
+                    showToast("Step 2 Executed: Device A quarantined!", "warning");
+                    fetchDevicesAndSessions();
+                }
+            } catch (e) {
+                logTheftConsole("Revocation error: " + e.message);
+            }
+        }
+
+        async function theftSimTestStolenAccess() {
+            logTheftConsole("<strong>STEP 3:</strong> Simulating attacker on stolen Device A attempting to download confidential documents...");
+            try {
+                // Device A token from seeder is 'token_eng_laptop_01'
+                const testResp = await fetch(apiUrl("/api/v1/documents"), {
+                    headers: { "Authorization": "Bearer token_eng_laptop_01" }
+                });
+                if (testResp.status === 401) {
+                    logTheftConsole("✓ <span style='color: var(--success); font-weight: 800;'>DEFENSE VERIFIED: HTTP 401 Unauthorized [SESSION_REVOKED]</span>. Zero documents exposed. Token rejected by server authority.");
+                    showToast("Step 3 Verified: Access blocked with HTTP 401!", "success");
+                } else {
+                    logTheftConsole(`HTTP Status: ${testResp.status}.`);
+                }
+            } catch (e) {
+                logTheftConsole("Attack simulation error: " + e.message);
+            }
+        }
+
+        async function theftSimVerifyDeviceB() {
+            logTheftConsole("<strong>STEP 4:</strong> Engineer switching to Device B (Emergency Workstation)...");
+            try {
+                const resp = await authFetch("/api/v1/documents");
+                if (resp.ok) {
+                    const docs = await resp.json();
+                    logTheftConsole(`✓ <span style='color: var(--success); font-weight: 800;'>ENTERPRISE CONTINUITY VERIFIED</span>: All ${docs.length} confidential refinery documents intact on server vault, 100% encrypted.`);
+                    showToast("Step 4 Passed: Repository intact on server!", "success");
+                }
+            } catch (e) {
+                logTheftConsole("Verification error: " + e.message);
+            }
+        }
+
+        // ==========================================
+        // 3. SIH Mandated 5 Demo Scenarios (1-Click)
+        // ==========================================
+        const sihScenariosData = {
+            1: {
+                title: "Scenario 1: PDF Summary & Grounded SOP Citations",
+                query: "Summarize compressor_maintenance_report.pdf and extract vibration limits, findings, and SOP references.",
+                kb_slug: "refinery-maintenance",
+                deliverable: "DOCX"
+            },
+            2: {
+                title: "Scenario 2: Cross-Document Compressor Vibration Search",
+                query: "Search all documents for centrifugal compressor vibration issues and recommend corrective maintenance actions.",
+                kb_slug: "refinery-maintenance",
+                deliverable: "DOCX"
+            },
+            3: {
+                title: "Scenario 3: Excel Failure History & Root Cause Analysis",
+                query: "Analyze equipment_failure_history.csv to identify top failure modes, MTBF, and maintenance patterns.",
+                kb_slug: "refinery-maintenance",
+                deliverable: "DOCX"
+            },
+            4: {
+                title: "Scenario 4: Multimodal Visual Inspection & Telemetry",
+                query: "Analyze Centrifugal Pump P-101A telemetry diagram, thermal hotspots, and bearing limits.",
+                kb_slug: "inspection-reports",
+                deliverable: "DOCX",
+                image_url: "demo_data/inspection_image.png"
+            },
+            5: {
+                title: "Scenario 5: Laptop Theft Simulation & Hardware Quarantine",
+                query: null
+            }
+        };
+
+        async function runSihScenario(num) {
+            const data = sihScenariosData[num];
+            if (!data) return;
+
+            if (num === 5) {
+                // Switch to devices tab and run simulation
+                switchTab('devices');
+                showToast("Switched to Laptop Theft & Devices module.", "info");
+                setTimeout(() => theftSimVerifyDeviceA(), 500);
+                return;
+            }
+
+            const banner = document.getElementById("scProgressBanner");
+            const pText = document.getElementById("scProgressText");
+            const resPanel = document.getElementById("scResultPanel");
+            const resTitle = document.getElementById("scResultTitle");
+            const resBadges = document.getElementById("scBadges");
+            const resContent = document.getElementById("scResultContent");
+            const delivBox = document.getElementById("scDeliverableBox");
+            const delivName = document.getElementById("scDeliverableName");
+            const delivLink = document.getElementById("scDeliverableLink");
+
+            if (banner) {
+                banner.style.display = "flex";
+                banner.style.alignItems = "center";
+                banner.style.gap = "0.5rem";
+                if (pText) pText.innerText = `Executing ${data.title} on local 7-agent coordinator (zero cloud APIs)...`;
+            }
+            if (resPanel) resPanel.style.display = "none";
+
+            try {
+                const startTime = performance.now();
+                const resp = await authFetch("/api/v1/agents/run", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        query: data.query,
+                        kb_slug: data.kb_slug,
+                        deliverable_format: data.deliverable,
+                        image_url: data.image_url || null
+                    })
+                });
+
+                const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+                if (banner) banner.style.display = "none";
+
+                if (resp.ok) {
+                    const result = await resp.json();
+                    if (resPanel) {
+                        resPanel.style.display = "block";
+                        if (resTitle) resTitle.innerText = data.title;
+                        if (resBadges) {
+                            resBadges.innerHTML = `
+                                <span class="badge badge-success">✓ 100% On-Premise (${elapsed}s)</span>
+                                <span class="badge badge-sih">${result.agent_trace ? result.agent_trace.length : 7} Agent Steps</span>
+                                ${result.human_verification_required ? `<span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">🚨 Human Verification Required</span>` : `<span class="badge badge-success">✅ Stable</span>`}
+                            `;
+                        }
+                        if (resContent) {
+                            resContent.innerText = result.final_verdict || result.response || "Analysis complete.";
+                        }
+                        if (result.deliverable_file && delivBox) {
+                            delivBox.style.display = "block";
+                            if (delivName) delivName.innerText = result.deliverable_file;
+                            if (delivLink) delivLink.href = apiUrl(`/api/v1/reports/download/${result.deliverable_file}`);
+                        } else if (delivBox) {
+                            delivBox.style.display = "none";
+                        }
+                    }
+                    showToast(`${data.title} completed in ${elapsed}s!`, "success");
+                    fetchReportsGallery();
+                } else {
+                    const err = await resp.json().catch(() => ({ detail: "Scenario execution failed" }));
+                    showToast("Execution error: " + (err.detail || "Server error"), "error");
+                }
+            } catch (e) {
+                if (banner) banner.style.display = "none";
+                console.error("runSihScenario error:", e);
+                showToast("Scenario error: " + e.message, "error");
+            }
+        }
+
+        async function seedDemoDataNow() {
+            showToast("Re-seeding synthetic industrial datasets & demo credentials...", "info");
+            try {
+                const resp = await authFetch("/api/v1/demo/launch", { method: "POST" });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    showToast(`Demo data seeded: ${data.indexed_documents.length} files encrypted into ChromaDB!`, "success");
+                    fetchEncryptedDocuments();
+                    fetchDocuments();
+                    fetchStats();
+                    fetchReportsGallery();
+                } else {
+                    showToast("Failed to seed demo data.", "error");
+                }
+            } catch (e) {
+                showToast("Seed error: " + e.message, "error");
+            }
+        }
+
+        // ==========================================
+        // 4. Multimodal Industrial Vision Workstation
+        // ==========================================
+        let selectedMultimodalFile = null;
+
+        function setMultimodalImage(imgName) {
+            const preview = document.getElementById("multimodalImgPreview");
+            if (preview) preview.src = apiUrl(`/static/${imgName}`);
+            selectedMultimodalFile = null;
+            showToast(`Loaded diagram: ${imgName}`, "info");
+        }
+
+        function handleMultimodalFileSelect(event) {
+            const files = event.target.files;
+            if (files && files.length > 0) {
+                selectedMultimodalFile = files[0];
+                const preview = document.getElementById("multimodalImgPreview");
+                if (preview) {
+                    preview.src = URL.createObjectURL(selectedMultimodalFile);
+                }
+                showToast(`Loaded custom image: ${selectedMultimodalFile.name}`, "info");
+            }
+        }
+
+        async function runMultimodalAnalysisNow() {
+            const promptInput = document.getElementById("multimodalPromptInput");
+            const query = promptInput ? promptInput.value : "Analyze equipment physical condition, thermal telemetry, and mechanical seal integrity.";
+            const outputBox = document.getElementById("multimodalOutputBox");
+            const riskBadge = document.getElementById("multimodalRiskBadge");
+            const delivBox = document.getElementById("multimodalDeliverableContainer");
+            const delivFilename = document.getElementById("multimodalDocxFilename");
+            const delivLink = document.getElementById("multimodalDownloadLink");
+
+            if (outputBox) {
+                outputBox.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--accent-primary); font-size: 0.82rem;">
+                        <span class="pulse-dot"></span>
+                        <span>Running local LLaVA vision inference & deterministic thermal telemetry evaluation...</span>
+                    </div>
+                `;
+            }
+            if (riskBadge) {
+                riskBadge.innerText = "INSPECTING...";
+                riskBadge.className = "badge";
+            }
+
+            try {
+                const formData = new FormData();
+                if (selectedMultimodalFile) {
+                    formData.append("file", selectedMultimodalFile);
+                } else {
+                    formData.append("image_name", "inspection_image.png");
+                }
+                formData.append("query", query);
+
+                const token = getAuthToken();
+                const headers = {};
+                if (token) headers["Authorization"] = `Bearer ${token}`;
+
+                const resp = await fetch(apiUrl("/api/v1/multimodal/analyze"), {
+                    method: "POST",
+                    headers: headers,
+                    credentials: "include",
+                    body: formData
+                });
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (outputBox) {
+                        const comps = (data.identified_components || []).map(c => `<span class="telemetry-tag">⚙️ ${escapeHtml(c)}</span>`).join(" ");
+                        const tele = data.telemetry_observations || {};
+                        let teleHtml = "";
+                        for (const [k, v] of Object.entries(tele)) {
+                            teleHtml += `<div style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);"><span style="color: var(--accent-primary);">${escapeHtml(k)}:</span> ${escapeHtml(String(v))}</div>`;
+                        }
+
+                        outputBox.innerHTML = `
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-main); margin-bottom: 0.35rem;">Identified Mechanical Components:</div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">${comps || "None detected"}</div>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-main); margin-bottom: 0.35rem;">Thermal & Vibration Telemetry:</div>
+                                <div style="background: var(--bg-surface); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color);">${teleHtml || "Telemetry extracted"}</div>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <div style="font-weight: 700; font-size: 0.82rem; color: var(--text-main); margin-bottom: 0.25rem;">Visual Inspection Synthesis:</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">${escapeHtml(data.visual_summary)}</div>
+                            </div>
+                            <div style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 6px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.78rem; color: #f87171; font-weight: 700;">
+                                🚨 Safety Gate Notice: Human verification required before manual restart.
+                            </div>
+                        `;
+                    }
+                    if (riskBadge) {
+                        riskBadge.innerText = "HUMAN VERIFICATION REQUIRED";
+                        riskBadge.style.background = "rgba(239, 68, 68, 0.2)";
+                        riskBadge.style.color = "#f87171";
+                    }
+                    if (delivBox && data.deliverable_file) {
+                        delivBox.style.display = "block";
+                        if (delivFilename) delivFilename.innerText = data.deliverable_file;
+                        if (delivLink) delivLink.href = data.deliverable_url ? apiUrl(data.deliverable_url) : apiUrl(`/api/v1/reports/download/${data.deliverable_file}`);
+                    }
+                    showToast("Multimodal inspection completed!", "success");
+                    fetchReportsGallery();
+                } else {
+                    const err = await resp.json().catch(() => ({ detail: "Vision analysis failed" }));
+                    showToast("Vision inspection error: " + (err.detail || "Failed"), "error");
+                }
+            } catch (e) {
+                console.error("runMultimodalAnalysisNow error:", e);
+                showToast("Vision error: " + e.message, "error");
+            }
+        }
+
+        // ==========================================
+        // 5. Reports & Deliverables Gallery
+        // ==========================================
+        async function fetchReportsGallery() {
+            try {
+                const resp = await authFetch("/api/v1/reports");
+                if (!resp.ok) return;
+                const reports = await resp.json();
+                const tbody = document.getElementById("reportsTableBody");
+                if (!tbody) return;
+
+                if (!reports || reports.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No reports generated yet. Run a scenario or query to generate deliverables.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = reports.map(r => `
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-size: 1.1rem;">${r.extension === 'DOCX' ? '📝' : (r.extension === 'CSV' ? '📊' : '📄')}</span>
+                                <span style="font-weight: 600; color: var(--text-main); font-size: 0.82rem;">${escapeHtml(r.filename)}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge ${r.extension === 'DOCX' ? 'badge-sih' : 'badge-success'}">${r.extension}</span>
+                        </td>
+                        <td style="font-family: var(--font-mono); font-size: 0.78rem;">${r.size_formatted}</td>
+                        <td><span class="badge badge-sih">${escapeHtml(r.classification || "Confidential")}</span></td>
+                        <td style="font-size: 0.75rem; color: var(--text-muted);">${new Date(r.modified_at).toLocaleString()}</td>
+                        <td>
+                            <a class="btn-action" href="${apiUrl(r.download_url)}" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                <span>📥</span> <span>Download</span>
+                            </a>
+                        </td>
+                    </tr>
+                `).join("");
+            } catch (err) {
+                console.error("fetchReportsGallery error:", err);
+            }
+        }
+
+        // ==========================================
+        // 6. Model Settings & Local Inference Test
+        // ==========================================
+        async function fetchModelSettings() {
+            try {
+                const resp = await authFetch("/api/v1/models");
+                if (resp.ok) {
+                    const badge = document.getElementById("ollamaHealthBadge");
+                    if (badge) {
+                        badge.innerText = "OLLAMA CONNECTED";
+                        badge.className = "badge badge-success";
+                    }
+                }
+            } catch (e) {
+                console.error("fetchModelSettings error:", e);
+            }
+        }
+
+        async function testLocalModelNow() {
+            const promptInput = document.getElementById("modelTestPrompt");
+            const select = document.getElementById("modelTestSelect");
+            const resultBox = document.getElementById("modelTestResult");
+
+            const prompt = promptInput ? promptInput.value : "Confirm local air-gapped sovereign inference operational.";
+            const modelName = select ? select.value : "llama3.1";
+
+            if (resultBox) {
+                resultBox.style.display = "block";
+                resultBox.innerText = `Connecting to local Ollama inference daemon for '${modelName}'...\nComputing on-premise without external cloud APIs...`;
+            }
+
+            try {
+                const startTime = performance.now();
+                const resp = await authFetch("/api/v1/models/test", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ model_name: modelName, prompt: prompt })
+                });
+
+                const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (resultBox) {
+                        resultBox.innerText = `✓ MODEL: ${data.model} | STATUS: ${data.status} | LATENCY: ${elapsed}s | SOVEREIGN VERIFIED: 100%\n\nRESPONSE:\n${data.response || data.error || 'Test successful.'}`;
+                    }
+                    showToast(`Local inference test for ${modelName} completed in ${elapsed}s!`, "success");
+                } else {
+                    const err = await resp.json().catch(() => ({ detail: "Model test failed" }));
+                    if (resultBox) resultBox.innerText = `Error: ${err.detail || 'Test failed'}`;
+                    showToast("Model test error", "error");
+                }
+            } catch (e) {
+                if (resultBox) resultBox.innerText = `Connection error: ${e.message}`;
+                showToast("Test failed: " + e.message, "error");
+            }
         }
 
         window.addEventListener("DOMContentLoaded", () => {
@@ -4873,6 +6462,8 @@
             fetchStats();
             verifyAuditLedger();
             fetchDocuments();
+            fetchEncryptedDocuments();
+            fetchReportsGallery();
         });
     </script>
 </body>

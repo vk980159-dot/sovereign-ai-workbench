@@ -180,6 +180,12 @@
             color: #fca5a5;
         }
 
+        .alert-success {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #86efac;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-4px); }
             to { opacity: 1; transform: translateY(0); }
@@ -389,7 +395,7 @@
         <div class="brand-section">
             <div class="brand-logo">Δ</div>
             <h1 class="brand-title">Sovereign AI Workbench</h1>
-            <p class="brand-subtitle">Secure On-Premise Multi-Agent Intelligence • SIH26117</p>
+            <p class="brand-subtitle">Private On-Premise AI • SIH26117</p>
 
             <div class="badges-row">
                 <div class="status-badge badge-airgap">
@@ -397,9 +403,10 @@
                     <span>LOCAL / AIR-GAPPED</span>
                 </div>
                 <div class="status-badge badge-audit">
-                    <span>🔒 ARGON2ID ENCRYPTED</span>
+                    <span>🔒 LOCAL AUTHENTICATION</span>
                 </div>
             </div>
+            <p style="font-size: 0.76rem; color: #94a3b8; margin-top: 0.65rem;">Local authentication only. Your credentials stay on this private server.</p>
         </div>
 
         <!-- Alert Banner -->
@@ -418,7 +425,7 @@
                         id="fullName" 
                         name="fullName" 
                         class="input-field" 
-                        placeholder="e.g. Dr. A. P. Sharma" 
+                        placeholder="e.g. Mukul Raj" 
                         required 
                         autofocus
                     />
@@ -434,7 +441,7 @@
                             id="username" 
                             name="username" 
                             class="input-field" 
-                            placeholder="e.g. asharma" 
+                            placeholder="e.g. mukul.21" 
                             required
                             autocomplete="username"
                         />
@@ -537,7 +544,7 @@
         <!-- Link to Sign In -->
         <div class="switch-link-wrapper">
             Already have an account? 
-            <a href="/login" class="switch-link">Sign In</a>
+            <a href="/login.html" onclick="navigateTo('login'); return false;" class="switch-link">Sign In</a>
         </div>
 
         <!-- Security Footnote -->
@@ -548,6 +555,40 @@
 
     <!-- Client Registration Logic -->
     <script>
+        // ----------------------------------------------------
+        // Universal API Base & Route Resolver
+        // Works across:
+        // - Standalone Frontend Dev Server (e.g. port 3000)
+        // - Direct Backend (port 8000)
+        // - Tailscale Funnel / Cloudflare Public Tunnels
+        // ----------------------------------------------------
+        function getApiBase() {
+            if (window.location.port && window.location.port !== "8000" && !window.location.host.includes(".ts.net") && !window.location.host.includes(".trycloudflare.com")) {
+                return `${window.location.protocol}//${window.location.hostname}:8000`;
+            }
+            return "";
+        }
+
+        function apiUrl(path) {
+            const base = getApiBase();
+            const cleanPath = path.startsWith("/") ? path : "/" + path;
+            return base ? `${base}${cleanPath}` : cleanPath;
+        }
+
+        function navigateTo(page, params = "") {
+            const queryString = params ? (params.startsWith("?") ? params : `?${params}`) : "";
+            const isStaticServer = window.location.port && window.location.port !== "8000";
+            if (page === "login") {
+                window.location.href = (isStaticServer ? "/login.html" : "/login") + queryString;
+            } else if (page === "register") {
+                window.location.href = (isStaticServer ? "/register.html" : "/register") + queryString;
+            } else if (page === "index" || page === "dashboard") {
+                window.location.href = (isStaticServer ? "/index.html" : "/") + queryString;
+            } else {
+                window.location.href = page + queryString;
+            }
+        }
+
         const registerForm = document.getElementById("registerForm");
         const fullNameInput = document.getElementById("fullName");
         const usernameInput = document.getElementById("username");
@@ -616,9 +657,9 @@
         passwordInput.addEventListener("input", updateCriteria);
         confirmPasswordInput.addEventListener("input", updateCriteria);
 
-        function showAlert(msg) {
+        function showAlert(msg, isSuccess = false) {
             alertMessage.innerText = msg;
-            alertBanner.classList.add("active");
+            alertBanner.className = isSuccess ? "alert-banner active alert-success" : "alert-banner active alert-error";
         }
 
         function hideAlert() {
@@ -643,13 +684,31 @@
             }
 
             if (fullName.length < 2) {
-                showAlert("Full name must be at least 2 characters long.");
+                showAlert("Full name must be at least 2 characters in length.");
                 fullNameInput.focus();
                 return;
             }
 
-            if (!/^[a-zA-Z0-9_-]{3,32}$/.test(username)) {
-                showAlert("Username must be 3-32 alphanumeric characters, underscores, or hyphens.");
+            if (/\s/.test(username)) {
+                showAlert("Username cannot contain spaces.");
+                usernameInput.focus();
+                return;
+            }
+
+            if (username.length < 3) {
+                showAlert("Username must be at least 3 characters.");
+                usernameInput.focus();
+                return;
+            }
+
+            if (username.length > 32) {
+                showAlert("Username cannot exceed 32 characters.");
+                usernameInput.focus();
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_.-]{3,32}$/.test(username)) {
+                showAlert("Username can only contain letters, numbers, underscores, hyphens, and periods.");
                 usernameInput.focus();
                 return;
             }
@@ -661,7 +720,7 @@
             }
 
             if (password !== confirmPassword) {
-                showAlert("Password and Confirm Password do not match.");
+                showAlert("Passwords do not match.");
                 confirmPasswordInput.focus();
                 return;
             }
@@ -678,11 +737,12 @@
             btnText.innerText = "Creating Account...";
 
             try {
-                const response = await fetch("/api/v1/auth/register", {
+                const response = await fetch(apiUrl("/api/v1/auth/register"), {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
                     },
+                    credentials: "include",
                     body: JSON.stringify({
                         full_name: fullName,
                         username: username,
@@ -696,10 +756,11 @@
 
                 if (response.ok && response.status === 201) {
                     btnText.innerText = "✓ Account Created";
+                    showAlert("Account created successfully. Redirecting to login...", true);
                     // Redirect to login page with registered query param
                     setTimeout(() => {
-                        window.location.href = "/login?registered=true";
-                    }, 400);
+                        navigateTo("login", "registered=true");
+                    }, 800);
                 } else {
                     const detail = data.detail || "Registration failed. Please check your details.";
                     showAlert(detail);
@@ -708,7 +769,7 @@
                     btnText.innerText = "Create Sovereign Account";
                 }
             } catch (err) {
-                showAlert(`Connection error: ${err.message}. Ensure backend is running.`);
+                showAlert("Local authentication server is unavailable.");
                 btnSubmit.disabled = false;
                 btnSubmit.classList.remove("loading");
                 btnText.innerText = "Create Sovereign Account";

@@ -1,0 +1,81 @@
+﻿version: '3.8'
+
+# ==============================================================================
+# MRPL Sovereign AI Workbench (SIH26117) - Multi-Container On-Premise Mesh
+# Sovereign On-Premise Agentic AI Workbench using Open-Weight Multimodal LLMs
+# ==============================================================================
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mrpl_sovereign_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - OFFLINE_MODE=true
+      - AIR_GAP_STRICT_MODE=true
+      - SOVEREIGN_STORAGE_KEY=mrpl_sovereign_aes256_master_key_production_sih2026
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - DATABASE_URL=sqlite:////app/data/tasks.db
+      - DEFAULT_LLM_MODEL=llama3.1
+      - VISION_LLM_MODEL=llava
+      - EMBEDDING_MODEL=nomic-embed-text
+    volumes:
+      - ./data:/app/data
+      - ./demo_data:/app/demo_data
+      - ./chroma_db:/app/chroma_db
+      - ./generated_artifacts:/app/generated_artifacts
+      - ./backend:/app/backend
+    depends_on:
+      - ollama
+    networks:
+      - sovereign-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/api/v1/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mrpl_ollama_daemon
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    networks:
+      - sovereign-net
+
+  db:
+    image: postgres:15-alpine
+    container_name: mrpl_postgres_db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=sovereign_db
+      - POSTGRES_USER=mrpl_admin
+      - POSTGRES_PASSWORD=mrpl_secure_password_2026
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - sovereign-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mrpl_admin -d sovereign_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  sovereign-net:
+    driver: bridge
+
+volumes:
+  ollama-models:
+  postgres-data:

@@ -135,6 +135,17 @@ class AuditLogger:
             if not os.path.exists(self.log_file):
                 return False, 0, "Audit ledger file not found.", ""
 
+            # Fast mtime and size cache to prevent re-hashing 1500+ records on every health ping
+            try:
+                mtime = os.path.getmtime(self.log_file)
+                size = os.path.getsize(self.log_file)
+                if hasattr(self, "_cached_integrity") and self._cached_integrity:
+                    c_mtime, c_size, c_res = self._cached_integrity
+                    if c_mtime == mtime and c_size == size:
+                        return c_res
+            except Exception:
+                pass
+
             records: List[Dict[str, Any]] = []
             with open(self.log_file, "r", encoding="utf-8") as f:
                 for idx, line in enumerate(f):

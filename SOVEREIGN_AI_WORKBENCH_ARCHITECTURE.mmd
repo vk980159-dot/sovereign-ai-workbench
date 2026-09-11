@@ -1,0 +1,151 @@
+graph TB
+    %% Sovereign AI Workbench (SIH26117) - Verified Actual Architecture
+
+    subgraph Client_Tier ["Client and Operator Tier"]
+        Browser["Web Browser (Local / Remote)"]
+        JudgeMode["Judge Demo UI (Guided Inspection)"]
+        WSClient["WebSocket Client (Live Telemetry)"]
+    end
+
+    subgraph Network_Boundary ["Network Boundary and Ingress"]
+        LocalLoopback["Local Loopback: 127.0.0.1:8000"]
+        CloudflareTunnel["Cloudflare Quick Tunnel (cloudflared)<br/>Isolated Public HTTPS Proxy -> Port 8000 Only"]
+    end
+
+    subgraph API_Gateway ["FastAPI Application Gateway (Port 8000)"]
+        CORSMw["CORS and Host Filtering Middleware"]
+        RateLimiter["In-Memory Sliding-Window Rate Limiter<br/>(60 req/min, Burst 10)"]
+        AuthRouter["Auth Router: /api/auth<br/>(Local bcrypt, Google OAuth, GitHub OAuth)"]
+        TaskRouter["Task Router: /api/tasks<br/>(CRUD, Async Task Launch, WebSocket Telemetry)"]
+        DocRouter["Docs and Uploads: /api/docs<br/>(File Ingestion, Multimodal Staging)"]
+        AuditRouter["Audit Router: /api/audit<br/>(Chain Verification, Ledger Inspection)"]
+        DemoRouter["Demo Router: /api/judge-demo<br/>(Automated Verification Workflow)"]
+        WSManager["WebSocket Connection Manager<br/>(Real-time State and Tool Telemetry)"]
+    end
+
+    subgraph Security_Perimeter ["Security and Guardrail Perimeter"]
+        SecurityGate["Security Gate Node<br/>(Prompt Injection, Shell Sanitization, Path Traversal)"]
+        PIIRedactor["PII Redactor Engine<br/>(Regex Masking: Aadhaar, SSN, PAN, Email, Phone)"]
+        RBAC["RBAC Engine<br/>(Admin, Lead Engineer, Field Inspector, Auditor)"]
+        AuditLogger["Cryptographic Audit Logger<br/>(SHA-256 Hash Chain Ledger)"]
+    end
+
+    subgraph Agent_Core ["LangGraph Sovereign Agent Engine"]
+        StateGraph["StateGraph Orchestrator"]
+        PlannerNode["Planner Node<br/>(Task Decomposition, Tool Sequence Definition)"]
+        ExecutorNode["Executor Node<br/>(Tool Dispatch, Observation Capture)"]
+        VerifierNode["Verifier Node<br/>(Tolerance and Evidence Verification, Self-Correction Loop)"]
+        SynthesizerNode["Synthesizer Node<br/>(Final Industrial Output Assembly)"]
+    end
+
+    subgraph Tool_System ["16 Registered Safe Deterministic Tools"]
+        T_RAG["rag_search"]
+        T_ReadDoc["read_document"]
+        T_SummDoc["summarize_document"]
+        T_Calc["calculate_expression"]
+        T_Unit["unit_conversion"]
+        T_Stat["statistical_summary"]
+        T_OCR["ocr_image_or_pdf"]
+        T_Vision["vision_inspect_image"]
+        T_Tables["extract_document_tables"]
+        T_Claim["verify_claim_against_evidence"]
+        T_Tol["verify_tolerance_limits"]
+        T_DOCX["generate_docx_approval_note"]
+        T_XLSX["generate_xlsx_calculation_sheet"]
+        T_PPTX["generate_pptx_briefing"]
+        T_PDF["generate_pdf_compliance_report"]
+        T_Save["save_text_artifact"]
+    end
+
+    subgraph Multimodal_Engines ["Multimodal Ingestion and Processing"]
+        PyMuPDF["PyMuPDF (fitz)<br/>Page Rasterization and Vector Text"]
+        TesseractOCR["Tesseract OCR v5.4.0 Engine<br/>(C:\Program Files\Tesseract-OCR\tesseract.exe)"]
+        TableExtractor["Table Extractor Engine<br/>(PyMuPDF Table Discovery)"]
+        EvidenceEngine["Evidence and Reference Correlator<br/>(Page and Paragraph Tagging)"]
+    end
+
+    subgraph Local_AI_Tier ["Local Sovereign AI Model Tier (Ollama 127.0.0.1:11434)"]
+        LLM_Reasoning["Reasoning and Synthesis Model<br/>llama3.1:latest (8B Q4_K_M)"]
+        LLM_Vision["Multimodal Vision Model<br/>llava:latest (7B Visual Encoder + Vicuna)"]
+        LLM_Embedding["Dense Vector Embedding Model<br/>nomic-embed-text:latest (768-dim)"]
+        LLM_Code["Auxiliary Fast Reasoning Model<br/>qwen2.5:3b-instruct (3B)"]
+    end
+
+    subgraph Deliverables_Engine ["Industrial Deliverable Generators"]
+        GenDOCX["python-docx Generator<br/>(Formal Approval Notes, Tables, Sign-off Blocks)"]
+        GenXLSX["openpyxl Generator<br/>(Multi-tab Calculation Sheets, Formulas, Styles)"]
+        GenPPTX["python-pptx Generator<br/>(Executive Briefing Decks, Dark Industrial Themes)"]
+        GenPDF["ReportLab Generator<br/>(Standard Compliance Audit Reports, Headers/Footers)"]
+        ValDeliverable["Deep Deliverable Integrity Validator<br/>(Magic Bytes, ZIP Structure, XML/Sheet Integrity)"]
+    end
+
+    subgraph Storage_Persistence ["Local Sovereign Storage and Persistence"]
+        DB_Auth[("SQLite auth.db<br/>Users, Tokens, OAuth Accounts")]
+        DB_Tasks[("SQLite tasks.db<br/>Tasks, Events, Uploads, Artifacts")]
+        DB_Chroma[("ChromaDB Vector Store<br/>chroma_db/sovereign_knowledge_base")]
+        AuditLedger[("audit_trail.jsonl<br/>Cryptographic SHA-256 Hash Chain Ledger")]
+        FS_Artifacts["Local Filesystem: generated_artifacts/"]
+        FS_Uploads["Local Filesystem: multimodal_uploads/"]
+    end
+
+    %% Ingress Connections
+    Browser -->|HTTP/REST| Network_Boundary
+    WSClient -->|WebSocket| Network_Boundary
+    JudgeMode -->|HTTP and WS| Network_Boundary
+    CloudflareTunnel -->|Isolated Reverse Proxy| LocalLoopback
+    LocalLoopback --> CORSMw
+    CORSMw --> RateLimiter
+    RateLimiter --> AuthRouter
+    RateLimiter --> TaskRouter
+    RateLimiter --> DocRouter
+    RateLimiter --> AuditRouter
+    RateLimiter --> DemoRouter
+    RateLimiter --> WSManager
+
+    %% Auth and Storage
+    AuthRouter --> DB_Auth
+    TaskRouter --> DB_Tasks
+    AuditRouter --> AuditLedger
+
+    %% Agent Invocation Flow
+    TaskRouter --> StateGraph
+    DemoRouter --> StateGraph
+    StateGraph --> SecurityGate
+    SecurityGate -->|Pass| PlannerNode
+    SecurityGate -->|Block / Malicious| AuditLogger
+
+    PlannerNode --> LLM_Reasoning
+    PlannerNode --> ExecutorNode
+    ExecutorNode --> Tool_System
+    ExecutorNode --> WSManager
+
+    %% Tool Bindings
+    T_RAG --> DB_Chroma
+    T_OCR --> TesseractOCR
+    T_OCR --> PyMuPDF
+    T_Vision --> LLM_Vision
+    T_Tables --> TableExtractor
+    T_DOCX --> GenDOCX
+    T_XLSX --> GenXLSX
+    T_PPTX --> GenPPTX
+    T_PDF --> GenPDF
+
+    %% Model Bindings
+    DB_Chroma --> LLM_Embedding
+    DocRouter --> PIIRedactor
+    PIIRedactor --> DB_Chroma
+
+    %% Verification and Deliverables
+    Tool_System --> VerifierNode
+    VerifierNode -->|Retry Loop| ExecutorNode
+    VerifierNode -->|Pass / Done| SynthesizerNode
+    SynthesizerNode --> LLM_Reasoning
+    SynthesizerNode --> ValDeliverable
+    ValDeliverable --> FS_Artifacts
+
+    %% Audit Ledger Flow
+    SecurityGate -.->|Audit Event| AuditLogger
+    ExecutorNode -.->|Tool Event| AuditLogger
+    VerifierNode -.->|Verification Event| AuditLogger
+    SynthesizerNode -.->|Artifact Event| AuditLogger
+    AuditLogger --> AuditLedger

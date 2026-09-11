@@ -24,7 +24,7 @@ from fastapi import (
 )
 from fastapi.responses import RedirectResponse
 
-from app.config import settings, BASE_DIR
+from app.config import settings, BASE_DIR, get_runtime_mode_info, verify_zero_external_ai
 from app.api.models import (
     QueryRequest,
     QueryResponse,
@@ -46,7 +46,8 @@ from app.api.models import (
     ArtifactItem,
     AICapabilitiesResponse,
     MultimodalUploadResponse,
-    UploadedFileResponse
+    UploadedFileResponse,
+    PublicShareResponse
 )
 from fastapi.responses import FileResponse
 from app.database.vector_store import vector_store
@@ -58,8 +59,10 @@ from app.database.task_store import (
     cancel_task,
     record_uploaded_file,
     get_uploaded_file,
-    list_uploaded_files
+    list_uploaded_files,
+    get_artifact_record
 )
+from app.security.rate_limiter import rate_limiter
 from app.security.audit_logger import audit_logger
 from app.security.auth import (
     authenticate_user,
@@ -168,7 +171,7 @@ async def login(login_req: LoginRequest, request: Request, response: Response):
     )
 
 
-@api_router.post("/auth/logout", response_model=LogoutResponse)
+@api_router.api_route("/auth/logout", methods=["GET", "POST"], response_model=LogoutResponse)
 async def logout(request: Request, response: Response):
     """
     Terminates session, revokes HMAC token in database, and clears cookie.
@@ -178,7 +181,13 @@ async def logout(request: Request, response: Response):
     if token:
         logout_user(token, client_ip=client_ip)
 
-    response.delete_cookie(key=settings.SESSION_COOKIE_NAME)
+    response.delete_cookie(
+        key=settings.SESSION_COOKIE_NAME,
+        path="/",
+        secure=is_request_secure(request),
+        httponly=True,
+        samesite="lax"
+    )
     return LogoutResponse(status="SUCCESS", message="Session securely terminated.")
 
 
@@ -216,6 +225,16 @@ def _is_ollama_connection_error(exc: Exception) -> bool:
     return any(m.lower() in err_str.lower() for m in markers) or any(m.lower() in err_type.lower() for m in markers)
 
 
+def _resolve_google_redirect_uri() -> str:
+    """Dynamically resolves Google redirect URI for local, cloud, or public share tunnel."""
+    return settings.get_google_redirect_uri()
+
+
+def _resolve_github_redirect_uri() -> str:
+    """Dynamically resolves GitHub redirect URI for local, cloud, or public share tunnel."""
+    return settings.get_github_redirect_uri()
+
+
 @api_router.get("/auth/providers", response_model=OAuthProvidersResponse)
 async def get_oauth_providers():
     """
@@ -223,12 +242,30 @@ async def get_oauth_providers():
     and safe diagnostics (configured status, environment, sanitized redirect URIs).
     Allows frontend and operators to inspect OAuth routing without exposing secrets.
     """
+    is_public = settings.is_public_share_active()
+    is_stable = settings.is_stable_tunnel() or (
+        is_public and bool(settings.PUBLIC_BASE_URL) and "trycloudflare.com" not in (settings.PUBLIC_BASE_URL or "")
+    )
+    is_temp_tunnel = is_public and not is_stable
+    google_enabled = settings.google_oauth_configured() and not is_temp_tunnel
+    github_enabled = settings.github_oauth_configured() and not is_temp_tunnel
+
+    notice = None
+    if is_temp_tunnel:
+        notice = "OAuth unavailable for temporary public tunnel. Use email/password login."
+    elif is_stable and (google_enabled or github_enabled):
+        notice = "Stable Named Tunnel active. Sovereign login and configured OAuth providers are enabled."
+
     return OAuthProvidersResponse(
-        google=settings.google_oauth_configured(),
-        github=settings.github_oauth_configured(),
-        environment=settings.ENVIRONMENT,
-        github_redirect_uri=settings.GITHUB_REDIRECT_URI,
-        google_redirect_uri=settings.GOOGLE_REDIRECT_URI
+        google=google_enabled,
+        github=github_enabled,
+        environment="public-share" if is_public else settings.ENVIRONMENT,
+        github_redirect_uri=_resolve_github_redirect_uri() if github_enabled else None,
+        google_redirect_uri=_resolve_google_redirect_uri() if google_enabled else None,
+        public_share=is_public,
+        temporary_tunnel=is_temp_tunnel,
+        stable_tunnel=is_stable,
+        notice=notice
     )
 
 
@@ -239,6 +276,9 @@ async def google_login(request: Request):
     Generates cryptographic CSRF state token and redirects to Google.
     """
     client_ip = request.client.host if request.client else "127.0.0.1"
+
+    if settings.is_public_share_active() and not (settings.PUBLIC_BASE_URL or settings.is_stable_tunnel()):
+        return RedirectResponse(url="/login?error=temp_tunnel_oauth_disabled&provider=google", status_code=302)
 
     if not settings.google_oauth_configured():
         log_oauth_event(
@@ -258,7 +298,7 @@ async def google_login(request: Request):
 
     state = create_oauth_state("google")
     client_id = settings.GOOGLE_CLIENT_ID.strip().lstrip('"\'<').rstrip('"\'>')
-    redirect_uri = settings.GOOGLE_REDIRECT_URI.strip().lstrip('"\'<').rstrip('"\'>')
+    redirect_uri = _resolve_google_redirect_uri()
     params = {
         "client_id": client_id,
         "redirect_uri": redirect_uri,
@@ -333,11 +373,11 @@ async def google_callback(
             token_resp = await client.post(
                 "https://oauth2.googleapis.com/token",
                 data={
-                    "client_id": settings.GOOGLE_CLIENT_ID,
-                    "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                    "client_id": settings.GOOGLE_CLIENT_ID.strip().lstrip('"\'<').rstrip('"\'>'),
+                    "client_secret": settings.GOOGLE_CLIENT_SECRET.strip().lstrip('"\'<').rstrip('"\'>'),
                     "code": code,
                     "grant_type": "authorization_code",
-                    "redirect_uri": settings.GOOGLE_REDIRECT_URI
+                    "redirect_uri": _resolve_google_redirect_uri()
                 }
             )
             if token_resp.status_code != 200:
@@ -454,6 +494,9 @@ async def github_login(request: Request):
     """
     client_ip = request.client.host if request.client else "127.0.0.1"
 
+    if settings.is_public_share_active() and not (settings.PUBLIC_BASE_URL or settings.is_stable_tunnel()):
+        return RedirectResponse(url="/login?error=temp_tunnel_oauth_disabled&provider=github", status_code=302)
+
     if not settings.github_oauth_configured():
         log_oauth_event(
             event_type="GITHUB_LOGIN_FAILED",
@@ -472,7 +515,7 @@ async def github_login(request: Request):
 
     state = create_oauth_state("github")
     client_id = settings.GITHUB_CLIENT_ID.strip().lstrip('"\'<').rstrip('"\'>')
-    redirect_uri = settings.GITHUB_REDIRECT_URI.strip().lstrip('"\'<').rstrip('"\'>')
+    redirect_uri = _resolve_github_redirect_uri()
     params = {
         "client_id": client_id,
         "redirect_uri": redirect_uri,
@@ -548,7 +591,7 @@ async def github_callback(
                     "client_id": settings.GITHUB_CLIENT_ID.strip().lstrip('"\'<').rstrip('"\'>'),
                     "client_secret": settings.GITHUB_CLIENT_SECRET.strip().lstrip('"\'<').rstrip('"\'>'),
                     "code": code,
-                    "redirect_uri": settings.GITHUB_REDIRECT_URI.strip().lstrip('"\'<').rstrip('"\'>')
+                    "redirect_uri": _resolve_github_redirect_uri()
                 },
                 headers={"Accept": "application/json"}
             )
@@ -698,20 +741,41 @@ async def upload_document(
     4. Indexes chunks into persistent ChromaDB
     5. Appends verifiable entry to SHA-256 audit ledger
     """
+    forbidden_extensions = {".exe", ".bat", ".cmd", ".ps1", ".dll", ".py", ".sh", ".js", ".zip", ".tar", ".gz", ".rar", ".7z", ".bin", ".msi", ".vbs"}
     allowed_extensions = {".pdf", ".txt", ".md", ".csv", ".json", ".log"}
     ext = os.path.splitext(file.filename)[1].lower()
+
+    if ext in forbidden_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail="Executable, script, and archive file uploads are strictly forbidden."
+        )
 
     if ext not in allowed_extensions:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported file format '{ext}'. Allowed types: {', '.join(allowed_extensions)}"
+            detail=f"Unsupported file format '{ext}'. Allowed types: {', '.join(sorted(allowed_extensions))}"
         )
 
-    # Save uploaded file locally in sandbox
-    save_path = os.path.join(settings.UPLOAD_DIR, f"{uuid.uuid4().hex}_{file.filename}")
+    max_mb = settings.PUBLIC_MAX_UPLOAD_MB if settings.is_public_share_active() else (settings.MAX_UPLOAD_SIZE_BYTES // (1024 * 1024))
+    max_bytes = max_mb * 1024 * 1024
+
+    # Save uploaded file locally in sandbox with size ceiling
+    save_path = os.path.join(settings.UPLOAD_DIR, f"{uuid.uuid4().hex}_{os.path.basename(file.filename)}")
+    size_bytes = 0
     try:
         with open(save_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            while chunk := file.file.read(1024 * 1024):
+                size_bytes += len(chunk)
+                if size_bytes > max_bytes:
+                    buffer.close()
+                    if os.path.exists(save_path):
+                        os.remove(save_path)
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File exceeds maximum permissible upload limit of {max_mb} MB."
+                    )
+                buffer.write(chunk)
 
         # Ingest into ChromaDB
         ingest_result = vector_store.ingest_file(
@@ -833,14 +897,18 @@ async def create_agent_task(
             "data": evt
         })
 
-    final_state = await run_agentic_task(
-        query=task_req.query,
-        user_id=user_id,
-        username=username,
-        session_id=sid,
-        deliverable_format=task_req.deliverable_format,
-        ws_emitter=thought_emitter
-    )
+    rate_limiter.acquire_task_slot(user_id)
+    try:
+        final_state = await run_agentic_task(
+            query=task_req.query,
+            user_id=user_id,
+            username=username,
+            session_id=sid,
+            deliverable_format=task_req.deliverable_format,
+            ws_emitter=thought_emitter
+        )
+    finally:
+        rate_limiter.release_task_slot(user_id)
 
     t_data = get_task(final_state["task_id"])
     if not t_data:
@@ -965,7 +1033,24 @@ async def get_task_artifacts_list(
         raise HTTPException(status_code=403, detail="Unauthorized: Access restricted.")
 
     artifacts = get_task_artifacts(task_id)
-    return [ArtifactItem(**a) for a in artifacts]
+    items = []
+    for a in artifacts:
+        fp = a.get("filepath") or a.get("file_path") or ""
+        ca = a.get("created_at") or task.get("created_at") or ""
+        items.append(ArtifactItem(
+            filename=a.get("filename", ""),
+            filepath=fp,
+            file_path=fp,
+            size_bytes=a.get("size_bytes", 0),
+            sha256=a.get("sha256", ""),
+            created_at=ca,
+            artifact_type=a.get("artifact_type", "document"),
+            format=a.get("format"),
+            title=a.get("title"),
+            confidence=a.get("confidence", 1.0),
+            verification_status=a.get("verification_status", "VERIFIED")
+        ))
+    return items
 
 
 @api_router.get("/agent/artifacts/{filename}")
@@ -973,16 +1058,25 @@ async def get_artifact_file(
     filename: str,
     current_user: Dict[str, Any] = Depends(get_current_user)
 ):
-    """Safely retrieves or downloads an artifact file from the designated OUTPUT_DIR."""
+    """Safely retrieves or downloads an artifact file from the designated OUTPUT_DIR with user isolation."""
     clean_name = os.path.basename(filename)
     filepath = os.path.join(settings.OUTPUT_DIR, clean_name)
     if not os.path.isfile(filepath):
         raise HTTPException(status_code=404, detail=f"Artifact '{clean_name}' not found.")
 
+    role = current_user.get("role", "user")
+    user_id = str(current_user.get("id") or current_user.get("user_id") or current_user.get("username"))
+    rec = get_artifact_record(clean_name)
+    if rec and role != "admin" and rec.get("user_id") and str(rec["user_id"]) != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized access: Artifact belongs to another user.")
+
     return FileResponse(filepath, filename=clean_name)
 
 
 @api_router.get("/agent/artifacts/download/{filename}")
+@api_router.get("/artifacts/download/{filename}")
+@api_router.get("/agent/artifacts/{filename}")
+@api_router.get("/artifacts/{filename}")
 async def download_artifact_file(
     filename: str,
     current_user: Dict[str, Any] = Depends(get_current_user)
@@ -1023,7 +1117,7 @@ async def run_sih26117_judge_demo(
     # Refuse to fake or simulate local AI stages in cloud demonstration mode or when Ollama is offline.
     ollama_ok = False
     try:
-        async with httpx.AsyncClient(timeout=1.0) as client:
+        async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.get(f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/tags")
             ollama_ok = (resp.status_code == 200)
     except Exception:
@@ -1157,11 +1251,21 @@ async def upload_multimodal_document(
 
     ext = os.path.splitext(clean_name)[1].lower()
     allowed_exts = {".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".bmp", ".csv", ".json", ".txt", ".md"}
+    forbidden_extensions = {".exe", ".bat", ".cmd", ".ps1", ".dll", ".py", ".sh", ".js", ".zip", ".tar", ".gz", ".rar", ".7z", ".bin", ".msi", ".vbs"}
+    if ext in forbidden_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail="Executable, script, and archive file uploads are strictly forbidden."
+        )
+
     if ext not in allowed_exts:
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported file format '{ext}'. Allowed formats: {', '.join(sorted(allowed_exts))}"
         )
+
+    max_mb = settings.PUBLIC_MAX_UPLOAD_MB if settings.is_public_share_active() else (settings.MAX_UPLOAD_SIZE_BYTES // (1024 * 1024))
+    max_bytes = max_mb * 1024 * 1024
 
     file_id = f"file_{uuid.uuid4().hex[:12]}"
     target_filename = f"{file_id}_{clean_name}"
@@ -1173,13 +1277,13 @@ async def upload_multimodal_document(
     with open(target_path, "wb") as buffer:
         while chunk := await file.read(1024 * 1024):
             size_bytes += len(chunk)
-            if size_bytes > settings.MAX_UPLOAD_SIZE_BYTES:
+            if size_bytes > max_bytes:
                 buffer.close()
                 if os.path.exists(target_path):
                     os.remove(target_path)
                 raise HTTPException(
                     status_code=413,
-                    detail=f"File exceeds maximum permissible upload limit of {settings.MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)} MB."
+                    detail=f"File exceeds maximum permissible upload limit of {max_mb} MB."
                 )
             hasher.update(chunk)
             buffer.write(chunk)
@@ -1408,6 +1512,36 @@ async def get_audit_logs(limit: int = 50, current_user: Dict[str, Any] = Depends
 # ==========================================
 # 4. SYSTEM HEALTH & AIR-GAP STATUS
 # ==========================================
+@api_router.get("/runtime/public-share", response_model=PublicShareResponse)
+async def get_public_share_info():
+    """
+    Returns public share status and endpoints safely without exposing internal secrets.
+    Truthfully indicates whether public HTTPS tunnel is currently routing traffic.
+    """
+    ollama_ok = False
+    try:
+        async with httpx.AsyncClient(timeout=0.8) as client:
+            resp = await client.get(f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/tags")
+            ollama_ok = (resp.status_code == 200)
+    except Exception:
+        ollama_ok = False
+
+    info = get_runtime_mode_info(ollama_connected=ollama_ok)
+    return PublicShareResponse(
+        enabled=settings.is_public_share_active(),
+        runtime_mode=info["runtime_mode"],
+        public_url=info["public_url"],
+        stable_url=settings.PUBLIC_BASE_URL,
+        local_url=info["local_url"],
+        ai_runtime=info["ai_runtime"],
+        ollama_connected=ollama_ok,
+        external_ai_calls=info["external_ai_calls"],
+        tunnel_provider=info.get("tunnel_provider", "cloudflare") if settings.is_public_share_active() else None,
+        tunnel_type=info.get("tunnel_type", "quick") if settings.is_public_share_active() else None,
+        notice=info["runtime_notice"]
+    )
+
+
 @api_router.get("/health", response_model=SystemHealthResponse)
 async def system_health():
     """Returns operational status, model configuration, and air-gap verification."""
@@ -1422,43 +1556,45 @@ async def system_health():
     except Exception:
         ollama_ok = False
 
-    is_cloud = (settings.ENVIRONMENT == "production-cloud" or not settings.AIR_GAP_STRICT_MODE)
-    if not ollama_ok:
-        runtime_mode = "CLOUD_DEMO" if is_cloud else "LOCAL_AIR_GAPPED"
-        runtime_label = "CLOUD DEMO / LOCAL AI REQUIRED" if is_cloud else "AIR-GAPPED / OLLAMA OFFLINE"
-        runtime_notice = (
-            "Cloud demonstration runtime. Sovereign AI inference requires the local/on-premise runtime with Ollama."
-            if is_cloud
-            else "Ollama local inference daemon is unreachable. Start 'ollama serve' on the local host."
-        )
-        embeddings_status = "DEGRADED / DEPENDENT ON OLLAMA"
-    else:
-        if is_cloud:
-            runtime_mode = "CLOUD_CONNECTED"
-            runtime_label = "CLOUD DEMO / OLLAMA CONNECTED"
-            runtime_notice = "Connected to remote Ollama inference instance."
-            embeddings_status = "OPERATIONAL"
-        else:
-            runtime_mode = "LOCAL_AIR_GAPPED"
-            runtime_label = "AIR-GAPPED / ON-PREMISE VERIFIED"
-            runtime_notice = None
-            embeddings_status = "OPERATIONAL"
+    from app.agents.multimodal.ocr_provider import local_ocr_provider
+    from app.agents.multimodal.vision_provider import ollama_vision_provider
+
+    ocr_info = local_ocr_provider.get_provider_info()
+    vision_info = ollama_vision_provider.get_provider_info()
+    chroma_ok = (stats.get("total_chunks", 0) >= 0)
+
+    mode_info = get_runtime_mode_info(ollama_connected=ollama_ok)
+    embeddings_status = "OPERATIONAL" if ollama_ok else "DEGRADED / DEPENDENT ON OLLAMA"
+
+    public_share_meta = {
+        "active": mode_info["public_share"],
+        "public_url": mode_info.get("public_url"),
+        "local_url": mode_info.get("local_url"),
+        "ai_runtime": mode_info.get("ai_runtime", "LOCAL"),
+        "zero_external_ai": mode_info.get("zero_external_ai", True)
+    }
 
     return SystemHealthResponse(
         status="ONLINE_SECURE",
         version=settings.VERSION,
-        environment=settings.ENVIRONMENT,
-        air_gapped=settings.AIR_GAP_STRICT_MODE,
-        runtime_mode=runtime_mode,
-        runtime_label=runtime_label,
-        runtime_notice=runtime_notice,
+        environment="public-share" if mode_info["public_share"] else settings.ENVIRONMENT,
+        air_gapped=mode_info["air_gapped"],
+        public_share=public_share_meta,
+        runtime_mode=mode_info["runtime_mode"],
+        runtime_label=mode_info["runtime_label"],
+        runtime_notice=mode_info["runtime_notice"],
         ollama_endpoint=settings.OLLAMA_BASE_URL,
         ollama_connected=ollama_ok,
         embeddings_status=embeddings_status,
         default_model=settings.DEFAULT_MODEL,
         chroma_collection=stats.get("collection_name", settings.CHROMA_COLLECTION_NAME),
         total_vectors=stats.get("total_chunks", 0),
-        audit_integrity=is_valid
+        audit_integrity=is_valid,
+        ocr_available=ocr_info.get("available", False),
+        vision_available=vision_info.get("available", False),
+        chroma_available=chroma_ok,
+        external_ai_calls=mode_info["external_ai_calls"],
+        zero_external_ai=mode_info.get("zero_external_ai", True)
     )
 
 

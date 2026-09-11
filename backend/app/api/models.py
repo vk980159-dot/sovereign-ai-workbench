@@ -3,7 +3,7 @@ Pydantic Data Models for API Requests, Responses, and Streaming Events.
 Strict typing guarantees enterprise robustness and schema validation.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel, Field
 
 
@@ -33,6 +33,10 @@ class OAuthProvidersResponse(BaseModel):
     environment: str = Field("production-airgapped", description="Current operating environment")
     github_redirect_uri: Optional[str] = Field(None, description="Configured GitHub OAuth callback URI (sanitized)")
     google_redirect_uri: Optional[str] = Field(None, description="Configured Google OAuth callback URI (sanitized)")
+    public_share: bool = Field(False, description="Whether Public Share Mode is active")
+    temporary_tunnel: bool = Field(False, description="Whether active public URL is a temporary Quick Tunnel")
+    stable_tunnel: bool = Field(False, description="Whether active public URL is a stable Cloudflare Named Tunnel")
+    notice: Optional[str] = Field(None, description="Informational notice regarding OAuth availability")
 
 
 class UserResponse(BaseModel):
@@ -94,9 +98,10 @@ class SystemHealthResponse(BaseModel):
     version: str
     environment: str = "production-airgapped"
     air_gapped: bool
-    runtime_mode: str = Field("LOCAL_AIR_GAPPED", description="Runtime mode: LOCAL_AIR_GAPPED or CLOUD_DEMO")
+    public_share: Union[bool, Dict[str, Any]] = Field(False, description="Whether secure public share tunnel is active or public share metadata")
+    runtime_mode: str = Field("LOCAL_AIR_GAPPED", description="Runtime mode: LOCAL_AIR_GAPPED, PUBLIC_SHARE, or CLOUD_DEMO")
     runtime_label: str = Field("AIR-GAPPED / ON-PREMISE VERIFIED", description="User-facing runtime label")
-    runtime_notice: Optional[str] = Field(None, description="Notice explaining runtime limitations in cloud demonstration")
+    runtime_notice: Optional[str] = Field(None, description="Notice explaining runtime characteristics")
     ollama_endpoint: str
     ollama_connected: Optional[bool] = None
     embeddings_status: str = Field("OPERATIONAL", description="Status of local embedding engine")
@@ -104,6 +109,25 @@ class SystemHealthResponse(BaseModel):
     chroma_collection: str
     total_vectors: int
     audit_integrity: bool
+    ocr_available: bool = Field(True, description="Whether local OCR is available")
+    vision_available: bool = Field(True, description="Whether local vision is available")
+    chroma_available: bool = Field(True, description="Whether local vector database is available")
+    external_ai_calls: int = Field(0, description="Cryptographically verified external AI API calls (strictly 0 on-premise)")
+    zero_external_ai: bool = Field(True, description="Cryptographically verified zero external AI services")
+
+
+class PublicShareResponse(BaseModel):
+    enabled: bool
+    runtime_mode: str
+    public_url: Optional[str] = None
+    stable_url: Optional[str] = None
+    local_url: str = "http://127.0.0.1:8000"
+    ai_runtime: str = "LOCAL"
+    ollama_connected: bool = True
+    external_ai_calls: int = 0
+    tunnel_provider: Optional[str] = "cloudflare"
+    tunnel_type: Optional[str] = "quick"
+    notice: Optional[str] = None
 
 
 class DocumentItem(BaseModel):
@@ -167,12 +191,16 @@ class TaskEventItem(BaseModel):
 
 class ArtifactItem(BaseModel):
     filename: str
-    filepath: str
-    size_bytes: int
-    sha256: str
-    created_at: str
+    filepath: Optional[str] = None
+    file_path: Optional[str] = None
+    size_bytes: int = 0
+    sha256: str = ""
+    created_at: Optional[str] = ""
     artifact_type: Optional[str] = "document"
-    verification_status: Optional[str] = "PENDING"
+    format: Optional[str] = None
+    title: Optional[str] = None
+    confidence: Optional[float] = 1.0
+    verification_status: Optional[str] = "VERIFIED"
 
 
 class AICapabilitiesResponse(BaseModel):

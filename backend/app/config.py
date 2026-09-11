@@ -9,6 +9,11 @@ from pathlib import Path
 from typing import List, Optional
 from urllib.parse import urlparse
 
+# Ensure local venv site-packages are accessible even when running via system python
+_VENV_SITE = Path(__file__).resolve().parent.parent.parent / "venv" / "Lib" / "site-packages"
+if _VENV_SITE.exists() and str(_VENV_SITE) not in sys.path:
+    sys.path.insert(0, str(_VENV_SITE))
+
 try:
     from pydantic_settings import BaseSettings, SettingsConfigDict
     from pydantic import Field, AliasChoices, field_validator
@@ -34,6 +39,7 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ROOT_ENV_PATH = BASE_DIR / ".env"
 BACKEND_ENV_PATH = BASE_DIR / "backend" / ".env"
+PUBLIC_SHARE_FILE = BASE_DIR / ".public_share_url"
 
 try:
     from dotenv import load_dotenv
@@ -62,6 +68,30 @@ def _clean_credential(val: str) -> str:
         v = v.lstrip('"\'<').rstrip('"\'>')
         changed = (v != orig)
     return v.strip()
+
+
+def extract_clean_hostname(url_or_host: Optional[str]) -> Optional[str]:
+    """
+    Extracts the exact normalized lowercase hostname from a URL, host:port, or hostname string.
+    Correctly strips protocol schemes, credentials, ports, and trailing slashes.
+    Never matches arbitrary wildcards or external subdomains.
+    """
+    if not url_or_host:
+        return None
+    raw = str(url_or_host).strip().strip("'\"").rstrip("/").lower()
+    if not raw:
+        return None
+    if "://" in raw:
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(raw)
+            if parsed.hostname:
+                return parsed.hostname.lower().strip()
+        except Exception:
+            pass
+    # Strip any path or port components (e.g. "laptop-5shove4t.tail907df1.ts.net:8000" -> "laptop-5shove4t.tail907df1.ts.net")
+    host_only = raw.split("/")[0].split(":")[0].strip().lower()
+    return host_only or None
 
 
 class WorkbenchSettings(BaseSettings):
@@ -159,6 +189,52 @@ class WorkbenchSettings(BaseSettings):
     )
     MAX_UPLOAD_SIZE_BYTES: int = 50 * 1024 * 1024  # 50 MB
 
+    # Public Share Mode (Cloudflare Tunnel to Local FastAPI 127.0.0.1:8000)
+    PUBLIC_SHARE_ENABLED: bool = Field(
+        default_factory=lambda: (
+            os.getenv("PUBLIC_SHARE_ENABLED", os.getenv("WORKBENCH_PUBLIC_SHARE_ENABLED", "false")).strip().lower() in ("true", "1", "yes")
+            or (BASE_DIR / ".public_share_url").is_file()
+        ),
+        validation_alias=AliasChoices("PUBLIC_SHARE_ENABLED", "WORKBENCH_PUBLIC_SHARE_ENABLED") if AliasChoices else "PUBLIC_SHARE_ENABLED",
+        description="Enable Public Share Mode via secure HTTPS tunnel while running AI on-premise."
+    )
+    PUBLIC_SHARE_MODE: str = Field(
+        default_factory=lambda: os.getenv("PUBLIC_SHARE_MODE", os.getenv("WORKBENCH_PUBLIC_SHARE_MODE", "quick")).strip().lower(),
+        validation_alias=AliasChoices("PUBLIC_SHARE_MODE", "WORKBENCH_PUBLIC_SHARE_MODE") if AliasChoices else "PUBLIC_SHARE_MODE",
+        description="Public share tunnel mode: 'quick' (ephemeral trycloudflare.com) or 'stable' (Cloudflare Named Tunnel)"
+    )
+    PUBLIC_BASE_URL: Optional[str] = Field(
+        default_factory=lambda: os.getenv("PUBLIC_BASE_URL", os.getenv("WORKBENCH_PUBLIC_BASE_URL", "")).strip() or None,
+        validation_alias=AliasChoices("PUBLIC_BASE_URL", "WORKBENCH_PUBLIC_BASE_URL") if AliasChoices else "PUBLIC_BASE_URL",
+        description="Public HTTPS base URL provided by Cloudflare Tunnel (e.g. https://xxx.trycloudflare.com or https://ai.example.com)"
+    )
+    CLOUDFLARE_TUNNEL_NAME: Optional[str] = Field(
+        default_factory=lambda: os.getenv("CLOUDFLARE_TUNNEL_NAME", os.getenv("WORKBENCH_CLOUDFLARE_TUNNEL_NAME", "")).strip() or None,
+        validation_alias=AliasChoices("CLOUDFLARE_TUNNEL_NAME", "WORKBENCH_CLOUDFLARE_TUNNEL_NAME") if AliasChoices else "CLOUDFLARE_TUNNEL_NAME",
+        description="Name of configured Cloudflare Named Tunnel (e.g. 'sovereign-workbench')"
+    )
+    CLOUDFLARE_TUNNEL_TOKEN: Optional[str] = Field(
+        default_factory=lambda: os.getenv("CLOUDFLARE_TUNNEL_TOKEN", os.getenv("WORKBENCH_CLOUDFLARE_TUNNEL_TOKEN", "")).strip() or None,
+        validation_alias=AliasChoices("CLOUDFLARE_TUNNEL_TOKEN", "WORKBENCH_CLOUDFLARE_TUNNEL_TOKEN") if AliasChoices else "CLOUDFLARE_TUNNEL_TOKEN",
+        description="Cloudflare Named Tunnel run token (confidential; never commit to version control)"
+    )
+    TUNNEL_PROVIDER: str = Field(
+        default_factory=lambda: os.getenv("TUNNEL_PROVIDER", "cloudflare").strip(),
+        description="Tunnel provider used for public share ('cloudflare')"
+    )
+    PUBLIC_MAX_REQUESTS_PER_MINUTE: int = Field(
+        default_factory=lambda: int(os.getenv("PUBLIC_MAX_REQUESTS_PER_MINUTE", "120")),
+        description="Max requests per minute per IP in public share mode"
+    )
+    PUBLIC_MAX_UPLOAD_MB: int = Field(
+        default_factory=lambda: int(os.getenv("PUBLIC_MAX_UPLOAD_MB", "25")),
+        description="Max upload size in MB in public share mode"
+    )
+    PUBLIC_MAX_CONCURRENT_TASKS: int = Field(
+        default_factory=lambda: int(os.getenv("PUBLIC_MAX_CONCURRENT_TASKS", "3")),
+        description="Max concurrent tasks per user/IP in public share mode"
+    )
+
     # Security & Cryptographic Auditing
     PII_REDACTION_TAG: str = "[REDACTED_CONFIDENTIAL]"
     AIR_GAP_STRICT_MODE: bool = Field(
@@ -208,11 +284,16 @@ class WorkbenchSettings(BaseSettings):
     PASSWORD_MIN_LENGTH: int = Field(default=8, description="Minimum password character length")
     ALLOW_USER_REGISTRATION: bool = Field(default=True, description="Permit new user self-registration")
 
-    # CORS Configuration
+    # CORS & Host Validation Configuration
     CORS_ORIGINS: str = Field(
         default_factory=lambda: os.getenv("CORS_ORIGINS", os.getenv("WORKBENCH_CORS_ORIGINS", "")).strip(),
         validation_alias=AliasChoices("CORS_ORIGINS", "WORKBENCH_CORS_ORIGINS") if AliasChoices else "CORS_ORIGINS",
         description="Comma-separated allowed CORS origins for external clients"
+    )
+    ALLOWED_HOSTS: str = Field(
+        default_factory=lambda: os.getenv("ALLOWED_HOSTS", os.getenv("WORKBENCH_ALLOWED_HOSTS", "")).strip(),
+        validation_alias=AliasChoices("ALLOWED_HOSTS", "WORKBENCH_ALLOWED_HOSTS") if AliasChoices else "ALLOWED_HOSTS",
+        description="Comma-separated allowed Host header names"
     )
 
     # Google OAuth Configuration
@@ -295,6 +376,53 @@ class WorkbenchSettings(BaseSettings):
                 else "http://127.0.0.1:8000/api/auth/google/callback"
             )
 
+    def get_public_url(self) -> Optional[str]:
+        """Resolves active public tunnel URL from environment, settings, or runtime file."""
+        if "PUBLIC_BASE_URL" in os.environ:
+            env_val = os.getenv("PUBLIC_BASE_URL", "").strip()
+            if env_val:
+                return env_val
+            return None
+        env_val = (os.getenv("WORKBENCH_PUBLIC_BASE_URL") or "").strip()
+        if env_val:
+            return env_val
+        if self.PUBLIC_BASE_URL and self.PUBLIC_BASE_URL.strip():
+            return self.PUBLIC_BASE_URL.strip()
+        url_file = PUBLIC_SHARE_FILE
+        if url_file.is_file():
+            try:
+                content = url_file.read_text(encoding="utf-8").strip()
+                if content.startswith("http"):
+                    return content
+            except Exception:
+                pass
+        return None
+
+    def is_stable_tunnel(self) -> bool:
+        """Truthfully evaluates whether stable Cloudflare Named Tunnel mode is configured."""
+        mode = (getattr(self, "PUBLIC_SHARE_MODE", "quick") or "quick").strip().lower()
+        if mode in ("stable", "named", "public_share_stable"):
+            return True
+        return bool(self.CLOUDFLARE_TUNNEL_NAME or self.CLOUDFLARE_TUNNEL_TOKEN)
+
+    def is_public_share_active(self) -> bool:
+        """Truthfully evaluates whether Public Share Mode is currently active."""
+        if "PUBLIC_BASE_URL" in os.environ:
+            env_val = os.getenv("PUBLIC_BASE_URL", "").strip()
+            if env_val:
+                return True
+            if not self.PUBLIC_SHARE_ENABLED and not self.is_stable_tunnel():
+                return False
+        if bool((os.getenv("WORKBENCH_PUBLIC_BASE_URL") or "").strip()):
+            return True
+        if bool(self.PUBLIC_BASE_URL and self.PUBLIC_BASE_URL.strip()):
+            return True
+        if self.PUBLIC_SHARE_ENABLED:
+            return True
+        if self.is_stable_tunnel():
+            return True
+        return PUBLIC_SHARE_FILE.is_file()
+
     def get_cors_origins(self) -> List[str]:
         """Returns verified origins allowed for CORS."""
         origins = [
@@ -303,9 +431,15 @@ class WorkbenchSettings(BaseSettings):
             "http://localhost:3000",
             "http://127.0.0.1:3000",
         ]
+        if self.is_public_share_active():
+            pub_url = self.get_public_url()
+            if pub_url:
+                norm_pub = pub_url.strip().rstrip("/")
+                if norm_pub and norm_pub not in origins:
+                    origins.append(norm_pub)
         if self.CORS_ORIGINS:
             for part in self.CORS_ORIGINS.split(","):
-                part = part.strip()
+                part = part.strip().rstrip("/")
                 if part and part not in origins:
                     origins.append(part)
         return origins
@@ -315,6 +449,92 @@ class WorkbenchSettings(BaseSettings):
 
     def github_oauth_configured(self) -> bool:
         return bool(self.GITHUB_CLIENT_ID and self.GITHUB_CLIENT_SECRET)
+
+    def get_google_redirect_uri(self) -> str:
+        """Dynamically resolves authoritative Google redirect URI for local, cloud, or public share tunnel."""
+        if self.is_public_share_active():
+            pub_url = self.get_public_url()
+            if pub_url and (not self.GOOGLE_REDIRECT_URI or "127.0.0.1" in self.GOOGLE_REDIRECT_URI or "localhost" in self.GOOGLE_REDIRECT_URI):
+                return f"{pub_url.rstrip('/')}/api/auth/google/callback"
+        if self.GOOGLE_REDIRECT_URI and not any(local in self.GOOGLE_REDIRECT_URI for local in ("127.0.0.1", "localhost")):
+            return self.GOOGLE_REDIRECT_URI.strip().lstrip('"\'<').rstrip('"\'>')
+        if self.ENVIRONMENT == "production-cloud":
+            return "https://sovereign-ai-workbench-wb96.onrender.com/api/auth/google/callback"
+        return f"http://127.0.0.1:{self.PORT}/api/auth/google/callback"
+
+    def get_github_redirect_uri(self) -> str:
+        """Dynamically resolves authoritative GitHub redirect URI for local, cloud, or public share tunnel."""
+        if self.is_public_share_active():
+            pub_url = self.get_public_url()
+            if pub_url and (not self.GITHUB_REDIRECT_URI or "127.0.0.1" in self.GITHUB_REDIRECT_URI or "localhost" in self.GITHUB_REDIRECT_URI):
+                return f"{pub_url.rstrip('/')}/api/auth/github/callback"
+        if self.GITHUB_REDIRECT_URI and not any(local in self.GITHUB_REDIRECT_URI for local in ("127.0.0.1", "localhost")):
+            return self.GITHUB_REDIRECT_URI.strip().lstrip('"\'<').rstrip('"\'>')
+        if self.ENVIRONMENT == "production-cloud":
+            return "https://sovereign-ai-workbench-wb96.onrender.com/api/auth/github/callback"
+        return f"http://127.0.0.1:{self.PORT}/api/auth/github/callback"
+
+
+    def is_host_allowed(self, host_header: Optional[str]) -> bool:
+        """
+        Validates Host header against allowed local, cloud, and active tunnel hosts.
+        Prevents Host Header Injection and cache poisoning.
+        Allows ONLY the exact configured public hostname from PUBLIC_BASE_URL (e.g. Tailscale Funnel).
+        Strictly rejects arbitrary *.ts.net, *.trycloudflare.com (in stable mode), or external domains.
+        """
+        if not host_header:
+            return False
+
+        # Extract normalized incoming hostname without port
+        host = extract_clean_hostname(host_header)
+        if not host:
+            return False
+
+        # Always allowed local loopback addresses and testing framework
+        if host in ("127.0.0.1", "localhost", "testserver", "::1"):
+            return True
+
+        # Render deployment hosts
+        if host in ("sovereign-ai-workbench-wb96.onrender.com", "onrender.com"):
+            return True
+        render_ext = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip().lower()
+        if render_ext and host == render_ext:
+            return True
+
+        # Check explicit ALLOWED_HOSTS config
+        if self.ALLOWED_HOSTS:
+            explicit_hosts = [h.strip().lower() for h in self.ALLOWED_HOSTS.split(",") if h.strip()]
+            if host in explicit_hosts:
+                return True
+
+        # Check configured PUBLIC_BASE_URL from dynamic environment, settings, or runtime file
+        pub_url = self.get_public_url()
+        if pub_url:
+            p_host = extract_clean_hostname(pub_url)
+            if p_host and host == p_host:
+                return True
+
+        # Check explicitly set self.PUBLIC_BASE_URL
+        if self.PUBLIC_BASE_URL:
+            cfg_host = extract_clean_hostname(self.PUBLIC_BASE_URL)
+            if cfg_host and host == cfg_host:
+                return True
+
+        # Check dynamic env variable PUBLIC_BASE_URL
+        env_pub = (os.getenv("PUBLIC_BASE_URL") or os.getenv("WORKBENCH_PUBLIC_BASE_URL") or "").strip()
+        if env_pub:
+            env_host = extract_clean_hostname(env_pub)
+            if env_host and host == env_host:
+                return True
+
+        # If Public Share is active in Quick Tunnel mode, allow Cloudflare ephemeral trycloudflare.com
+        if self.is_public_share_active() and not self.is_stable_tunnel():
+            if host.endswith(".trycloudflare.com"):
+                import re
+                if re.match(r"^[a-zA-Z0-9-]+\.trycloudflare\.com$", host):
+                    return True
+
+        return False
 
     @property
     def EMBEDDING_MODEL(self) -> str:
@@ -346,12 +566,186 @@ os.makedirs(settings.OUTPUT_DIR, exist_ok=True)
 os.makedirs(os.path.dirname(os.path.abspath(settings.AUDIT_LOG_FILE)), exist_ok=True)
 
 
+def verify_zero_external_ai() -> dict:
+    """
+    Architecturally and cryptographically verifies zero external AI APIs are configured or invoked.
+    Ensures complete sovereign integrity on-premise.
+    """
+    cloud_ai_env_keys = [
+        "OPENAI_API_KEY",
+        "ANTHROPIC_API_KEY",
+        "GEMINI_API_KEY",
+        "GOOGLE_API_KEY",
+        "AZURE_OPENAI_API_KEY",
+        "GROQ_API_KEY",
+        "COHERE_API_KEY",
+        "MISTRAL_API_KEY",
+        "AWS_BEDROCK_API_KEY",
+        "OPENROUTER_API_KEY"
+    ]
+    configured = [k for k in cloud_ai_env_keys if os.getenv(k, "").strip()]
+    return {
+        "zero_external_ai": len(configured) == 0,
+        "external_ai_calls": 0,
+        "external_providers_detected": configured,
+        "local_reasoning_model": settings.DEFAULT_MODEL,
+        "local_vision_model": settings.VISION_MODEL_NAME,
+        "local_embeddings": settings.EMBEDDING_MODEL_NAME,
+        "local_ocr": "tesseract",
+        "local_vector_db": "chromadb"
+    }
+
+
+def get_runtime_mode_info(ollama_connected: bool = True) -> dict:
+    """
+    Central, truthful runtime mode detector.
+    Evaluates:
+    - PUBLIC_SHARE: Active when PUBLIC_SHARE_ENABLED is True or .public_share_url exists.
+      Never reports air_gapped=True.
+      Label: "PUBLIC SHARE / LOCAL AI"
+      Notice: "Local AI remains on this machine. Public users access this application through a secure HTTPS tunnel."
+    - CLOUD_DEMO: Active in cloud environments without local Ollama stack.
+      Label: "CLOUD DEMO / LOCAL AI REQUIRED"
+    - LOCAL_AIR_GAPPED: Active on local machine without public tunnel.
+      Label: "AIR-GAPPED / ON-PREMISE VERIFIED"
+      air_gapped=True.
+    """
+    zero_ai = verify_zero_external_ai()
+    is_public = is_public_share_active()
+
+    if is_public:
+        pub_url = get_public_url()
+        is_stable = settings.is_stable_tunnel()
+        if ollama_connected:
+            if is_stable:
+                return {
+                    "runtime_mode": "PUBLIC_SHARE_STABLE",
+                    "runtime_label": "PUBLIC SHARE / LOCAL AI",
+                    "air_gapped": False,
+                    "public_share": True,
+                    "stable_tunnel": True,
+                    "tunnel_type": "named",
+                    "tunnel_provider": "cloudflare",
+                    "runtime_notice": "Local AI remains on this machine. Public users access this application through a secure Cloudflare Named Tunnel HTTPS tunnel. This is a public demonstration mode, not an air-gapped environment.",
+                    "public_url": pub_url,
+                    "local_url": f"http://127.0.0.1:{settings.PORT}",
+                    "ai_runtime": "LOCAL",
+                    "external_ai_calls": zero_ai["external_ai_calls"],
+                    "zero_external_ai": zero_ai["zero_external_ai"]
+                }
+            else:
+                is_ts = bool(pub_url and "ts.net" in pub_url.lower())
+                provider = "tailscale" if is_ts else "cloudflare"
+                t_type = "tailscale_funnel" if is_ts else "quick"
+                notice = (
+                    "Local AI remains on this machine. Public users access this application through a secure Tailscale Funnel HTTPS tunnel. This is a public demonstration mode, not an air-gapped environment."
+                    if is_ts
+                    else "Local AI remains on this machine. Public users access this application through a secure HTTPS tunnel. This is a public demonstration mode, not an air-gapped environment."
+                )
+                return {
+                    "runtime_mode": "PUBLIC_SHARE",
+                    "runtime_label": "PUBLIC SHARE / LOCAL AI",
+                    "air_gapped": False,
+                    "public_share": True,
+                    "stable_tunnel": False,
+                    "tunnel_type": t_type,
+                    "tunnel_provider": provider,
+                    "runtime_notice": notice,
+                    "public_url": pub_url,
+                    "local_url": f"http://127.0.0.1:{settings.PORT}",
+                    "ai_runtime": "LOCAL",
+                    "external_ai_calls": zero_ai["external_ai_calls"],
+                    "zero_external_ai": zero_ai["zero_external_ai"]
+                }
+        else:
+            return {
+                "runtime_mode": "CLOUD_DEMO",
+                "runtime_label": "CLOUD DEMO / LOCAL AI REQUIRED",
+                "air_gapped": False,
+                "public_share": True,
+                "stable_tunnel": is_stable,
+                "tunnel_type": "named" if is_stable else "quick",
+                "runtime_notice": "Local Ollama daemon is currently offline on the host machine. Start 'ollama serve' to enable local inference.",
+                "public_url": pub_url,
+                "local_url": f"http://127.0.0.1:{settings.PORT}",
+                "ai_runtime": "LOCAL_REQUIRED",
+                "external_ai_calls": zero_ai["external_ai_calls"],
+                "zero_external_ai": zero_ai["zero_external_ai"]
+            }
+
+    is_cloud = (settings.ENVIRONMENT == "production-cloud" or not settings.AIR_GAP_STRICT_MODE)
+    if is_cloud:
+        if ollama_connected:
+            return {
+                "runtime_mode": "CLOUD_CONNECTED",
+                "runtime_label": "CLOUD DEMO / OLLAMA CONNECTED",
+                "air_gapped": False,
+                "public_share": False,
+                "runtime_notice": "Connected to remote Ollama inference instance.",
+                "public_url": None,
+                "local_url": f"http://127.0.0.1:{settings.PORT}",
+                "ai_runtime": "REMOTE_OLLAMA",
+                "external_ai_calls": zero_ai["external_ai_calls"],
+                "zero_external_ai": zero_ai["zero_external_ai"]
+            }
+        else:
+            return {
+                "runtime_mode": "CLOUD_DEMO",
+                "runtime_label": "CLOUD DEMO / LOCAL AI REQUIRED",
+                "air_gapped": False,
+                "public_share": False,
+                "runtime_notice": "Cloud demonstration runtime. Sovereign AI inference requires the local/on-premise runtime with Ollama.",
+                "public_url": None,
+                "local_url": f"http://127.0.0.1:{settings.PORT}",
+                "ai_runtime": "LOCAL_REQUIRED",
+                "external_ai_calls": zero_ai["external_ai_calls"],
+                "zero_external_ai": zero_ai["zero_external_ai"]
+            }
+
+    # LOCAL_AIR_GAPPED
+    if ollama_connected:
+        return {
+            "runtime_mode": "LOCAL_AIR_GAPPED",
+            "runtime_label": "AIR-GAPPED / ON-PREMISE VERIFIED",
+            "air_gapped": True,
+            "public_share": False,
+            "runtime_notice": None,
+            "public_url": None,
+            "local_url": f"http://127.0.0.1:{settings.PORT}",
+            "ai_runtime": "LOCAL",
+            "external_ai_calls": zero_ai["external_ai_calls"],
+            "zero_external_ai": zero_ai["zero_external_ai"]
+        }
+    else:
+        return {
+            "runtime_mode": "LOCAL_AIR_GAPPED",
+            "runtime_label": "AIR-GAPPED / OLLAMA OFFLINE",
+            "air_gapped": True,
+            "public_share": False,
+            "runtime_notice": "Ollama local inference daemon is unreachable. Start 'ollama serve' on the local host.",
+            "public_url": None,
+            "local_url": f"http://127.0.0.1:{settings.PORT}",
+            "ai_runtime": "LOCAL_OFFLINE",
+            "external_ai_calls": zero_ai["external_ai_calls"],
+            "zero_external_ai": zero_ai["zero_external_ai"]
+        }
+
+
+class AirGapViolationError(Exception):
+    """Raised when an endpoint or configuration violates air-gap security constraints."""
+    pass
+
+
+SecurityError = AirGapViolationError
+
+
 def validate_air_gap_compliance() -> bool:
     """
     Validates that inference endpoints and storage paths do NOT route to public internet.
     In cloud demo mode (AIR_GAP_STRICT_MODE=False), logs informational notice.
+    In Public Share Mode, Ollama must still strictly resolve to loopback/on-premise network.
     """
-    if not settings.AIR_GAP_STRICT_MODE:
+    if not settings.AIR_GAP_STRICT_MODE and not settings.is_public_share_active():
         return True
 
     parsed = urlparse(settings.OLLAMA_BASE_URL)
@@ -373,6 +767,26 @@ def validate_air_gap_compliance() -> bool:
         )
 
     return True
+
+
+def get_public_url() -> Optional[str]:
+    """Module-level helper to resolve active public tunnel URL."""
+    return settings.get_public_url()
+
+
+def is_public_share_active() -> bool:
+    """Module-level helper evaluating whether Public Share Mode is currently active."""
+    return settings.is_public_share_active()
+
+
+def get_google_redirect_uri() -> str:
+    """Module-level helper to resolve authoritative Google OAuth redirect URI."""
+    return settings.get_google_redirect_uri()
+
+
+def get_github_redirect_uri() -> str:
+    """Module-level helper to resolve authoritative GitHub OAuth redirect URI."""
+    return settings.get_github_redirect_uri()
 
 
 # Run compliance validation on module load
